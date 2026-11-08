@@ -267,7 +267,7 @@
   }
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape' && G && !document.querySelector('.modal-bg')) confirmHome();
-    if(e.key==='Enter' && G && G.cur && G.cur.finished && document.activeElement && document.activeElement.id!=='next' && !document.querySelector('.modal-bg')){ e.preventDefault(); next(); }
+    if(e.key==='Enter' && G && G.cur && G.cur.finished && !(document.activeElement && /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) && !document.querySelector('.modal-bg')){ e.preventDefault(); next(); }
   });
   menu();
 })();
