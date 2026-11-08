@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bilgi Yolu – Ders Oyunu</title>
+<style>
+:root{
+  --bg:#1a1d23; --surface:#22262e; --surface2:#2a2f38; --line:#363c47;
+  --ink:#d8dce2; --muted:#8a92a0; --accent:#86b5a5; --accent-ink:#13201b; --accent2:#cfae74;
+  --ok:#86c29a; --ok-bg:rgba(134,194,154,.12); --bad:#dc9090; --bad-bg:rgba(220,144,144,.12);
+  --hint-bg:rgba(207,174,116,.10);
+  --f1:rgba(120,165,215,.28); --f2:rgba(134,190,150,.28); --f3:rgba(215,175,105,.30); --f4:rgba(215,130,140,.28); --f5:rgba(170,150,215,.28);
+  --k1:#8fb4dd; --k2:#8cc49e; --k3:#d9b56f; --k4:#de9aa3; --k5:#b4a3dd;
+  --shadow:0 6px 24px rgba(0,0,0,.25);
+  --radius:14px;
+}
+html[data-theme="light"]{
+  --bg:#f3f0e9; --surface:#fbfaf6; --surface2:#f0ece3; --line:#ddd6c8;
+  --ink:#2c3038; --muted:#757b86; --accent:#4c8573; --accent-ink:#ffffff; --accent2:#a87f37;
+  --ok:#3f8a57; --ok-bg:rgba(63,138,87,.10); --bad:#b9504f; --bad-bg:rgba(185,80,79,.09);
+  --hint-bg:rgba(168,127,55,.10);
+  --f1:rgba(70,120,190,.18); --f2:rgba(60,150,90,.18); --f3:rgba(200,150,60,.22); --f4:rgba(200,90,100,.18); --f5:rgba(130,100,200,.18);
+  --k1:#3f6fae; --k2:#3b8a55; --k3:#a8792a; --k4:#b25462; --k5:#6e58b0;
+  --shadow:0 6px 24px rgba(60,50,30,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;min-height:100vh;transition:background .25s,color .25s}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:860px;margin:0 auto;padding:20px 18px 60px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:.2px;font-size:18px}
+.brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.icon-btn{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:14px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.icon-btn:hover{color:var(--ink);border-color:var(--muted)}
+.hero{margin:10px 0 26px}
+.hero h1{font-size:30px;margin:0 0 6px;font-weight:700;letter-spacing:-.3px}
+.hero p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;transition:transform .15s,border-color .15s,box-shadow .15s;text-align:left;width:100%}
+.subject{display:flex;flex-direction:column;gap:10px;min-height:150px;position:relative;overflow:hidden}
+.subject:hover{transform:translateY(-2px);border-color:var(--sc,var(--accent));box-shadow:var(--shadow)}
+.subject .ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--sc) 18%,transparent);color:var(--sc)}
+.subject .ico svg{width:24px;height:24px}
+.subject h3{margin:0;font-size:18px}
+.subject .meta{color:var(--muted);font-size:13.5px;margin-top:auto;display:flex;justify-content:space-between}
+.subject .tag{font-size:12px;color:var(--sc)}
+.opts{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin:26px 0 8px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);font-size:14.5px;color:var(--muted)}
+.seg{display:inline-flex;background:var(--surface2);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:8px;color:var(--muted);font-size:14px}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+label.chk{display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+label.chk input{accent-color:var(--accent);width:16px;height:16px}
+.foot{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
+
+/* oyun */
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.bar .title{font-weight:650;display:flex;align-items:center;gap:8px}
+.bar .title i{width:10px;height:10px;border-radius:50%;background:var(--sc);display:inline-block}
+.bar .sp{flex:1}
+.pill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13.5px;color:var(--muted)}
+.pill b{color:var(--ink);font-weight:650}
+.progress{height:4px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:18px}
+.progress>div{height:100%;background:var(--sc,var(--accent));transition:width .35s}
+.qcard{padding:22px 22px 18px}
+.qnum{font-size:13px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.passage{background:var(--surface2);border-left:3px solid var(--sc,var(--accent));border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14.5px;max-height:300px;overflow:auto;line-height:1.65}
+.passage h4{margin:4px 0 6px;font-size:14px;letter-spacing:.3px}
+.passage p{margin:0 0 10px}
+.passage .src{text-align:right;color:var(--muted);font-style:italic}
+.qtext{font-size:18px;font-weight:550;line-height:1.55;margin-bottom:6px}
+.qtext .sub{display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:4px}
+.qtext u b,.qtext b u{color:var(--accent2)}
+figure.fig{margin:14px 0 6px;display:flex;justify-content:center;background:var(--surface2);border-radius:12px;padding:12px}
+figure.fig svg{max-width:100%;height:auto;display:block}
+.inputs{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.field{display:flex;align-items:center;gap:10px}
+.field label{min-width:0;flex:0 0 auto;max-width:45%;font-size:14.5px;color:var(--muted)}
+.field input,.field textarea{flex:1;min-width:0;background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--ink);font:inherit;outline:none;transition:border-color .15s,background .15s}
+.field textarea{min-height:120px;resize:vertical;line-height:1.5}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.field.ok input,.field.ok textarea{border-color:var(--ok);background:var(--ok-bg)}
+.field.bad input,.field.bad textarea{border-color:var(--bad);background:var(--bad-bg)}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface2);padding:10px 18px;border-radius:10px;font-weight:550;font-size:15px;transition:.15s}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.hints{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.hint{background:var(--hint-bg);border:1px solid color-mix(in srgb,var(--accent2) 35%,transparent);border-radius:10px;padding:9px 13px;font-size:14.5px;animation:fade .3s}
+.hint b{color:var(--accent2);font-weight:650;margin-right:6px}
+.fb{margin-top:14px;border-radius:12px;padding:12px 15px;font-size:15px;animation:fade .3s}
+.fb.ok{background:var(--ok-bg);border:1px solid color-mix(in srgb,var(--ok) 45%,transparent)}
+.fb.bad{background:var(--bad-bg);border:1px solid color-mix(in srgb,var(--bad) 45%,transparent)}
+.fb .h{font-weight:650;margin-bottom:4px}
+.fb.ok .h{color:var(--ok)} .fb.bad .h{color:var(--bad)}
+.fb .alt{color:var(--muted);font-size:13.5px;margin-top:6px}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.kbd{font-size:12px;color:var(--muted);margin-left:auto}
+
+/* sonuç */
+.result{text-align:center;padding:30px 22px}
+.result .big{font-size:52px;font-weight:750;color:var(--sc,var(--accent));line-height:1.1}
+.result .sub{color:var(--muted);margin-top:6px}
+.stats{display:flex;justify-content:center;gap:12px;margin:20px 0;flex-wrap:wrap}
+.stat{background:var(--surface2);border-radius:12px;padding:10px 18px;min-width:96px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12.5px;color:var(--muted)}
+.review{margin-top:18px;text-align:left;display:flex;flex-direction:column;gap:8px}
+.rv{display:flex;gap:12px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:14.5px;align-items:flex-start}
+.rv .st{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700}
+.rv .st.ok{background:var(--ok-bg);color:var(--ok)} .rv .st.bad{background:var(--bad-bg);color:var(--bad)}
+.rv .ans{color:var(--muted);font-size:13.5px}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:50;animation:fade .2s;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:380px;width:100%;box-shadow:var(--shadow)}
+.modal h3{margin:0 0 6px}
+.modal p{margin:0 0 18px;color:var(--muted);font-size:14.5px}
+.modal .actions{justify-content:flex-end}
+
+/* svg */
+svg text{fill:var(--ink);font-family:system-ui,sans-serif;font-size:14px}
+svg .ink{stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg .thin{stroke:var(--muted);fill:none;stroke-width:1.2}
+svg .dash{stroke:var(--muted);fill:none;stroke-width:1.4;stroke-dasharray:5 4}
+svg .mut{fill:var(--muted)}
+svg .acc{fill:var(--accent2)} svg .sacc{stroke:var(--accent2);fill:none;stroke-width:2.2}
+svg .f1{fill:var(--f1);stroke:var(--k1);stroke-width:1.6} svg .f2{fill:var(--f2);stroke:var(--k2);stroke-width:1.6}
+svg .f3{fill:var(--f3);stroke:var(--k3);stroke-width:1.6} svg .f4{fill:var(--f4);stroke:var(--k4);stroke-width:1.6}
+svg .f5{fill:var(--f5);stroke:var(--k5);stroke-width:1.6}
+svg .k1{stroke:var(--k1);fill:none;stroke-width:2.2} svg .k2{stroke:var(--k2);fill:none;stroke-width:2.2}
+svg .k3{stroke:var(--k3);fill:none;stroke-width:2.2} svg .k4{stroke:var(--k4);fill:none;stroke-width:2.2} svg .k5{stroke:var(--k5);fill:none;stroke-width:2.2}
+svg .t1{fill:var(--k1)} svg .t2{fill:var(--k2)} svg .t3{fill:var(--k3)} svg .t4{fill:var(--k4)} svg .t5{fill:var(--k5)}
+svg .mk{fill:var(--ink)} svg .mka{fill:var(--accent2)} svg .mk4{fill:var(--k4)} svg .mk1{fill:var(--k1)}
+svg .qb{fill:var(--accent2)} svg .qbt{fill:var(--bg);font-weight:800}
+@media (max-width:560px){
+  .hero h1{font-size:25px}
+  .qtext{font-size:16.5px}
+  .field{flex-direction:column;align-items:stretch;gap:4px}
+  .field label{max-width:none}
+  .qcard{padding:18px 15px}
+}
+
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+/* Esnek cevap kontrolü: Türkçe karakter, büyük/küçük harf, yazım hatası ve ek toleransı */
+var M = (function(){
+  var MAP = {'ı':'i','ş':'s','ğ':'g','ü':'u','ö':'o','ç':'c','â':'a','î':'i','û':'u','é':'e','ë':'e','ä':'a'};
+  function lower(s){ return String(s).replace(/İ/g,'i').replace(/I/g,'ı').toLowerCase(); }
+  function norm(s){
+    s = lower(s).replace(/√/g,' kok ').replace(/²/g,'2').replace(/³/g,'3').replace(/₂/g,'2');
+    s = s.replace(/[ışğüöçâîûéëä]/g, function(c){ return MAP[c]; });
+    s = s.replace(/['’‘`´"“”]/g,'');
+    s = s.replace(/[^a-z0-9]+/g,' ').trim();
+    return s;
+  }
+  function lev(a,b,max){
+    if(a===b) return 0;
+    var la=a.length, lb=b.length;
+    if(Math.abs(la-lb)>max) return max+1;
+    var pp=new Array(lb+1), prev=new Array(lb+1), cur=new Array(lb+1), i, j;
+    for(j=0;j<=lb;j++) prev[j]=j;
+    for(i=1;i<=la;i++){
+      cur[0]=i; var best=cur[0];
+      for(j=1;j<=lb;j++){
+        var c = a.charCodeAt(i-1)===b.charCodeAt(j-1)?0:1;
+        cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+c);
+        if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) cur[j]=Math.min(cur[j],pp[j-2]+1);
+        if(cur[j]<best) best=cur[j];
+      }
+      if(best>max) return max+1;
+      var t=pp; pp=prev; prev=cur; cur=t;
+    }
+    return prev[lb];
+  }
+  function thr(len, strict){
+    if(strict) return 0;
+    if(len<=3) return 0;
+    if(len<=6) return 1;
+    if(len<=10) return 2;
+    return 3;
+  }
+  /* girdinin içinde hedefe en yakın parçanın uzaklığı */
+  function dist(inp, tgt){
+    var T = thr(tgt.length) + 2, best = lev(inp,tgt,T);
+    var tn = tgt.replace(/ /g,'');
+    best = Math.min(best, lev(inp.replace(/ /g,''), tn, T));
+    var toks = inp.split(' '), k = tgt.split(' ').length;
+    for(var w=Math.max(1,k-1); w<=k+1; w++){
+      for(var i=0;i+w<=toks.length;i++){
+        var win = toks.slice(i,i+w).join(' ');
+        best = Math.min(best, lev(win,tgt,T), lev(win.replace(/ /g,''),tn,T));
+        if(tgt.length>=4 && win.length>tgt.length){
+          // Türkçe ekler: "mitokondridir" -> "mitokondri"
+          if(win.length - tgt.length <= 6){
+            best = Math.min(best, lev(win.slice(0,tgt.length),tgt,T));
+          }
+        }
+        if(best===0) return 0;
+      }
+    }
+    return best;
+  }
+  function nums(raw){
+    var s = String(raw).replace(/(\d),(\d)/g,'$1.$2');
+    var out=[], re=/(-?\d+(?:\.\d+)?)(?:\s*[\/:]\s*(-?\d+(?:\.\d+)?))?/g, m;
+    while((m=re.exec(s))){
+      var v=parseFloat(m[1]);
+      if(m[2]!==undefined){ var d=parseFloat(m[2]); if(d!==0) out.push(v/d); out.push(v); out.push(d); }
+      else out.push(v);
+    }
+    return out;
+  }
+  function numMatch(raw, targets, tol){
+    targets = [].concat(targets); tol = tol==null?0.02:tol;
+    var ns = nums(raw);
+    // kesirli cevap bekleniyorsa pay/payda tek başına sayılmasın
+    var s = String(raw).replace(/(\d),(\d)/g,'$1.$2');
+    var fr = /(-?\d+(?:\.\d+)?)\s*[\/:]\s*(-?\d+(?:\.\d+)?)/g, m, fracs=[], plain=s.replace(fr,function(a,p,q){ fracs.push(parseFloat(p)/parseFloat(q)); return ' '; });
+    var cand = fracs.concat(nums(plain).filter(function(x){return true;}));
+    for(var i=0;i<cand.length;i++) for(var j=0;j<targets.length;j++){
+      var t=targets[j]; if(Math.abs(cand[i]-t) <= Math.max(Math.abs(t)*tol,1e-9)) return true;
+    }
+    return false;
+  }
+  function bestOf(inp, list, strict){
+    var b={d:99,len:0};
+    (list||[]).forEach(function(a){
+      var t=norm(a); if(!t) return;
+      var d = strict ? (inp.replace(/ /g,'')===t.replace(/ /g,'')?0:99) : dist(inp,t);
+      var ok = d<=thr(t.length,strict);
+      if(d<b.d || (d===b.d && ok)) b={d:d,len:t.length,ok:ok};
+    });
+    return b;
+  }
+  function has(inp, alts){ return bestOf(inp, [].concat(alts)).ok; }
+  /* spec: {a, not, num, tol, strict, keys, minKeys, all} */
+  function check(raw, spec){
+    var inp = norm(raw), rt = String(raw).trim();
+    if(!rt) return false;
+    if(spec.raw && spec.raw.indexOf(rt)>=0) return true;
+    if(spec.minWords && rt.split(/\s+/).length < spec.minWords) return false;
+    if(spec.cap && rt.charAt(0)===rt.charAt(0).toLocaleLowerCase('tr')) return false;
+    if(spec.exact){
+      var e = (spec.a||[]).some(function(a){ return norm(a)===inp; });
+      return e;
+    }
+    if(spec.num!=null && numMatch(raw, spec.num, spec.tol)) return true;
+    if(spec.all){
+      for(var g=0; g<spec.all.length; g++) if(!has(inp, spec.all[g])) return false;
+      return true;
+    }
+    if(spec.keys){
+      var c=0; spec.keys.forEach(function(g){ if(has(inp,g)) c++; });
+      if(c >= (spec.minKeys||1)) return true;
+    }
+    if(spec.a){
+      var acc = bestOf(inp, spec.a, spec.strict);
+      if(acc.ok){
+        if(spec.not){
+          var bad = bestOf(inp, spec.not, false);
+          if(bad.ok && (bad.d < acc.d || (bad.d===acc.d && bad.len > acc.len))) return false;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+  /* liste tipi: n girdinin her biri farklı bir havuz öğesiyle eşleşmeli */
+  function checkList(inputs, pool, ordered){
+    var used = {}, res = [];
+    inputs.forEach(function(raw, i){
+      var hit=-1;
+      if(ordered){ if(pool[i] && check(raw,pool[i])) hit=i; }
+      else for(var j=0;j<pool.length;j++){ if(!used[j] && check(raw,pool[j])){ hit=j; break; } }
+      if(hit>=0) used[hit]=1;
+      res.push(hit>=0);
+    });
+    return res;
+  }
+  return {norm:norm, lev:lev, check:check, checkList:checkList, nums:nums, numMatch:numMatch, dist:dist};
+})();
+if(typeof module!=='undefined') module.exports=M;
+
+/* Soru çizimleri için küçük SVG yardımcıları */
+var S = {
+  wrap: function(w,h,body){
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img">'+
+      '<defs>'+
+      '<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>'+
+      '<marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mka" d="M0,0 L10,5 L0,10 z"/></marker>'+
+      '<marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk4" d="M0,0 L10,5 L0,10 z"/></marker>'+
+      '<marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk1" d="M0,0 L10,5 L0,10 z"/></marker>'+
+      '</defs>'+body+'</svg>';
+  },
+  t: function(x,y,s,o){ o=o||{};
+    return '<text x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'"'+(o.c?' class="'+o.c+'"':'')+
+      ' style="'+(o.s?'font-size:'+o.s+'px;':'')+(o.b?'font-weight:700;':'')+(o.i?'font-style:italic;':'')+'" dominant-baseline="middle">'+s+'</text>'; },
+  l: function(x1,y1,x2,y2,c,ar){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" class="'+(c||'ink')+'"'+(ar?' marker-end="url(#'+ar+')"':'')+'/>'; },
+  c: function(cx,cy,r,c){ return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" class="'+(c||'ink')+'"/>'; },
+  dot: function(cx,cy,r,c){ return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r||3.5)+'" class="'+(c||'mk')+'"/>'; },
+  r: function(x,y,w,h,c,rx){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(rx||0)+'" class="'+(c||'ink')+'"/>'; },
+  p: function(d,c,ar){ return '<path d="'+d+'" class="'+(c||'ink')+'"'+(ar?' marker-end="url(#'+ar+')"':'')+'/>'; },
+  q: function(x,y,s){ return '<circle cx="'+x+'" cy="'+y+'" r="11" class="qb"/>'+S.t(x,y+1,s||'?',{c:'qbt',s:14}); },
+  axes: function(x0,y0,w,h,xl,yl){
+    return S.l(x0,y0,x0+w,y0,'ink','ar')+S.l(x0,y0,x0,y0-h,'ink','ar')+
+      S.t(x0+w+4,y0+16,xl,{a:'end',s:13,i:1})+S.t(x0+8,y0-h-2,yl,{a:'start',s:13,i:1});
+  }
+};
+
+var BIO = (function(){
+  var t=S.t, l=S.l, c=S.c, r=S.r, p=S.p, q=S.q, W=S.wrap;
+  function nuc(which){
+    var lab = function(k,x,y,name){ return which===k ? q(x,y,'?') : t(x,y,name,{s:13,c:'mut'}); };
+    return W(380,200,
+      c(72,100,28,'f3')+t(72,101,'P',{b:1})+l(100,100,142,95)+
+      p('M185,58 L230,90 L213,142 L157,142 L140,90 Z','f2')+t(185,108,'5C',{s:12,c:'mut'})+
+      l(230,90,268,90)+r(268,62,86,56,'f1',10)+t(311,91,'A/T/G/C',{s:12})+
+      lab(1,72,45,'fosfat')+lab(2,185,172,'şeker')+lab(3,311,40,'baz')+
+      t(190,190,'Bir DNA nükleotidi',{s:12,c:'mut'}));
+  }
+  function ladder(top, bottomQ, title){
+    var n=top.length, w=60*n+80, b='';
+    b+=l(30,40,w-30,40,'k1')+l(30,140,w-30,140,'k4');
+    b+=t(18,40,"5'",{s:12})+t(w-16,40,"3'",{s:12})+t(18,140,"3'",{s:12})+t(w-16,140,"5'",{s:12});
+    for(var i=0;i<n;i++){ var x=70+60*i;
+      b+=l(x,40,x,140,'thin')+r(x-17,52,34,28,'f1',6)+t(x,67,top[i],{b:1});
+      b+=r(x-17,100,34,28,'f4',6)+t(x,115,bottomQ?'?':'',{b:1}); }
+    if(title) b+=t(w/2,166,title,{s:12,c:'mut'});
+    return W(w,176,b);
+  }
+  function transcription(){
+    var s=['T','A','C','G','G','A'], b='', w=60*6+80;
+    b+=t(20,30,'DNA (kalıp)',{a:'start',s:12,c:'mut'})+l(30,48,w-30,48,'k1');
+    for(var i=0;i<6;i++){ var x=70+60*i; b+=r(x-17,58,34,28,'f1',6)+t(x,73,s[i],{b:1})+l(x,90,x,108,'dash')+r(x-17,112,34,28,'f5',6)+t(x,127,'?',{b:1}); }
+    b+=l(30,150,w-30,150,'k5')+t(20,168,'mRNA',{a:'start',s:12,c:'mut'});
+    return W(w,180,b);
+  }
+  function fork(){
+    var b='';
+    b+=l(20,104,200,104,'k1')+l(20,126,200,126,'k4');
+    for(var x=30;x<200;x+=16) b+=l(x,106,x,124,'thin');
+    b+=l(200,104,450,36,'k1')+l(200,126,450,194,'k4');
+    // öncü iplik
+    b+=p('M440,52 L232,108','k2','ar');
+    // kesikli iplik parçaları
+    var seg=function(t1,t2){ var x1=200+250*t1,y1=126+68*t1-15,x2=200+250*t2,y2=126+68*t2-15; return p('M'+x1+','+y1+' L'+x2+','+y2,'k2','ar'); };
+    b+=seg(0.14,0.33)+seg(0.39,0.6)+seg(0.66,0.88);
+    b+=S.dot(200+250*0.36,126+68*0.36-15,5,'acc')+S.dot(200+250*0.63,126+68*0.63-15,5,'acc');
+    b+='<ellipse cx="204" cy="115" rx="16" ry="26" class="f3"/>';
+    b+=c(372,62,13,'f5');
+    b+=q(204,72,'X')+q(320,190,'Y')+q(372,144,'Z')+q(392,30,'W');
+    b+=l(372,155,358,141,'thin')+l(392,41,374,52,'thin');
+    b+=t(470,36,"ana iplik",{a:'end',s:11,c:'mut'})+t(110,150,'Eşlenmemiş DNA',{s:12,c:'mut'});
+    return W(480,206,b);
+  }
+  function organization(hl){
+    var b='', nb=function(n,x,y){ return hl===n? q(x,y,String(n)) : '<circle cx="'+x+'" cy="'+y+'" r="10" class="f5"/>'+t(x,y+1,String(n),{s:12,b:1}); };
+    // kromozom
+    b+='<g transform="translate(62,78)"><rect x="-7" y="-44" width="14" height="88" rx="7" class="f5" transform="rotate(22)"/><rect x="-7" y="-44" width="14" height="88" rx="7" class="f5" transform="rotate(-22)"/></g>';
+    // kromatin iplik + nükleozomlar
+    b+=p('M84,72 C120,40 150,110 190,78 S240,50 262,96 S290,150 300,158','k3');
+    [[124,64],[170,86],[222,64],[270,112]].forEach(function(o){ b+=c(o[0],o[1],9,'f3'); });
+    b+=l(258,98,284,98,'thin')+l(258,126,284,126,'thin');
+    // DNA sarmalı
+    var s1='M300,160', s2='M300,160';
+    for(var x=300;x<=520;x+=5){ var y=Math.sin((x-300)/18)*14; s1+=' L'+x+','+(160+y).toFixed(1); s2+=' L'+x+','+(160-y).toFixed(1); }
+    b+=p(s1,'k1')+p(s2,'k4');
+    for(var x2=309;x2<520;x2+=9){ var y2=Math.sin((x2-300)/18)*14; b+=l(x2,160+y2,x2,160-y2,'thin'); }
+    b+=l(360,130,450,130,'ink')+l(360,124,360,136,'ink')+l(450,124,450,136,'ink');
+    b+=l(300,196,520,196,'ink');
+    b+=l(489,170,489,150,'ink','ar');
+    b+=nb(7,26,40)+l(36,46,52,62,'thin')+l(36,46,70,52,'thin');
+    b+=nb(5,124,30)+l(124,40,124,55,'thin');
+    b+=nb(6,170,124)+l(170,114,166,96,'thin');
+    b+=nb(4,296,112);
+    b+=nb(3,405,112)+nb(2,410,212)+nb(1,489,124);
+    return W(540,226,b);
+  }
+  function meselson(){
+    var b='', xs=[70,180,290], lab=['¹⁵N’li DNA','1. eşlenme','2. eşlenme'];
+    xs.forEach(function(x,i){ b+=p('M'+(x-22)+',30 L'+(x-22)+',160 Q'+x+',190 '+(x+22)+',160 L'+(x+22)+',30','ink')+t(x,202,lab[i],{s:12}); });
+    b+=r(48,136,44,7,'f4',3)+r(158,101,44,7,'f2',3)+q(290,100,'?');
+    [['hafif',68],['ara',104],['ağır',140]].forEach(function(o){ b+=l(330,o[1],350,o[1],'dash')+t(356,o[1],o[0],{a:'start',s:12,c:'mut'}); });
+    b+=t(200,16,'14N ortamında eşlenme',{s:12,c:'mut'});
+    return W(400,214,b);
+  }
+  function mouse(x,dead){
+    return '<ellipse cx="'+x+'" cy="98" rx="26" ry="15" class="f5"/>'+c(x+24,88,10,'f5')+c(x+20,78,5,'f5')+p('M'+(x-26)+',100 q-14,6 -20,-6','k5')+
+      (dead? t(x+27,87,'×',{s:12,b:1}) : S.dot(x+27,86,2));
+  }
+  function griffith(){
+    var b='', L=[['Canlı S',''],['Canlı R',''],['Isıyla','öldürülmüş S'],['Öldürülmüş S','+ canlı R']], R=['Öldü','Yaşadı','Yaşadı','Öldü'];
+    for(var i=0;i<4;i++){ var x=70+135*i; b+=t(x,22,L[i][0],{s:12})+(L[i][1]?t(x,40,L[i][1],{s:12}):'')+mouse(x-6,R[i]==='Öldü')+t(x,140,R[i],{s:12.5,b:1,c:R[i]==='Öldü'?'t4':'t2'})+t(x,158,(i+1)+'. durum',{s:11,c:'mut'}); if(i) b+=l(2+135*i,14,2+135*i,160,'dash'); }
+    return W(545,170,b);
+  }
+  function trna(){
+    var b='';
+    b+=p('M150,20 L150,70','ink')+t(150,12,"amino asit bağlanır (3')",{s:11,c:'mut'});
+    b+=c(92,96,26,'f2')+c(208,96,26,'f2')+p('M130,70 L170,70 L170,130 L130,130 Z','f2');
+    b+=c(150,168,32,'f2');
+    b+=t(132,178,'U',{b:1})+t(150,184,'A',{b:1})+t(168,178,'C',{b:1});
+    b+=t(196,140,'antikodon',{s:11,c:'mut',a:'start'})+l(194,142,176,152,'thin');
+    b+=l(30,222,270,222,'k5');
+    b+=r(104,198,26,24,'f5',5)+r(137,198,26,24,'f5',5)+r(170,198,26,24,'f5',5)+t(117,211,'?',{b:1})+t(150,211,'?',{b:1})+t(183,211,'?',{b:1});
+    b+=t(285,222,'mRNA',{a:'start',s:12,c:'mut'});
+    return W(330,240,b);
+  }
+  function flow(which){
+    var b='', box=function(x,s){ return r(x,32,100,40,'f1',10)+t(x+50,53,s,{b:1}); };
+    b+=box(20,'DNA')+box(190,'mRNA')+box(360,'Protein');
+    b+=l(124,52,184,52,'ink','ar')+l(294,52,354,52,'ink','ar');
+    b+= which===1 ? q(154,30,'1') : t(154,32,'1',{b:1,c:'mut'});
+    b+= which===2 ? q(324,30,'2') : t(324,32,'2',{b:1,c:'mut'});
+    b+=p('M50,30 C40,4 90,4 80,28','ink','ar')+t(65,90,'kendini eşler',{s:11,c:'mut'});
+    return W(480,100,b);
+  }
+  function ribosome(){
+    var b='';
+    b+='<ellipse cx="200" cy="84" rx="120" ry="52" class="f3"/>'+'<ellipse cx="200" cy="160" rx="110" ry="22" class="f3"/>';
+    b+=l(30,146,370,146,'k5');
+    ['A','U','G','U','U','C','G','C','A'].forEach(function(s,i){ b+=t(110+22*i,135,s,{s:12}); });
+    b+=p('M154,126 L154,96 M132,126 L176,126','k2')+p('M220,126 L220,96 M198,126 L242,126','k2');
+    b+=c(154,82,14,'f4')+t(154,83,'Met',{s:10})+c(220,82,14,'f1')+t(220,83,'Phe',{s:10});
+    b+=c(118,62,12,'f4')+l(140,74,128,68,'thin');
+    b+=l(168,82,206,82,'sacc')+q(187,58,'?');
+    b+=t(30,170,'mRNA',{a:'start',s:12,c:'mut'});
+    return W(400,192,b);
+  }
+  function hbonds(){
+    var b='', row=function(y,a1,a2,n){ var s=r(60,y-18,56,36,'f1',8)+t(88,y+1,a1,{b:1})+r(184,y-18,56,36,'f4',8)+t(212,y+1,a2,{b:1});
+      for(var i=0;i<n;i++){ var yy=y-((n-1)*7)+i*14; s+=l(120,yy,180,yy,'dash'); } return s; };
+    b+=row(46,'A','T',2)+row(122,'G','C',3);
+    b+=t(150,170,'kesikli çizgi = hidrojen bağı',{s:12,c:'mut'});
+    return W(300,182,b);
+  }
+  function bars(){
+    var b='', v=[['X',80],['Y',15],['Z',5]];
+    b+=S.axes(50,170,250,150,'RNA tipi','% oran');
+    v.forEach(function(o,i){ var x=85+70*i, h=o[1]*1.6; b+=r(x,170-h,40,h,'f'+(i+1),4)+t(x+20,186,o[0],{b:1})+t(x+20,162-h,'%'+o[1],{s:12}); });
+    return W(320,200,b);
+  }
+  function semicons(){
+    var b='';
+    b+=l(30,60,130,60,'k4')+l(30,90,130,90,'k4')+t(80,112,'Ana DNA',{s:12,c:'mut'});
+    b+=l(150,75,200,40,'ink','ar')+l(150,75,200,110,'ink','ar');
+    b+=l(220,24,340,24,'k4')+l(220,46,340,46,'k1')+t(280,64,'Yavru DNA 1',{s:11,c:'mut'});
+    b+=l(220,104,340,104,'k1')+l(220,126,340,126,'k4')+t(280,144,'Yavru DNA 2',{s:11,c:'mut'});
+    b+=t(190,166,'koyu: eski iplik · açık: yeni iplik',{s:11.5,c:'mut'});
+    return W(370,176,b);
+  }
+  function origins(){
+    var b='';
+    b+=c(100,80,52,'k1')+c(100,80,44,'k4')+'<ellipse cx="100" cy="32" rx="16" ry="9" class="f3"/>'+t(100,152,'Prokaryot',{b:1});
+    b+=l(200,70,450,70,'k1')+l(200,90,450,90,'k4');
+    [250,330,410].forEach(function(x){ b+='<ellipse cx="'+x+'" cy="80" rx="22" ry="15" class="f3"/>'; });
+    b+=t(325,152,'Ökaryot',{b:1})+t(325,120,'sarı balonlar: eşlenmenin başladığı bölgeler',{s:11.5,c:'mut'});
+    return W(470,164,b);
+  }
+  function cell(){
+    var b='';
+    b+='<ellipse cx="200" cy="105" rx="180" ry="88" class="f2"/>'+c(160,100,46,'f5');
+    b+=p('M135,95 q10,-15 20,0 t20,0 t20,0','k4')+p('M140,112 q10,-12 20,0 t20,0','k4');
+    [[260,60],[290,120],[240,150],[320,90],[100,160],[80,70]].forEach(function(o){ b+=S.dot(o[0],o[1],4,'acc'); });
+    b+=q(160,40,'1')+l(160,51,160,58,'thin')+q(330,60,'2')+l(322,68,322,84,'thin');
+    return W(400,210,b);
+  }
+  return {nuc:nuc, ladder:ladder, transcription:transcription, fork:fork, organization:organization, meselson:meselson, griffith:griffith, trna:trna, flow:flow, ribosome:ribosome, hbonds:hbonds, bars:bars, semicons:semicons, origins:origins, cell:cell};
+})();
+
+var Q_BIYOLOJI = [
+{ topic:'Nükleik asitlerin keşfi', q:'Çekirdekten elde ettiği, asit özelliği gösteren maddeye “nüklein” adını veren bilim insanı kimdir?',
+  a:['Miescher','Friedrich Miescher','F. Miescher','Mişer'], hints:['1870’li yıllarda çalışan İsviçreli bir biyokimyacıdır.','Soyadı “M” ile başlar.'], exp:'<b>Friedrich Miescher</b> (1869–1871)' },
+{ topic:'Nükleik asitlerin keşfi', svg:BIO.griffith(), q:'1928’de kapsüllü (S) ve kapsülsüz (R) zatürre bakterileri ile şekildeki deneyi yapan bilim insanı kimdir?',
+  a:['Griffith','Frederick Griffith','F. Griffith','Grifit'], not:['Avery'], hints:['Bu deneyde kapsül özelliğinin aktarıldığı gösterildi ama aktaran madde bulunamadı.','Soyadı “G” ile başlar.'], exp:'<b>Frederick Griffith</b>' },
+{ topic:'Nükleik asitlerin keşfi', svg:BIO.griffith(), q:'Şekildeki 4. durumda fare ölmüştür. Isıyla öldürülmüş S bakterileri ile canlı R bakterileri birlikteyken ne olmuştur?',
+  long:true, keys:[['dönüşüm','transformasyon','dönüştü','dönüşmüş','dönüştürdü','dönüşerek'],['kapsül özelliği','kapsüllü hale','kapsül kazandı','kapsül geçti','aktarıldı','aktarılmış','geçmiş','S bakterisine']],
+  hints:['Ölü S bakterilerinden canlı R bakterilerine bir şey geçti.','R bakterileri kapsül yapabilen hale geldi. Bu olayın adı?'],
+  exp:'Ölü S bakterilerindeki kalıtım maddesi canlı R bakterilerine geçti ve R bakterileri kapsüllü S bakterilerine <b>dönüştü (transformasyon)</b>.' },
+{ topic:'Nükleik asitlerin keşfi', q:'1944’te Griffith deneyini enzimler kullanarak geliştiren ve özelliği aktaran maddenin DNA olduğunu bulan araştırmacılardan birinin adını yazınız.',
+  a:['Avery','Oswald Avery','MacLeod','Colin MacLeod','McCarty','Maclyn McCarty','Avery MacLeod McCarty'], hints:['Üç kişilik bir ekiptir.','Ekip: A…, MacLeod ve McCarty.'], exp:'<b>Avery – MacLeod – McCarty</b>' },
+{ topic:'Nükleik asitlerin keşfi', q:'DNA’nın X ışını fotoğrafını (Photo 51) elde eden bilim insanlarından birini yazınız.',
+  a:['Rosalind Franklin','Franklin','Maurice Wilkins','Wilkins'], not:['Watson','Crick'], hints:['Fotoğraf, onun izni olmadan Watson’a gösterildi.','Bir kadın bilim insanı: Rosalind …'], exp:'<b>Rosalind Franklin</b> ve <b>Maurice Wilkins</b> (1951)' },
+{ topic:'Nükleik asitlerin keşfi', q:'1953’te DNA’nın çift sarmal yapısını modelleyen bilim insanlarından birinin adını yazınız.',
+  a:['Watson','James Watson','Crick','Francis Crick','Watson ve Crick','Watson Crick'], not:['Franklin','Wilkins'], hints:['1962’de Nobel Ödülü’nü Wilkins ile paylaştılar.','İki kişidir: W… ve C…'], exp:'<b>James Watson</b> ve <b>Francis Crick</b>' },
+{ topic:'Bilimin doğası', q:'Nükleik asitlerin keşif sürecinden çıkarılabilecek, bilimin doğasına ait bir özellik yazınız.',
+  long:true, keys:[['değişebilir','değişir','değişken','kesin değil','mutlak değil','sorgulanabilir','gelişir'],['gözlem','deney'],['etkilen','birbirinin çalışma','birikimli','birikim','iş birliği','işbirliği','önceki çalışma'],['teknoloji','toplum'],['etik']],
+  hints:['Bilgi zamanla yenilendi; Griffith’in sorusunu Avery cevapladı.','Franklin’in fotoğrafının izinsiz paylaşılması hangi kavramla ilgili?','Deney, gözlem, etik, değişebilirlik… bunlardan biriyle cümle kur.'],
+  exp:'Bilimsel bilgi değişebilir · Bilimde gözlem ve deneyler yoluyla çıkarımlar elde edilir · Bilim insanları birbirlerinin çalışmalarından etkilenir · Bilim, toplum ve teknoloji arasında ayrılmaz bir ilişki vardır · Bilimde etik dışı süreçler yaşanabilir.' },
+{ topic:'Nükleotit', svg:BIO.nuc(1), q:'Şekildeki DNA nükleotidinde “?” ile gösterilen yapı nedir?',
+  a:['Fosfat','fosfat grubu','fosforik asit','P'], not:['şeker','baz'], hints:['Nükleotitleri birbirine bağlayan omurgada şekerle birlikte bulunur.','İçinde “P” elementi vardır.'], exp:'<b>Fosfat grubu</b>' },
+{ topic:'Nükleotit', svg:BIO.nuc(2), q:'Şekildeki DNA nükleotidinde “?” ile gösterilen 5 karbonlu şekerin adı nedir?',
+  a:['Deoksiriboz','deoksiriboz şekeri','dezoksiriboz'], not:['riboz','glikoz'], hints:['RNA’daki şekerden bir oksijen eksiktir.','DNA’nın açık adındaki “D…” harfi bu şekerden gelir.'], exp:'<b>Deoksiriboz</b>' },
+{ topic:'Nükleotit', svg:BIO.nuc(3), q:'Şekilde “?” ile gösterilen ve A, T, G, C harfleriyle ifade edilen yapıya ne ad verilir?',
+  a:['Azotlu organik baz','azotlu baz','organik baz','baz','nükleobaz'], not:['fosfat','şeker'], hints:['Adenin, timin, guanin ve sitozin bu gruptadır.','İçinde azot (N) bulunur.'], exp:'<b>Azotlu organik baz</b>' },
+{ topic:'DNA – RNA', q:'RNA nükleotitlerinde bulunan 5 karbonlu şekerin adı nedir?',
+  a:['Riboz'], not:['deoksiriboz','glikoz'], hints:['DNA’daki şekerin oksijen eksiği olmayan hali.','“RNA” kısaltmasındaki “R” bu şekerden gelir.'], exp:'<b>Riboz</b>' },
+{ topic:'DNA – RNA', q:'RNA’da timin bazı yerine hangi baz bulunur?',
+  a:['Urasil','U'], not:['timin','adenin','guanin','sitozin'], hints:['Sadece RNA’ya özgü bir bazdır.','“U” harfiyle gösterilir.'], exp:'<b>Urasil (U)</b>' },
+{ topic:'DNA – RNA', q:'DNA ve RNA’nın ortak özelliklerinden birini yazınız.',
+  long:true, keys:[['fosfat'],['adenin','guanin','sitozin','A G C'],['nükleotit','nükleotid'],['protein sentezi','protein sentezinde'],['fosfodiester','fosfat ester','ester bağ'],['hücrede bulunur','tüm canlılarda','bütün canlılarda']],
+  hints:['İkisi de aynı tür yapı birimlerinden oluşur.','Her ikisinde de ortak bulunan bazlar ve gruplar var: fosfat, adenin, guanin, sitozin…'],
+  exp:'Her ikisi de nükleotitlerden oluşur · fosfat ve A, G, C bazlarını içerir · fosfodiester (fosfat ester) bağları bulundurur · protein sentezinde görevlidir.' },
+{ topic:'DNA – RNA', q:'DNA ile RNA arasındaki farklardan birini yazınız.',
+  long:true, keys:[['çift','tek','sarmal','zincir','iplik'],['deoksiriboz','riboz'],['timin','urasil'],['çekirdek','sitoplazma'],['kendini eşler','eşlenir','replikasyon']],
+  hints:['Zincir sayısını düşün.','Şeker çeşidi ya da bazlardan birini karşılaştırabilirsin.'],
+  exp:'DNA çift, RNA tek zincirlidir · DNA’da deoksiriboz, RNA’da riboz bulunur · DNA’da timin, RNA’da urasil bulunur.' },
+{ topic:'DNA yapısı', svg:BIO.ladder(['A','T','G','C','G','T'],true,'Üstteki zincire göre alttaki zinciri yaz'), q:'Şekildeki DNA’nın üst zinciri ATGCGT ise alttaki tamamlayıcı zincirin baz dizilimi nedir?',
+  strict:true, a:['TACGCA'], hints:['A’nın karşısına T, G’nin karşısına C gelir.','İlk iki baz “TA…” ile başlar.'], exp:'<b>TACGCA</b> (A–T, G–C eşleşmesi)' },
+{ topic:'DNA yapısı', svg:BIO.hbonds(), q:'Bir DNA molekülünde 10 adet A–T ve 5 adet G–C baz çifti varsa toplam kaç hidrojen bağı bulunur?',
+  num:35, hints:['Şekle bak: A–T arasında 2, G–C arasında 3 hidrojen bağı vardır.','10×2 + 5×3 = ?'], exp:'10×2 + 5×3 = <b>35</b> hidrojen bağı' },
+{ topic:'DNA yapısı', q:'100 nükleotitlik çift zincirli bir DNA’da 30 adenin varsa kaç guanin vardır?',
+  num:20, hints:['A sayısı = T sayısı, G sayısı = C sayısıdır.','A + T = 60 ise G + C = 40.'], exp:'A=T=30 → G+C=40 → G = <b>20</b>' },
+{ topic:'RNA tipleri', q:'Protein sentezi için DNA’dan kopyalanan şifreleri (kodonları) ribozoma taşıyan RNA çeşidi hangisidir?',
+  a:['mRNA','mesajcı RNA','elçi RNA','haberci RNA'], not:['tRNA','rRNA'], hints:['Adı “mesaj” kelimesinden gelir.','Kısaltması m harfiyle başlar.'], exp:'<b>mRNA</b> (mesajcı RNA)' },
+{ topic:'RNA tipleri', q:'Antikodonları ile amino asitleri ribozoma taşıyan RNA çeşidi hangisidir?',
+  a:['tRNA','taşıyıcı RNA','transfer RNA'], not:['mRNA','rRNA'], hints:['Adı “taşımak” ile ilgilidir.','Yonca yaprağı şeklindedir.'], exp:'<b>tRNA</b> (taşıyıcı RNA)' },
+{ topic:'RNA tipleri', svg:BIO.bars(), q:'Grafikte hücrede bulunma oranları verilen RNA tiplerinden X hangisidir?',
+  note:'Bilgi: Bu RNA ribozomun alt birimlerini oluşturur.',
+  a:['rRNA','ribozomal RNA'], not:['mRNA','tRNA'], hints:['Sıralama: rRNA > tRNA > mRNA','En çok bulunan RNA ribozomun yapısına katılır.'], exp:'<b>X = rRNA</b> (rRNA > tRNA > mRNA)' },
+{ topic:'RNA tipleri', svg:BIO.bars(), q:'Grafiğe göre hücrede en az bulunan Z hangi RNA tipidir?',
+  a:['mRNA','mesajcı RNA','elçi RNA'], not:['tRNA','rRNA'], hints:['Sıralama: rRNA > tRNA > mRNA','Ömrü kısadır; şifreyi taşıdıktan sonra yıkılır.'], exp:'<b>Z = mRNA</b>' },
+{ topic:'DNA replikasyonu', svg:BIO.fork(), q:'Şekildeki replikasyon çatalında X ile gösterilen, DNA’nın iki zinciri arasındaki hidrojen bağlarını kıran enzim hangisidir?',
+  a:['Helikaz','helikaz enzimi'], not:['ligaz','polimeraz','primaz'], hints:['Fermuar gibi DNA’yı açar.','Adı “helix” (sarmal) kelimesinden gelir.'], exp:'<b>Helikaz</b>' },
+{ topic:'DNA replikasyonu', svg:BIO.fork(), q:'Şekilde Y ile gösterilen, kesintili sentezlenen kısa DNA parçalarına ne ad verilir?',
+  a:['Okazaki parçaları','okazaki','okazaki parçacıkları','okazaki fragmentleri'], hints:['Bu parçaları keşfeden Japon bilim insanının adını taşır.','“O” harfiyle başlar.'], exp:'<b>Okazaki parçaları</b>' },
+{ topic:'DNA replikasyonu', svg:BIO.fork(), q:'Şekilde Z noktalarında Okazaki parçaları arasında fosfodiester bağı kurarak onları birleştiren enzim hangisidir?',
+  a:['DNA ligaz','ligaz'], not:['helikaz','polimeraz'], hints:['Adı Latince “bağlamak” (ligare) kelimesinden gelir.','Sonu “-gaz” ile biter.'], exp:'<b>DNA ligaz</b>' },
+{ topic:'DNA replikasyonu', svg:BIO.fork(), q:'Şekilde W ile gösterilen, kalıp zincire bakarak yeni nükleotitleri ekleyen enzim hangisidir?',
+  a:['DNA polimeraz','polimeraz'], not:['RNA polimeraz','helikaz','ligaz'], hints:['“Polimer” yapan enzim.','DNA … (iki kelime)'], exp:'<b>DNA polimeraz</b>' },
+{ topic:'DNA replikasyonu', svg:BIO.semicons(), q:'Şekilde her yavru DNA’da bir eski bir yeni zincir bulunmaktadır. Bu eşlenme modeline ne ad verilir?',
+  a:['Yarı korunumlu','yarı korunumlu eşlenme','semikonservatif','yarı korunumlu replikasyon','yarı koruyucu'], not:['korunumlu','dağınık'], hints:['Ana DNA’nın yarısı korunuyor.','“Yarı …” diye başlar.'], exp:'<b>Yarı korunumlu (semikonservatif)</b> eşlenme' },
+{ topic:'DNA replikasyonu', svg:BIO.meselson(), q:'Meselson–Stahl deneyinde ¹⁵N’li DNA, ¹⁴N ortamında iki kez eşlendiğinde 3. tüpte hangi bantlar görülür?',
+  all:[['ara','orta','hibrit','ortada'],['hafif','üst','üstte','yukarı']], hints:['Yarı korunumlu modele göre 2. eşlenmede 4 DNA’nın 2’si hibrit olur.','Diğer ikisi tamamen ¹⁴N’lidir. İki bant yaz.'], exp:'<b>Ara (hibrit) ve hafif</b> bantlar (yarı yarıya)' },
+{ topic:'DNA replikasyonu', svg:BIO.origins(), q:'Şekle göre prokaryot ve ökaryot DNA replikasyonu arasındaki farklardan birini yazınız.',
+  long:true, keys:[['orijin','başlangıç','köken','başladığı'],['sitoplazma','çekirdek'],['halkasal','dairesel','doğrusal']],
+  hints:['Sarı balonların sayısına bak.','Ayrıca replikasyonun hücrede gerçekleştiği yeri de yazabilirsin.'],
+  exp:'Prokaryotlarda tek, ökaryotlarda birden fazla replikasyon orijini bulunur · Prokaryot replikasyonu sitoplazmada, ökaryotlarınki çekirdekte gerçekleşir.' },
+{ topic:'DNA replikasyonu', q:'Prokaryot hücrelerde DNA replikasyonu hücrenin neresinde gerçekleşir?',
+  a:['Sitoplazma','sitoplazmada','stoplazma'], not:['çekirdek'], hints:['Prokaryotlarda çekirdek zarı yoktur.','Hücre zarı ile çevrili sıvı ortam.'], exp:'<b>Sitoplazmada</b>' },
+{ topic:'Genetik materyal', svg:BIO.organization(1), q:'Genetik materyalin organizasyonunda 1 numara ile gösterilen, DNA’nın en küçük yapı birimi nedir?',
+  a:['Nükleotit','nükleotid','nukleotit'], not:['gen','histon'], hints:['Fosfat + şeker + bazdan oluşur.','“N” ile başlar.'], exp:'1: <b>Nükleotit</b> · 2: DNA zinciri · 3: Gen · 4: Kromatin parçası (nükleozom) · 5: Histon proteini · 6: Kromatin iplik · 7: Kardeş kromatitler' },
+{ topic:'Genetik materyal', svg:BIO.organization(3), q:'Şekilde 3 numara ile gösterilen, protein sentezi için anlamlı şifre veren DNA bölümüne ne denir?',
+  a:['Gen'], not:['kromozom','histon'], hints:['Kalıtsal özellikleri belirleyen birimdir.','Üç harfli bir kelime.'], exp:'3: <b>Gen</b>' },
+{ topic:'Genetik materyal', q:'Şekildeki genetik materyalde gen uzunluğu her zaman aynı mıdır?',
+  svg:BIO.organization(3), a:['Hayır','değişir','değişken','aynı değil','farklıdır','farklı','hayır değişir'], not:['evet','aynıdır','sabittir'], hints:['Her protein aynı uzunlukta mı?','Protein sentezi için anlamlı şifre veren kısım gendir; şifre uzunluğu proteine göre değişir.'], exp:'<b>Hayır</b>, gen uzunluğu değişir. Protein sentezi için anlamlı şifre veren kısımlar gendir.' },
+{ topic:'Genetik materyal', svg:BIO.organization(5), q:'Şekilde 5 numara ile gösterilen, DNA’nın etrafına sarıldığı proteinler nedir?',
+  a:['Histon','histon proteini','histonlar'], not:['nükleozom','gen'], hints:['DNA bu proteinlerin etrafına makaraya sarılan ip gibi dolanır.','“H” ile başlar.'], exp:'5: <b>Histon proteini</b>' },
+{ topic:'Genetik materyal', svg:BIO.organization(7), q:'Şekilde 7 numara ile gösterilen, eşlenmiş kromozomun birbirinin aynısı olan iki kolunun adı nedir?',
+  a:['Kardeş kromatit','kardeş kromatitler','kromatit','kromatitler'], not:['homolog'], hints:['Eşlenme sonucu oluşan özdeş kopyalardır.','“Kardeş …”'], exp:'7: <b>Eşlenmiş kromozomun kardeş kromatitleri</b>' },
+{ topic:'Protein sentezi', svg:BIO.flow(1), q:'Şekilde 1 numara ile gösterilen, DNA’dan mRNA sentezlenmesi olayına ne ad verilir?',
+  a:['Transkripsiyon','yazılım','RNA sentezi'], not:['translasyon','replikasyon'], hints:['Türkçesi “yazılım”dır.','“Trans…” ile başlar, “kopyalamak” anlamına gelir.'], exp:'<b>Transkripsiyon</b> (yazılım)' },
+{ topic:'Protein sentezi', svg:BIO.flow(2), q:'Şekilde 2 numara ile gösterilen, mRNA’daki şifreye göre protein sentezlenmesi olayına ne ad verilir?',
+  a:['Translasyon','çeviri','protein sentezi'], not:['transkripsiyon','replikasyon'], hints:['Türkçesi “çeviri”dir.','Ribozomda gerçekleşir; “Trans…” ile başlar.'], exp:'<b>Translasyon</b> (çeviri)' },
+{ topic:'Protein sentezi', svg:BIO.transcription(), q:'Kalıp DNA zinciri TACGGA ise bu zincirden sentezlenen mRNA’nın baz dizilimi nedir?',
+  strict:true, a:['AUGCCU'], hints:['RNA’da timin yerine urasil (U) bulunur.','A’nın karşısına U, T’nin karşısına A gelir; dizi “AUG…” ile başlar.'], exp:'<b>AUGCCU</b>' },
+{ topic:'Protein sentezi', q:'mRNA üzerinde bir amino asidi şifreleyen üçlü baz dizisine (kodona) kaç nükleotit vardır?',
+  num:3, a:['üç'], hints:['“Üçlü şifre” olarak da adlandırılır.'], exp:'<b>3</b> nükleotit' },
+{ topic:'Protein sentezi', svg:BIO.trna(), q:'Şekildeki tRNA’nın antikodonu UAC’dir. Bu antikodonun eşleştiği mRNA kodonu nedir?',
+  strict:true, a:['AUG'], hints:['Antikodon ile kodon tamamlayıcıdır (A–U, G–C).','Bu kodon aynı zamanda başlangıç kodonudur.'], exp:'<b>AUG</b> (başlangıç kodonu)' },
+{ topic:'Protein sentezi', svg:BIO.trna(), q:'AUG başlangıç kodonuna karşılık gelen, şekildeki tRNA’nın taşıdığı amino asit hangisidir?',
+  a:['Metiyonin','metionin','Met'], hints:['Protein sentezi her zaman bu amino asitle başlar.','Kısaltması “Met”.'], exp:'<b>Metiyonin</b>' },
+{ topic:'Protein sentezi', svg:BIO.ribosome(), q:'Şekilde ribozomda “?” ile gösterilen, iki amino asit arasında kurulan bağın adı nedir?',
+  a:['Peptit bağı','peptid bağı','peptit'], not:['hidrojen bağı','fosfodiester','glikozit'], hints:['Amino asitler arasında su çıkışıyla kurulur.','Proteinlere “polipeptit” de denir.'], exp:'<b>Peptit bağı</b>' },
+{ topic:'Protein sentezi', q:'DNA üzerindeki genden RNA sentezlenmesini sağlayan enzim hangisidir?',
+  a:['RNA polimeraz','rna polimeraz enzimi'], not:['DNA polimeraz','ligaz','helikaz'], hints:['Replikasyondaki DNA polimerazın RNA için olan karşılığı.','“RNA …” (iki kelime)'], exp:'<b>RNA polimeraz</b>' },
+{ topic:'Protein sentezi', svg:BIO.cell(), q:'Ökaryot hücrede transkripsiyon, şekildeki 1 numaralı yapıda gerçekleşir. Bu yapının adı nedir?',
+  a:['Çekirdek','nükleus','cekirdek'], not:['ribozom','sitoplazma'], hints:['DNA’nın bulunduğu, zarla çevrili bölüm.','Hücrenin yönetim merkezi.'], exp:'<b>Çekirdek</b>' },
+{ topic:'Protein sentezi', svg:BIO.cell(), q:'Şekilde 2 numara ile gösterilen, translasyonun gerçekleştiği küçük organel hangisidir?',
+  a:['Ribozom','ribozomlar'], not:['lizozom','çekirdek','mitokondri'], hints:['Zarsız, çok küçük bir organeldir; rRNA ve proteinden oluşur.','“R” ile başlar.'], exp:'<b>Ribozom</b>' }
+];
+
+var FIZ = (function(){
+  var t=S.t, l=S.l, c=S.c, r=S.r, p=S.p, q=S.q, W=S.wrap, dot=S.dot;
+  function info(lines,x,y){ return lines.map(function(s,i){ return t(x||12,(y||20)+i*20,s,{a:'start',s:13.5}); }).join(''); }
+  function circ(lines, opt){
+    opt=opt||{}; var b='';
+    b+=c(170,125,88,'ink')+dot(170,125)+t(160,140,'O',{s:13,i:1});
+    b+=l(170,125,258,125,'dash')+t(214,113,'r',{i:1});
+    b+=c(258,125,8,'f4')+l(258,117,258,52,'k4','ar4')+t(272,58,'v',{i:1,b:1});
+    if(opt.arc) b+=p('M232,62 A88,88 0 0 0 195,40','sacc','ara');
+    b+=info(lines,8,22);
+    return W(330,230,b);
+  }
+  function coaxial(){
+    var b=c(150,120,90,'f3')+c(150,120,42,'f1')+dot(150,120)+t(140,134,'O',{s:13,i:1});
+    b+=l(150,120,192,120,'dash')+t(171,110,'r',{s:12,i:1})+l(150,120,150,30,'dash')+t(160,72,'2r',{s:12,i:1});
+    b+=dot(192,120,4)+t(204,132,'K',{b:1})+dot(150,30,4)+t(162,24,'L',{b:1});
+    b+=p('M225,70 A90,90 0 0 1 238,100','ink','ar');
+    b+=t(150,228,'K ve L aynı mile perçinli (eş merkezli)',{s:12,c:'mut'});
+    return W(300,240,b);
+  }
+  function belt(){
+    var b=c(80,120,30,'f1')+c(260,120,90,'f3')+dot(80,120)+dot(260,120);
+    // dış ortak teğetler (yaklaşık)
+    b+=l(70,91.7,230,35,'ink')+l(70,148.3,230,205,'ink');
+    b+=l(80,120,110,120,'dash')+t(95,110,'r',{s:12,i:1})+l(260,120,350,120,'dash')+t(305,110,'3r',{s:12,i:1});
+    b+=t(80,172,'X',{b:1})+t(260,226,'Y',{b:1})+t(80,30,'f = 6 tur/s',{s:13})+q(300,60,'?');
+    return W(370,240,b);
+  }
+  function avgacc(){
+    var b=c(150,140,90,'ink')+dot(150,140)+t(140,154,'O',{s:13,i:1});
+    b+=p('M240,140 A90,90 0 0 0 150,50','sacc','ara');
+    b+=dot(240,140,4)+t(254,150,'A',{b:1})+dot(150,50,4)+t(150,36,'B',{b:1});
+    b+=l(240,140,240,80,'k4','ar4')+t(255,90,'v',{i:1})+l(150,50,90,50,'k4','ar4')+t(96,38,'v',{i:1});
+    b+=info(['v = 2 m/s','A → B : 2 s'],8,20);
+    return W(300,240,b);
+  }
+  function hstring(){
+    var b='<g transform="translate(70,10)">'+c(150,120,80,'dash')+dot(150,120)+t(140,134,'O',{s:13,i:1});
+    b+=l(150,120,222,120,'ink')+c(230,120,9,'f4')+t(244,138,'m',{i:1});
+    b+=l(222,120,180,120,'k1','ar1')+t(200,108,'T',{b:1,c:'t1'});
+    b+=l(230,111,230,50,'k4','ar4')+t(244,56,'v',{i:1})+'</g>';
+    b+=info(['Üstten görünüm','m = 0,5 kg','r = 1 m','v = 4 m/s'],8,20);
+    return W(360,226,b);
+  }
+  function vcircle(lines){
+    var b='<g transform="translate(50,0)">'+c(170,130,85,'ink')+dot(170,130)+t(158,140,'O',{s:12,i:1});
+    b+=l(170,130,170,45,'dash')+l(170,130,170,215,'dash');
+    b+=c(170,45,8,'f4')+t(170,24,'C',{b:1})+c(170,215,8,'f4')+t(188,226,'F',{b:1});
+    b+=t(72,130,'D',{b:1})+t(268,130,'A',{b:1})+dot(85,130,3)+dot(255,130,3);
+    b+=l(150,45,150,82,'k1','ar1')+t(140,70,'mg',{s:11,a:'end'})+l(150,215,150,250,'k1','ar1')+t(140,240,'mg',{s:11,a:'end'});
+    b+=p('M240,70 A85,85 0 0 1 252,100','ink','ar')+'</g>';
+    b+=info(lines||['Düşey düzlem'],8,20);
+    return W(390,262,b);
+  }
+  function flatcurve(){
+    var b='';
+    b+=p('M40,175 A190,190 0 0 1 400,175','ink')+p('M90,190 A140,140 0 0 1 350,190','ink');
+    b+=dot(220,215)+t(232,222,'O',{s:12,i:1});
+    b+='<g transform="translate(220,48)"><rect x="-22" y="-12" width="44" height="24" rx="6" class="f1"/></g>';
+    b+=l(220,62,220,118,'k4','ar4')+t(236,96,'fs',{b:1,c:'t4'});
+    b+=l(220,130,220,210,'dash')+t(232,170,'r',{i:1});
+    b+=l(250,48,300,56,'ink','ar')+t(310,62,'v',{i:1,a:'start'});
+    b+=info(['Yatay, eğimsiz viraj'],8,20);
+    return W(440,232,b);
+  }
+  function banked(){
+    var b='';
+    b+=l(20,210,330,210,'thin')+p('M60,210 L250,20','ink');
+    b+=p('M100,210 A40,40 0 0 0 88,182','ink')+t(110,192,'θ',{i:1});
+    b+='<g transform="translate(158,104) rotate(-45)"><rect x="-26" y="-30" width="52" height="30" rx="6" class="f1"/></g>';
+    var cx=147,cy=93;
+    b+=l(cx,cy,cx-50,cy-50,'k2','ar')+t(cx-60,cy-58,'N',{b:1,c:'t2'});
+    b+=l(cx,cy,cx,cy+80,'k1','ar1')+t(cx+14,cy+76,'mg',{c:'t1'});
+    b+=l(cx,cy,cx-80,cy,'dash','ar')+t(cx-80,cy+16,'merkez yönü',{s:11,a:'start',c:'mut'});
+    b+=info(['Eğimli viraj (kesit)'],210,190);
+    return W(340,224,b);
+  }
+  function rotor(){
+    var b='';
+    b+='<ellipse cx="160" cy="40" rx="100" ry="18" class="ink"/>'+l(60,40,60,210,'ink')+l(260,40,260,210,'ink')+p('M60,210 A100,18 0 0 0 260,210','ink')+p('M60,210 A100,18 0 0 1 260,210','dash');
+    b+=l(160,20,160,232,'dash')+p('M140,14 A22,8 0 1 0 182,14','ink','ar');
+    b+=r(236,112,22,26,'f4',4);
+    b+=l(236,125,186,125,'k2','ar')+t(196,112,'N',{b:1,c:'t2'});
+    b+=l(247,112,247,70,'k3','ar')+t(266,76,'fs',{b:1,c:'t3'});
+    b+=l(247,138,247,182,'k1','ar1')+t(268,178,'mg',{c:'t1'});
+    return W(320,240,b);
+  }
+  function loop(){
+    var b='';
+    b+=l(20,220,380,220,'thin');
+    b+=p('M40,40 C60,170 140,220 280,220','ink')+c(280,165,55,'ink');
+    b+=c(40,32,8,'f4')+t(56,22,'v = 0',{s:12,a:'start'});
+    b+=l(20,40,20,218,'dash')+t(10,130,'h=5r',{s:12,a:'start'});
+    b+=dot(280,220,4)+t(280,236,'A',{b:1})+dot(335,165,4)+t(350,165,'B',{b:1})+dot(280,110,4)+t(280,96,'C',{b:1});
+    b+=dot(280,165)+l(280,165,335,165,'dash')+t(305,155,'r',{i:1,s:12});
+    b+=info(['Sürtünmesiz ray'],230,20);
+    return W(400,246,b);
+  }
+  function rolling(){
+    var b=l(20,190,340,190,'ink')+c(170,115,75,'f1')+dot(170,115);
+    b+=l(170,115,230,115,'k4','ar4')+t(240,115,'v',{a:'start',i:1,b:1});
+    b+=dot(170,40,4)+q(196,32,'?')+dot(170,190,4)+q(196,176,'?');
+    b+=p('M215,62 A75,75 0 0 1 238,88','ink','ar');
+    b+=t(170,214,'Kaymadan yuvarlanan teker',{s:12,c:'mut'});
+    return W(360,226,b);
+  }
+  function inertia(kind){
+    var b='';
+    if(kind===1){
+      b+=l(60,90,280,90,'thin')+c(170,90,6,'f3')+c(90,90,13,'f4')+c(250,90,13,'f4')+t(90,91,'m',{s:12})+t(250,91,'m',{s:12});
+      b+=l(170,110,90,110,'dash')+t(130,122,'r',{i:1})+l(170,110,250,110,'dash')+t(210,122,'r',{i:1});
+      b+=t(170,60,'dönme ekseni',{s:12,c:'mut'})+l(170,66,170,84,'thin');
+    } else {
+      b+=l(60,90,300,90,'thin')+c(70,90,6,'f3')+c(160,90,13,'f4')+c(250,90,13,'f4')+t(160,91,'m',{s:12})+t(250,91,'m',{s:12});
+      b+=l(70,112,160,112,'dash')+t(115,124,'r',{i:1})+l(70,132,250,132,'dash')+t(160,146,'2r',{i:1});
+      b+=t(70,60,'dönme ekseni',{s:12,c:'mut'})+l(70,66,70,84,'thin');
+    }
+    b+=t(170,170,'Çubuğun kütlesi önemsiz',{s:12,c:'mut'});
+    return W(340,184,b);
+  }
+  function skater(){
+    var fig=function(x,open){ var s=c(x,40,12,'ink')+l(x,52,x,110,'ink')+l(x,110,x-16,150,'ink')+l(x,110,x+16,150,'ink');
+      s+= open ? l(x-70,70,x+70,70,'ink') : p('M'+(x-14)+',66 L'+(x-4)+',80 M'+(x+14)+',66 L'+(x+4)+',80','ink');
+      return s; };
+    var b=fig(100,true)+fig(280,false);
+    b+=p('M80,18 A22,8 0 1 0 122,18','ink','ar')+t(100,6,'ω₁',{s:13})+p('M260,18 A22,8 0 1 0 302,18','ink','ar')+q(318,22,'?');
+    b+=t(100,174,'Kollar açık',{s:12,c:'mut'})+t(280,174,'Kollar kapalı',{s:12,c:'mut'});
+    return W(380,186,b);
+  }
+  function sun(x,y){ var s=c(x,y,14,'f3'); for(var i=0;i<8;i++){ var a=i*Math.PI/4; s+=l((x+19*Math.cos(a)).toFixed(1),(y+19*Math.sin(a)).toFixed(1),(x+25*Math.cos(a)).toFixed(1),(y+25*Math.sin(a)).toFixed(1),'k3'); } return s; }
+  function kepler(){
+    var b='<ellipse cx="200" cy="110" rx="160" ry="90" class="dash"/>'+sun(68,110);
+    b+=dot(40,110,5)+t(26,110,'X',{b:1})+dot(200,20,5)+t(200,8,'Y',{b:1})+dot(360,110,5)+t(376,110,'Z',{b:1});
+    b+=t(68,148,'Güneş',{s:12,c:'mut'});
+    return W(400,210,b);
+  }
+  function planets(){
+    var b=c(100,200,40,'f3')+c(270,200,50,'f2');
+    b+=l(100,200,100,138,'ink','ar')+t(112,170,'r',{i:1})+c(100,130,8,'f1')+t(100,114,'X',{b:1});
+    b+=l(270,200,270,68,'ink','ar')+t(284,140,'2r',{i:1})+c(270,60,8,'f1')+t(270,44,'X',{b:1});
+    b+=t(100,256,'M₁',{b:1})+t(270,262,'M₂',{b:1});
+    b+=info(['X cisimlerinin ağırlıkları eşit'],8,18);
+    return W(350,276,b);
+  }
+  function ellsat(){
+    var b='<ellipse cx="230" cy="100" rx="150" ry="62" class="dash"/>'+sun(200,100);
+    b+=c(80,100,7,'f1')+t(80,82,'X',{b:1})+c(380,100,7,'f1')+t(380,82,'Y',{b:1});
+    b+=l(88,124,192,124,'thin')+t(140,138,'2R',{s:12})+l(208,124,372,124,'thin')+t(290,138,'3R',{s:12});
+    b+=t(200,176,'Güneş etrafında dolanan uydu',{s:12,c:'mut'});
+    return W(400,190,b);
+  }
+  function earthsat(){
+    var b=c(110,140,48,'f1')+dot(110,140);
+    var a=-0.45, sx=110+192*Math.cos(a), sy=140+192*Math.sin(a), ex=110+48*Math.cos(a), ey=140+48*Math.sin(a);
+    b+=l(110,140,ex,ey,'ink')+t(126,118,'R',{i:1,s:13})+l(ex,ey,sx,sy,'dash')+t((ex+sx)/2+8,(ey+sy)/2+12,'x',{i:1});
+    b+=r(sx-8,sy-8,16,16,'f4',3)+t(sx+12,sy-14,'G/16',{a:'start',s:12});
+    b+=t(110,206,'Dünya (yüzeyde ağırlık G)',{s:12,c:'mut'});
+    return W(360,220,b);
+  }
+  function orbits(){
+    var b=c(50,200,16,'f3')+p('M50,150 A50,50 0 0 1 100,200','dash')+p('M50,0 A200,200 0 0 1 250,200','dash');
+    var ax=50+50*Math.cos(-0.8), ay=200+50*Math.sin(-0.8), bx=50+200*Math.cos(-0.8), by=200+200*Math.sin(-0.8);
+    b+=c(ax,ay,6,'f1')+t(ax+14,ay-6,'X',{b:1})+c(bx,by,6,'f1')+t(bx+14,by-6,'Y',{b:1});
+    b+=l(50,200,ax,ay,'thin')+t(70,200-14,'',{})+l(50,214,100,214,'thin')+t(75,226,'R',{s:12})+l(50,234,250,234,'thin')+t(150,246,'4R',{s:12});
+    return W(300,252,b);
+  }
+  function overflow(){
+    var b='';
+    var cup=function(x,water,ball){
+      var s=l(x,40,x,170,'ink')+l(x,170,x+110,170,'ink')+l(x+110,170,x+110,40,'ink')+p('M'+(x+110)+',80 l28,-10','ink');
+      s+=r(x+2,water,106,168-water,'f1',0);
+      if(ball) s+=c(x+55,150,18,'f4');
+      return s; };
+    b+=cup(30,125,false)+cup(220,80,true);
+    b+=l(30,80,140,80,'dash')+t(26,80,'120 cm³',{a:'end',s:11})+t(26,125,'60 cm³',{a:'end',s:11});
+    b+=r(352,130,40,40,'f1',2)+t(400,150,'48 cm³',{a:'start',s:11});
+    b+=t(85,190,'Şekil I',{s:12})+t(275,190,'Şekil II',{s:12});
+    return W(460,202,b).replace('viewBox="0 0 460 202"','viewBox="-30 0 490 202"');
+  }
+  function cylinders(){
+    var b=l(20,190,380,190,'thin');
+    var cy=function(x,w,h,name){ return r(x,190-h,w,h,'f1',4)+'<ellipse cx="'+(x+w/2)+'" cy="'+(190-h)+'" rx="'+(w/2)+'" ry="6" class="f1"/>'+t(x+w/2,190-h/2,name,{b:1}); };
+    b+=cy(40,30,120,'K')+cy(120,60,60,'L')+cy(230,90,60,'M');
+    b+=t(55,206,'S',{s:12})+t(150,206,'2S',{s:12})+t(275,206,'3S',{s:12});
+    b+=t(30,130,'2h',{a:'end',s:12})+t(112,160,'h',{a:'end',s:12})+t(222,160,'h',{a:'end',s:12});
+    b+=info(['Aynı maddeden yapılmış silindirler'],8,18);
+    return W(380,214,b);
+  }
+  function semicircle(){
+    var b=l(20,150,320,150,'thin')+p('M70,150 A100,100 0 0 1 270,150','ink','ar');
+    b+=dot(70,150,4)+t(70,168,'A',{b:1})+dot(270,150,4)+t(270,168,'B',{b:1})+dot(170,150)+t(170,168,'O',{s:12,i:1});
+    b+=l(170,146,270,146,'dash')+t(220,134,'r = 10 m',{s:12});
+    b+=info(['Süre: 5 s  (π = 3)'],8,18);
+    return W(340,180,b);
+  }
+  return {circ:circ, coaxial:coaxial, belt:belt, avgacc:avgacc, hstring:hstring, vcircle:vcircle, flatcurve:flatcurve, banked:banked, rotor:rotor, loop:loop, rolling:rolling, inertia:inertia, skater:skater, kepler:kepler, planets:planets, ellsat:ellsat, earthsat:earthsat, orbits:orbits, overflow:overflow, cylinders:cylinders, semicircle:semicircle};
+})();
+
+var Q_FIZIK = [
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ(['T = 4 s']), q:'Şekildeki X cismi O merkezli çembersel yörüngede bir turunu 4 saniyede tamamlıyor. Cismin frekansı kaç Hz’dir?',
+  num:0.25, hints:['Frekans, saniyedeki tur sayısıdır.','f = 1 / T'], exp:'f = 1/T = 1/4 = <b>0,25 Hz</b>' },
+{ topic:'Düzgün çembersel hareket', q:'Çembersel hareket yapan bir cismin bir tam tur atması için geçen süreye ne ad verilir?',
+  a:['Periyot','periyod','dönem'], not:['frekans'], hints:['T harfiyle gösterilir, birimi saniyedir.','“P” ile başlar.'], exp:'<b>Periyot (T)</b>' },
+{ topic:'Düzgün çembersel hareket', q:'Çembersel harekette bir saniyedeki tur sayısına ne ad verilir?',
+  a:['Frekans','frekans (f)'], not:['periyot'], hints:['Birimi s⁻¹ yani Hertz’dir.','f harfiyle gösterilir.'], exp:'<b>Frekans (f)</b> – birimi Hertz (s⁻¹)' },
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ(['r = 3 m','T = 6 s','π = 3']), q:'Şekildeki cismin çizgisel hızının büyüklüğü kaç m/s’dir? (π = 3)',
+  num:3, hints:['Bir turda alınan yol çevredir: 2πr','v = 2πr / T'], exp:'v = 2πr/T = 2·3·3/6 = <b>3 m/s</b>' },
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ(['T = 3 s','π = 3']), q:'Periyodu 3 s olan şekildeki cismin açısal hızı kaç rad/s’dir? (π = 3)',
+  num:2, hints:['Bir turda taranan açı 2π radyandır.','ω = 2π / T'], exp:'ω = 2π/T = 6/3 = <b>2 rad/s</b>' },
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ(['ω = 4 rad/s','r = 0,5 m']), q:'Açısal hızı 4 rad/s olan cisim 0,5 m yarıçaplı yörüngede dönüyor. Çizgisel hızı kaç m/s’dir?',
+  num:2, hints:['Çizgisel hız ile açısal hız arasındaki ilişkiyi kullan.','v = ω · r'], exp:'v = ω·r = 4·0,5 = <b>2 m/s</b>' },
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ(['v = 6 m/s','r = 3 m']), q:'Şekildeki cismin merkezcil ivmesinin büyüklüğü kaç m/s²’dir?',
+  num:12, hints:['Merkezcil ivme merkeze doğrudur.','a = v² / r'], exp:'a = v²/r = 36/3 = <b>12 m/s²</b>' },
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ(['m = 2 kg','v = 4 m/s','r = 2 m']), q:'Şekildeki 2 kg kütleli cisme etki eden merkezcil kuvvet kaç N’dur?',
+  num:16, hints:['F = m · a ve a = v²/r','F = m·v² / r'], exp:'F = mv²/r = 2·16/2 = <b>16 N</b>' },
+{ topic:'Düzgün çembersel hareket', svg:FIZ.circ([]), q:'Düzgün çembersel harekette büyüklüğü sabit kalıp yönü sürekli değişen vektörel niceliklerden birini yazınız.',
+  a:['çizgisel hız','hız','hız vektörü','merkezcil ivme','ivme','merkezcil kuvvet','kuvvet','konum vektörü','konum','momentum','çizgisel momentum'], not:['açısal hız','periyot','frekans','sürat','kinetik enerji'],
+  hints:['Şekildeki v okunun yönü cisim döndükçe ne olur?','Hız, ivme, kuvvet, konum… bunlardan biri.'], exp:'Çizgisel hız, merkezcil ivme, merkezcil kuvvet, konum vektörü, momentum' },
+{ topic:'Düzgün çembersel hareket', q:'Düzgün çembersel hareket yapan bir cisimde sabit (değişmeyen) kalan niceliklerden birini yazınız.',
+  a:['açısal hız','periyot','frekans','sürat','hızın büyüklüğü','kinetik enerji','merkezcil ivmenin büyüklüğü','yarıçap'], not:['hız vektörü','çizgisel hız','ivme','konum vektörü'],
+  hints:['Cisim her turu aynı sürede atıyor.','Periyot, frekans, açısal hız… bunlardan biri.'], exp:'Açısal hız, periyot, frekans, sürat (hızın büyüklüğü), kinetik enerji' },
+{ topic:'Kasnaklar', svg:FIZ.coaxial(), q:'Şekildeki eş merkezli kasnaklarda K ve L noktaları için hangi nicelik aynıdır?',
+  a:['açısal hız','periyot','frekans','devir sayısı','tur sayısı','dönme sayısı'], not:['çizgisel hız','hız','merkezcil ivme'],
+  hints:['İki kasnak aynı anda bir tur atar.','Aynı mile bağlı kasnakların ω değerleri eşittir.'], exp:'<b>Açısal hız</b> (dolayısıyla periyot ve frekans) aynıdır. Çizgisel hız: v_L = 2·v_K' },
+{ topic:'Kasnaklar', svg:FIZ.belt(), q:'Yarıçapı r olan X kasnağı saniyede 6 tur atıyor ve kayışla 3r yarıçaplı Y kasnağına bağlıdır. Y kasnağı saniyede kaç tur atar?',
+  num:2, hints:['Kayışla bağlı kasnakların çizgisel hızları eşittir.','2π·f_X·r = 2π·f_Y·3r'], exp:'f_X·r = f_Y·3r → 6·r = f_Y·3r → <b>2 tur/s</b>' },
+{ topic:'Ortalama ivme', svg:FIZ.avgacc(), q:'v = 2 m/s sabit süratle dönen cisim A’dan B’ye 2 s’de geliyor. Bu aralıktaki ortalama ivmesinin büyüklüğü kaç m/s²’dir?',
+  num:Math.SQRT2, tol:0.03, a:['kök 2','karekök 2','√2'], hints:['Δv, son hız ile ilk hızın vektörel farkıdır.','Birbirine dik iki 2 m/s’lik vektörün farkı 2√2 m/s’dir. a = Δv/Δt'],
+  exp:'|Δv| = 2√2 m/s → a = 2√2 / 2 = <b>√2 m/s²</b> (≈1,41)' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.hstring(), q:'Yatay düzlemde ipe bağlı olarak dönen cisim için ipteki gerilme kuvveti T kaç N’dur?',
+  num:8, hints:['Yatay düzlemde merkezcil kuvveti ip gerilmesi sağlar.','T = m·v²/r'], exp:'T = mv²/r = 0,5·16/1 = <b>8 N</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.vcircle(['m = 1 kg','v = 4 m/s','r = 0,4 m','g = 10 m/s²']), q:'Düşey düzlemde dönen cisim en üst nokta C’den 4 m/s hızla geçiyor. C noktasında ipteki gerilme kuvveti kaç N’dur?',
+  num:30, hints:['En üstte hem T hem mg merkeze (aşağı) doğrudur.','T + mg = mv²/r → T = mv²/r − mg'], exp:'T = mv²/r − mg = 1·16/0,4 − 10 = <b>30 N</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.vcircle(['m = 1 kg','v = 4 m/s','r = 1 m','g = 10 m/s²']), q:'Cisim en alt nokta F’den 4 m/s hızla geçiyor. F noktasında ipteki gerilme kuvveti kaç N’dur?',
+  num:26, hints:['En altta T yukarı (merkeze), mg aşağı doğrudur.','T − mg = mv²/r → T = mv²/r + mg'], exp:'T = mv²/r + mg = 16 + 10 = <b>26 N</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.vcircle(), q:'Düşey düzlemde sabit süratle dönen cismin ipi en çok hangi noktada kopabilir?',
+  a:['F','F noktası','en alt','en alt nokta','en alt noktada','alt'], not:['C','en üst','A','D'], hints:['İp gerilmesinin en büyük olduğu noktayı bul.','Bu noktada T = mv²/r + mg olur.'], exp:'<b>F (en alt nokta)</b>: gerilme en büyüktür (T = mv²/r + mg).' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.vcircle(['r = 0,9 m','g = 10 m/s²']), q:'İpin en üst noktada gevşememesi için cismin C noktasındaki hızı en az kaç m/s olmalıdır?',
+  num:3, hints:['Sınır durumda C noktasında T = 0 olur.','mg = mv²/r → v = √(g·r)'], exp:'v = √(gr) = √9 = <b>3 m/s</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.flatcurve(), q:'Yatay ve eğimsiz bir virajı dönen aracın dönebilmesi için gereken merkezcil kuvveti hangi kuvvet sağlar?',
+  a:['sürtünme kuvveti','sürtünme','statik sürtünme','fs'], not:['ağırlık','tepki','normal kuvvet'], hints:['Şekilde merkeze doğru gösterilen kuvvete bak.','Lastikler ile yol arasındaki kuvvet.'], exp:'<b>Sürtünme kuvveti (fs)</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.flatcurve(), q:'Sürtünme katsayısı 0,5 olan yatay yolda 20 m yarıçaplı virajı kaymadan dönebilecek en büyük hız kaç m/s’dir? (g = 10 m/s²)',
+  num:10, hints:['fs = merkezcil kuvvet → k·m·g = m·v²/r','v = √(k·g·r)'], exp:'v = √(kgr) = √(0,5·10·20) = <b>10 m/s</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.banked(), q:'Eğim açısı θ = 45° olan sürtünmesiz virajın yarıçapı 40 m’dir. Araç bu virajı kaç m/s hızla güvenle döner? (g = 10 m/s², tan45° = 1)',
+  num:20, hints:['Normal kuvvetin yatay bileşeni merkezcil kuvveti sağlar.','tanθ = v²/(g·r) → v² = tanθ·g·r'], exp:'v² = tanθ·g·r = 1·10·40 = 400 → <b>20 m/s</b>' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.rotor(), q:'Dönen silindirin iç yüzeyindeki cisim için merkezcil kuvveti hangi kuvvet sağlar?',
+  a:['tepki kuvveti','normal kuvvet','N','yüzeyin tepki kuvveti','duvarın tepkisi','tepki'], not:['sürtünme','ağırlık','mg','fs'], hints:['Şekilde merkeze (eksene) doğru olan oka bak.','Duvarın cisme dik olarak uyguladığı kuvvet.'], exp:'<b>Tepki (normal) kuvveti N</b>. Sürtünme ise ağırlığı dengeler (fs = mg).' },
+{ topic:'Çembersel hareket uygulamaları', svg:FIZ.rotor(), q:'Yarıçapı 5 m olan silindirin iç yüzeyi ile cisim arasındaki sürtünme katsayısı 0,5’tir. Cismin kaymaması için çizgisel hızı en az kaç m/s olmalıdır? (g = 10 m/s²)',
+  num:10, hints:['fs = mg ve N = mv²/r; fs = k·N','k·mv²/r = mg → v² = g·r/k'], exp:'v² = gr/k = 10·5/0,5 = 100 → <b>10 m/s</b>' },
+{ topic:'Raylı sistemler', svg:FIZ.loop(), q:'5r yüksekliğinden serbest bırakılan cisim A noktasından geçerken raya uyguladığı tepki kuvveti kaç mg olur?',
+  num:11, hints:['Enerji korunumu: mg·5r = ½mv² → v² = 10gr','A’da N − mg = mv²/r'], exp:'v² = 10gr → N = mg + m·10gr/r = <b>11 mg</b>' },
+{ topic:'Raylı sistemler', svg:FIZ.loop(), q:'Aynı cisim çemberin en üst noktası C’den geçerken tepki kuvveti kaç mg olur?',
+  num:5, hints:['C’nin yüksekliği 2r: mg·5r = mg·2r + ½mv² → v² = 6gr','C’de N + mg = mv²/r'], exp:'v² = 6gr → N = 6mg − mg = <b>5 mg</b>' },
+{ topic:'Raylı sistemler', svg:FIZ.loop(), q:'Cisim B noktasından (r yüksekliğinde) geçerken tepki kuvveti kaç mg olur?',
+  num:8, hints:['mg·5r = mg·r + ½mv² → v² = 8gr','B’de ağırlık yataya diktir; merkezcil kuvveti yalnız N sağlar: N = mv²/r'], exp:'v² = 8gr → N = mv²/r = <b>8 mg</b>' },
+{ topic:'Dönerek öteleme', svg:FIZ.rolling(), q:'Kaymadan yuvarlanan tekerin merkezi v hızıyla ilerliyor. Tekerin en üst noktasının yere göre hızı ne olur?',
+  a:['2v','2 v','iki v','2 katı'], num:2, hints:['En üst noktada öteleme hızı ile dönme hızı aynı yöndedir.','v + ω·r = v + v'], exp:'v + v = <b>2v</b>' },
+{ topic:'Dönerek öteleme', svg:FIZ.rolling(), q:'Aynı tekerin yere değen en alt noktasının yere göre hızı nedir?',
+  num:0, a:['sıfır','hareketsiz','sıfırdır'], hints:['En altta öteleme ve dönme hızları zıt yönlüdür.','v − ω·r = v − v'], exp:'v − v = <b>0</b>' },
+{ topic:'Eylemsizlik momenti', q:'Bir cismin dönmeye karşı gösterdiği zorluğa (dirence) ne ad verilir?',
+  a:['eylemsizlik momenti','atalet momenti','dönme eylemsizliği'], not:['tork','açısal momentum'], hints:['I harfiyle gösterilir ve skalerdir.','I = m·r²; “…lik momenti”'], exp:'<b>Eylemsizlik (atalet) momenti</b>, I = mr²' },
+{ topic:'Eylemsizlik momenti', svg:FIZ.inertia(1), q:'Şekildeki sistemin dönme eksenine göre eylemsizlik momenti nedir? (m ve r cinsinden)',
+  strict:true, a:['2mr2','2mr^2','2 m r2','2r2m','2m r2'], hints:['Her kütle için I = m·r²','İki kütle eksenden r uzakta: mr² + mr²'], exp:'I = mr² + mr² = <b>2mr²</b>' },
+{ topic:'Eylemsizlik momenti', svg:FIZ.inertia(2), q:'Şekildeki sistemin eksene göre eylemsizlik momenti nedir? (m ve r cinsinden)',
+  strict:true, a:['5mr2','5mr^2','5 m r2','5r2m','5m r2'], hints:['Uzaklık karesiyle etkili: 2r’deki kütle m(2r)² verir.','mr² + m(2r)² = mr² + 4mr²'], exp:'I = mr² + m(2r)² = <b>5mr²</b>' },
+{ topic:'Dönme kinetik enerjisi', q:'Eylemsizlik momenti 2 kg·m² olan bir cisim 3 rad/s açısal hızla dönüyor. Dönme kinetik enerjisi kaç J’dür?',
+  num:9, hints:['Öteleme için ½mv², dönme için benzer formül.','E = ½·I·ω²'], exp:'E = ½·2·3² = <b>9 J</b>' },
+{ topic:'Açısal momentum', q:'Eylemsizlik momenti 4 kg·m² olan bir disk 5 rad/s açısal hızla dönüyor. Açısal momentumu kaç kg·m²/s’dir?',
+  num:20, hints:['Çizgisel momentum p = m·v’nin dönme karşılığı.','L = I·ω'], exp:'L = I·ω = 4·5 = <b>20 kg·m²/s</b>' },
+{ topic:'Açısal momentum', svg:FIZ.skater(), q:'Buz patencisi dönerken kollarını kapatıyor. Patencinin açısal hızı nasıl değişir?',
+  a:['artar','hızlanır','büyür','artış','yükselir'], not:['azalır','değişmez','yavaşlar','sabit'], hints:['Açısal momentum korunur: I₁ω₁ = I₂ω₂','Kollar kapanınca r, dolayısıyla I küçülür.'], exp:'I küçülür, L = Iω korunduğu için ω <b>artar</b>.' },
+{ topic:'Açısal momentum', q:'Bir sisteme etki eden net tork sıfır ise hangi nicelik korunur?',
+  a:['açısal momentum','L'], not:['enerji','çizgisel momentum','eylemsizlik momenti'], hints:['τ = ΔL/Δt','τ = 0 ise ΔL = 0'], exp:'<b>Açısal momentum</b> korunur (L_ilk = L_son).' },
+{ topic:'Kütle çekimi ve Kepler', svg:FIZ.kepler(), q:'Güneş etrafındaki eliptik yörüngede dolanan gezegenin çizgisel hızı X, Y ve Z noktalarından hangisinde en büyüktür?',
+  a:['X','X noktası','X noktasında'], not:['Y','Z'], hints:['Kepler’in 2. yasası: eşit zamanlarda eşit alanlar taranır.','Güneş’e en yakın noktada hız en büyüktür.'], exp:'<b>X</b> (Güneş’e en yakın nokta). Sıralama: v_X > v_Y > v_Z' },
+{ topic:'Kütle çekimi ve Kepler', svg:FIZ.kepler(), q:'Kepler’in birinci yasasına göre gezegenlerin Güneş etrafındaki yörüngelerinin şekli nedir?',
+  a:['elips','eliptik','elips şeklinde'], not:['çember','daire'], hints:['Güneş, yörüngenin odaklarından birindedir.','Basık bir çember.'], exp:'<b>Elips</b> – Güneş odaklardan birindedir.' },
+{ topic:'Kütle çekimi ve Kepler', svg:FIZ.planets(), q:'Kütleleri M₁ ve M₂ olan gezegenlerin merkezinden r ve 2r uzaklıktaki X cisimlerinin ağırlıkları eşittir. M₁/M₂ oranı kaçtır?',
+  num:0.25, hints:['g = G·M / d²','M₁/r² = M₂/(2r)²'], exp:'M₁/r² = M₂/4r² → M₁/M₂ = <b>1/4</b>' },
+{ topic:'Kütle çekimi ve Kepler', svg:FIZ.ellsat(), q:'Uydu X noktasındayken Güneş’in uyguladığı çekim kuvveti F_X, Y noktasındayken F_Y’dir. F_X / F_Y oranı kaçtır?',
+  num:2.25, hints:['F = G·M·m / d², kuvvet uzaklığın karesiyle ters orantılı.','F_X/F_Y = (3R)² / (2R)²'], exp:'F_X/F_Y = 9R²/4R² = <b>9/4</b>' },
+{ topic:'Kütle çekimi ve Kepler', svg:FIZ.earthsat(), q:'Dünya yüzeyinde ağırlığı G olan uydunun ağırlığı, yüzeyden x yüksekliğindeki yörüngede G/16 oluyor. Dünya’nın yarıçapı R ise x kaç R’dir?',
+  num:3, a:['3R'], hints:['Ağırlık merkeze uzaklığın karesiyle ters orantılı: 16 kat azalma → uzaklık 4 katı.','Merkeze uzaklık 4R ise yüzeyden yükseklik?'], exp:'R + x = 4R → x = <b>3R</b>' },
+{ topic:'Kütle çekimi ve Kepler', svg:FIZ.orbits(), q:'Bir gezegen etrafında R ve 4R yarıçaplı yörüngelerde dolanan X ve Y uydularının periyotları T_X ve T_Y’dir. T_X / T_Y oranı kaçtır?',
+  num:0.125, hints:['Kepler’in 3. yasası: T² / r³ sabittir.','(T_X/T_Y)² = (1/4)³ = 1/64'], exp:'(T_X/T_Y)² = 1/64 → T_X/T_Y = <b>1/8</b>' },
+{ topic:'Kütle çekimi ve Kepler', q:'Newton’un etki-tepki prensibine göre Dünya’nın Güneş’e uyguladığı çekim kuvveti, Güneş’in Dünya’ya uyguladığı kuvvete göre nasıldır?',
+  a:['eşit','aynı','eşittir','aynı büyüklükte','eşit büyüklükte'], not:['büyük','küçük','daha az'], hints:['Etki-tepki kuvvetleri her zaman çift hâlinde oluşur.','Büyüklükleri …, yönleri zıttır.'], exp:'<b>Eşit büyüklükte</b>, zıt yönlüdür.' },
+{ topic:'Kütle çekimi ve Kepler', q:'İki cisim arasındaki uzaklık 2 katına çıkarılırsa aralarındaki kütle çekim kuvveti ilk değerinin kaçta kaçı olur?',
+  num:0.25, a:['dörtte biri','dörtte bir'], hints:['F ∝ 1/d²','2² = 4'], exp:'F′ = F/4 → <b>1/4</b>’ü' },
+{ topic:'Kütle çekimi ve Kepler', q:'Dünya yüzeyinden yukarı çıkıldıkça yer çekimi ivmesi nasıl değişir?',
+  a:['azalır','küçülür','düşer','azalma'], not:['artar','değişmez'], hints:['g = G·M / d²','d büyüdükçe g …'], exp:'<b>Azalır</b> (g = GM/d²).' },
+{ topic:'Fizik bilimine giriş', q:'Bir usta tahtaya çivi çakarken çivinin sıcaklığının arttığını gözlemliyor. Çivinin sıcaklık artışı fiziğin hangi alt alanının konusudur?',
+  a:['Termodinamik','ısı bilimi'], not:['mekanik','optik','elektrik'], hints:['Konu: ısı ve sıcaklık.','“Termo” ısı demektir.'], exp:'<b>Termodinamik</b> – çakma işi ısıya dönüşür; ısı ve sıcaklık termodinamiğin konusudur.' },
+{ topic:'Fizik bilimine giriş', q:'Sıcaklığın SI (Uluslararası Birim Sistemi) birimi nedir?',
+  a:['Kelvin','K'], not:['celsius','santigrat','fahrenheit','derece'], hints:['°C, SI birimi değildir.','Mutlak sıcaklık ölçeğinin birimi.'], exp:'<b>Kelvin (K)</b>' },
+{ topic:'Madde ve özellikleri', svg:FIZ.overflow(), q:'Küre biçimindeki metal cisim Şekil I’deki taşma kabına bırakıldığında kaptan 48 cm³ su taşıyor. Kürenin yarıçapı kaç cm’dir? (π = 3)',
+  num:3, hints:['Kürenin hacmi = kaptaki boş kısım + taşan su = 60 + 48','V = (4/3)·π·r³ = 4r³'], exp:'V = 60 + 48 = 108 cm³ → 4r³ = 108 → r³ = 27 → <b>r = 3 cm</b>' },
+{ topic:'Madde ve özellikleri', svg:FIZ.cylinders(), q:'Aynı maddeden yapılmış K, L ve M silindirlerinden hangisi kendi ağırlığına karşı en az dayanıklıdır?',
+  a:['K','K silindiri'], not:['L','M'], hints:['Dayanıklılık kesit alanına değil, yüksekliğe bağlıdır.','Yükseklik arttıkça dayanıklılık azalır.'], exp:'<b>K</b> (D_L = D_M > D_K). Dayanıklılık yalnızca yüksekliğe bağlıdır.' },
+{ topic:'Hareket', svg:FIZ.semicircle(), q:'Çember şeklindeki yolun A noktasından B noktasına yarım çember çizerek 5 s’de gelen cismin sürat ve hızı kaç m/s’dir? (π = 3)',
+  type:'parts', parts:[{label:'Sürat (m/s):', num:6},{label:'Hız (m/s):', num:4}],
+  hints:['Sürat = alınan yol / süre; hız = yer değiştirme / süre.','Yol = π·r = 30 m, yer değiştirme = 2r = 20 m.'], exp:'Sürat = 30/5 = <b>6 m/s</b> · Hız = 20/5 = <b>4 m/s</b>' }
+];
+
+var Q_INKILAP = [
+{ q:'Osmanlı Devleti’nin meşruti yönetime geçmesini sağlayan Türk tarihinin ilk anayasasının ismi nedir?',
+  a:['Kanun-i Esasi','Kanun-ı Esasi','Kanuni Esasi','Kanunu Esasi','1876 Anayasası','Kanun-i Esasi (1876 Anayasası)'],
+  not:['Teşkilat-ı Esasiye','Sened-i İttifak','Tanzimat Fermanı','Islahat Fermanı'],
+  hints:['1876 yılında, I. Meşrutiyet ile ilan edildi.','Adı “Esas Kanun” anlamına gelen iki kelimelik Osmanlıca bir terimdir.'],
+  exp:'<b>Kanun-i Esasi</b> (1876 Anayasası)' },
+{ q:'Osmanlı Devleti’ni kurtarmak için ortaya çıkmış fikir akımlarından dördünü yazınız.',
+  type:'list', n:4,
+  pool:[{a:['Osmanlıcılık','Osmanlılık']},{a:['İslamcılık','Ümmetçilik','Panislamizm']},{a:['Türkçülük','Turancılık','Pantürkizm']},{a:['Batıcılık','Garpçılık']},{a:['Adem-i merkeziyetçilik','Ademi merkeziyetçilik','Adem-i merkeziyet','Yerinden yönetim']}],
+  hints:['Akımların çoğu “-cılık / -çülük” ekiyle biter.','Biri tüm milletleri, biri dini, biri milliyeti, biri Avrupa’yı esas alır.','Beşinci akım yönetimin merkezden yerele dağıtılmasını savunur.'],
+  exp:'Osmanlıcılık · İslamcılık · Türkçülük · Batıcılık · Adem-i merkeziyetçilik (herhangi dördü)' },
+{ q:'Mustafa Kemal’i etkileyen yazarlardan iki tanesinin ismini yazınız.',
+  type:'list', n:2,
+  pool:[{a:['Ziya Gökalp','Gökalp']},{a:['Namık Kemal']},{a:['Tevfik Fikret','Fikret']},{a:['Mehmet Emin Yurdakul','Yurdakul','Mehmet Emin']},{a:['Voltaire','Volter']},{a:['Jean-Jacques Rousseau','Jan-Jak Ruso','Rousseau','Ruso']},{a:['Auguste Comte','Ogüst Kont','Comte','Kont']},{a:['Emile Zola','Zola']},{a:['Goethe','Göte']},{a:['Friedrich Nietzsche','Nietzsche','Niçe']}],
+  hints:['Hem Türk hem Fransız/Alman yazarlar kabul edilir.','Türk yazarlardan biri “Türkçülüğün Esasları”nı yazmıştır.','Vatan şairi olarak bilinen Tanzimat yazarı da bunlardan biridir.'],
+  exp:'Ziya Gökalp, Namık Kemal, Tevfik Fikret, Mehmet Emin Yurdakul, Voltaire, J. J. Rousseau, Auguste Comte, Emile Zola, Goethe, F. Nietzsche (herhangi ikisi)' },
+{ q:'Osmanlı Devleti’nin Kuzey Afrika’daki son toprak parçası neresidir ve Uşi Antlaşması ile hangi devlete bırakılmıştır?',
+  type:'parts', parts:[
+    {label:'Toprak parçası:', a:['Trablusgarp','Trablus','Libya','Trablusgarb']},
+    {label:'Bırakıldığı devlet:', a:['İtalya','Italya'], not:['İngiltere','Fransa']}],
+  hints:['Bugünkü Libya topraklarıdır.','1911’de Mustafa Kemal’in de gönüllü olarak savaştığı yerdir.','Antlaşma 1912’de imzalandı; karşı taraf Roma merkezli devletti.'],
+  exp:'<b>Trablusgarp</b> – <b>İtalya</b>’ya bırakılmıştır.' },
+{ q:'Birinci Dünya Savaşı’nda Osmanlı Devleti’nin müttefiklerine yardım amacıyla katıldığı cephelerini yazınız.',
+  type:'list', n:3,
+  pool:[{a:['Galiçya','Galicya']},{a:['Makedonya']},{a:['Romanya']}],
+  hints:['Üç cephe vardır ve hepsi Avrupa’dadır.','Biri bugünkü Polonya–Ukrayna sınırındadır, biri Balkanlar’ın güneyinde.','Üçüncüsü Bükreş’in başkent olduğu ülkedir.'],
+  exp:'Galiçya – Makedonya – Romanya' },
+{ q:'Birinci Dünya Savaşı’ndaki ittifak bloğu devletlerini yazınız.',
+  type:'list', n:4,
+  pool:[{a:['Almanya']},{a:['Avusturya-Macaristan','Avusturya Macaristan','Avusturya','Macaristan']},{a:['Osmanlı Devleti','Osmanlı']},{a:['Bulgaristan']}],
+  hints:['Bloğun adı “Merkez Devletler” olarak da geçer.','Liderliği Almanya yapıyordu; Türkiye de bu bloktaydı.','Balkanlar’dan bir devlet de bloğa sonradan katıldı.'],
+  exp:'Almanya · Avusturya-Macaristan · Osmanlı Devleti · Bulgaristan' },
+{ q:'Birinci Dünya Savaşı sonunda imzalanan antlaşmalardan ikisini ve hangi devletlerle imzalandığını yazınız.',
+  note:'Her kutuya antlaşma ve devleti birlikte yaz (ör. “X – Y”).',
+  type:'list', n:2, labels:['1. Antlaşma – Devlet','2. Antlaşma – Devlet'],
+  pool:[{all:[['Versay','Versailles'],['Almanya']]},{all:[['Triyanon','Trianon','Triannon'],['Macaristan']]},{all:[['Nöyyi','Neuilly','Nöyi'],['Bulgaristan']]},{all:[['Sevr','Sevres'],['Osmanlı','Türkiye']]},{all:[['Sen Jermen','Saint Germain','Senjermen'],['Avusturya']]}],
+  hints:['Yenilen her devletle ayrı bir antlaşma imzalandı.','Almanya ile Paris yakınındaki bir sarayın adını taşıyan antlaşma imzalandı.','Osmanlı ile imzalanan antlaşma “S” harfiyle başlar.'],
+  exp:'Almanya – Versay · Macaristan – Triyanon · Bulgaristan – Nöyyi · Osmanlı – Sevr · Avusturya – Sen Jermen (herhangi ikisi)' },
+{ q:'Mustafa Kemal Samsun’a hangi görev ile gitmiştir?',
+  a:['9. Ordu Müfettişliği','9 ordu müfettişliği','dokuzuncu ordu müfettişliği','9. Ordu Müfettişi','ordu müfettişliği','ordu müfettişi','müfettiş'],
+  hints:['Görevi asayişi sağlamak ve silahları toplatmaktı (görünürde).','Görevin adında bir ordu numarası ve “müfettiş” kelimesi geçer.'],
+  exp:'<b>9. Ordu Müfettişliği</b>' },
+{ q:'Mustafa Kemal’in yayımladığı genelgeleri ve katıldığı kongreleri sırasıyla yazınız.',
+  type:'list', n:4, ordered:true,
+  pool:[{a:['Havza Genelgesi','Havza'], not:['Amasya']},{a:['Amasya Genelgesi','Amasya'], not:['Havza']},{a:['Erzurum Kongresi','Erzurum'], not:['Sivas']},{a:['Sivas Kongresi','Sivas'], not:['Erzurum']}],
+  hints:['İki genelge ve iki kongre vardır; önce genelgeler gelir.','İlk genelge Samsun’dan sonra uğranan ilk durakta yayımlandı.','Kongreler doğudan batıya doğru sıralanır.'],
+  exp:'Havza Genelgesi → Amasya Genelgesi → Erzurum Kongresi → Sivas Kongresi' },
+{ q:'Manda ve Himaye kesin olarak hangi kongre ile reddedilmiştir?',
+  a:['Sivas Kongresi','Sivas'], not:['Erzurum Kongresi','Erzurum','Balıkesir','Alaşehir'],
+  hints:['İlk kez Erzurum’da reddedilmişti; burada “kesin olarak” soruluyor.','Bu kongre tüm yurdu temsil eden ulusal bir kongredir.'],
+  exp:'<b>Sivas Kongresi</b>' }
+];
+
+var Q_DIN = [
+{ q:'Kur’an-ı Kerim’de yaratılış ve evrendeki düzen ile ilgili ayetlerde sıklıkla kullanılan, “Düşünmez misiniz? İbret almaz mısınız? Umulur ki anlarsınız. vb.” anlamlara gelen ifadelerin insanın hangi özelliğine hitap ettiğini ve bu ifadelerde Allah’ın(c.c.) insanlardan neler istediğini açıklayınız.',
+  long:true, keys:[['akıl','akla','aklına','aklını','aklı','akli','aklıyla','akıllı']],
+  hints:['İnsanı diğer canlılardan ayıran, düşünmesini sağlayan özellik.','Bu özelliğin adı üç harflidir ve “düşünmez misiniz” sorusuyla doğrudan ilgilidir.'],
+  exp:'Bu ifadeler insanın <b>aklına</b> hitap ederek düşünmesini, doğruyu keşfetmesini, tevhit inancı üzere yaşayıp, sadece Allah’a kullukta bulunmasını, Ona gereği gibi şükretmesini, hakkıyla tanımasını istemektedir.' },
+{ q:'Müslüman bilim insanlarının Tıp, Matematik ve Coğrafya alanlarında yaptıkları özgün çalışmalara her bir alan için birer örnek bilim insanı ve onun en bilinen katkısını yazarak açıklayınız.',
+  note:'Her alan için bir bilim insanı yazman yeterli.',
+  type:'parts', parts:[
+    {label:'Tıp:', a:['İbn Sina','İbni Sina','İbn-i Sina','Avicenna','Razi','Ebubekir Razi','İbn Nefis','İbni Nefis','Zehravi','İbn Rüşd']},
+    {label:'Matematik:', a:['Harezmi','El-Harezmi','Ömer Hayyam','Ali Kuşçu','Battani','Ebu’l-Vefa','Gıyaseddin Cemşid','Takiyüddin']},
+    {label:'Coğrafya:', a:['Piri Reis','Pîrî Reis','Biruni','İdrisi','Kaşgarlı Mahmud','Kaşgarlı Mahmut','Katip Çelebi','Seydi Ali Reis','İbn Battuta','Evliya Çelebi']}],
+  hints:['Tıpta “el-Kânûn fi’t-Tıb” yazarını düşün.','“Cebir” ve “algoritma” kelimeleri bir matematikçiyle ilgilidir.','1513 tarihli ünlü dünya haritasını çizen Osmanlı denizcisi.'],
+  exp:'<b>Tıp: İbn Sînâ.</b> En meşhur eseri olan "el-Kânûn fi\'t-Tıb" (Tıbbın Kanunu), yüzyıllar boyunca hem Doğu\'da hem de Batı\'da tıp fakültelerinde temel ders kitabı olarak okutulmuştur. Bu eserde hastalıkları sistemli bir şekilde sınıflandırmış, teşhis ve tedavi yöntemlerini açıklamış, ayrıca mikrop teorisine ilk işaret edenlerden biri olmuştur.<br><b>Matematik: Hârezmî.</b> "Cebir" biliminin kurucusu olarak kabul edilir. "El-Kitâbü\'l-Muhtasar fî Hisâbi\'l-Cebr ve\'l-Mukâbele" adlı eseriyle birinci ve ikinci dereceden denklemlerin çözüm yöntemlerini sistematik hale getirmiştir. Ayrıca Hint rakamlarını ve "sıfır"ı İslam dünyasına ve oradan da Avrupa\'ya tanıtan kişidir. "Algoritma" kelimesi onun isminden türemiştir.<br><b>Coğrafya: Pîrî Reis.</b> Çizdiği dünya haritalarıyla tanınır. Özellikle 1513 tarihli dünya haritası, Kristof Kolomb\'un kayıp haritasından da faydalanılarak çizilmiş olması ve Amerika kıtasının kıyılarını oldukça doğru göstermesiyle ünlüdür. "Kitâb-ı Bahriye" adlı eseri ise Akdeniz\'in en detaylı ve güvenilir denizcilik kılavuzlarından biridir.' },
+{ q:'İzafiyet (görecelik) teorisi, Einstein teorisi olarak bilinir oysa bu teori ilk defa bir İslam filozofu tarafından ortaya konmuştur. Bu filozof kimdir?',
+  a:['Kindi','El-Kindi','Kindî'], not:['Farabi','Biruni','İbn Sina'],
+  hints:['“Arapların filozofu” olarak anılır.','Adı beş harflidir ve “K” ile başlar.'],
+  exp:'Bu teori ilk defa İslam filozofu <b>Kindi</b> tarafından ortaya konmuştur.' },
+{ q:'Kelam ilmi, ehl-i sünnet çevrelerinde, bağımsız bir ilim olarak gerçek kimliğine 9. asrın sonları, 10. asrın başlarında kurulmuştur. Bu konuda en çok emeği geçenler kimlerdir?',
+  type:'list', n:2,
+  pool:[{a:['Eşari','Eş’ari','Eşarî','Ebu’l-Hasan el-Eşari','Eşarilik']},{a:['Maturidi','Mâtürîdî','Ebu Mansur el-Maturidi','Maturidilik']}],
+  hints:['Ehl-i sünnetin iki itikadi mezhebinin kurucularıdır.','Biri Basra’da, diğeri Semerkant’ta yaşamıştır.','Mezhepler: Eş’arîlik ve Mâtürîdîlik.'],
+  exp:'<b>Eşari</b> (ö. 324/935) ve <b>Maturidi</b>’nin (ö. 333/944) çabalarıyla kavuşmuştur.' },
+{ q:'İslam dininin inanç esaslarını ayet, hadis ve aklı kullanarak açıklayan, yorumlayan, ispat eden ve başka din ve inançlardan gelebilecek eleştirilere karşı savunan bilim dalının adını yazınız?',
+  a:['Kelam İlmi','Kelam','Kelâm'], not:['Fıkıh','Tefsir','Hadis'],
+  hints:['Bir önceki soruda adı geçen ilim dalıdır.','“Söz, konuşma” anlamına gelen Arapça bir kelimedir.'],
+  exp:'<b>Kelam İlmi</b>' },
+{ q:'Müslüman bilim insanlarının fizik alanına katkılarına örnekler veriniz.',
+  long:true, keys:[['İbnü’l-Heysem','İbn Heysem','İbni Heysem','Heysem','Alhazen'],['Hazini','Hâzinî'],['optik','ayna','mercek','kırılma'],['terazi','yoğunluk','özgül ağırlık']],
+  hints:['Optiğin temellerini atan, ışığın kırılmasını inceleyen bilgini düşün.','Hassas teraziler icat eden bir bilgin de vardır.','İsimlerden biri: İbnü’l-H…'],
+  exp:'İbnü’l-Heysem’in parabolik ve küresel aynalar, mercekler ve ışığın kırılması konusundaki araştırmaları daha sonraları fizikte optiğin temellerini oluşturmuştur. İbnü’l-Heysem, ışığın kırılma kanununu bulan kişidir. Hazini, çalışmalarını teraziler üzerinde yoğunlaştırmış; icat ettiği terazi, değerli metallerin saflığını belirlemede ve değerli taşların değerini tespit etmede kullanılmıştır. Cisimlerin yoğunluğu ve özgül ağırlıklarını ölçmek için kimya ve fizik laboratuvarlarında kullanılan hassas teraziler de Müslümanların icadıdır.' },
+{ q:'Battani kimdir, yaptığı çalışmalar hakkında bilgi vererek tanıtınız.',
+  long:true, keys:[['astronomi','astronom','gökbilim','gök bilimci','gökbilimci'],['güneş yılı','365'],['Kitabü’z-Zic','zic','zîc'],['Albetanius']],
+  hints:['Gökyüzü ile ilgilenen bir bilgindir.','Güneş yılının uzunluğunu hesaplamıştır.','Eserinin adı “Kitabü’z-…” diye başlar.'],
+  exp:'İsmi Batı’da Albetanius olarak anılan Bettani (ö. 317/929), Güneş yılını 365 gün, 5 saat, 46 dakika ve 24 saniye olarak hesaplamıştır ki bu değer de 365 gün 5 saat 48 dakika 46 saniye olan gerçek değere çok yakındır. Bettani’nin Kitabü’z-Zic adlı eseri Yahudi ve Bizanslı yazarlar üzerinde büyük etki bırakmıştır. Bu etki, kaynak göstererek veya göstermeden onun eserinden faydalanan pek çok Orta Çağ Yahudi ve Hristiyan bilgininin varlığından anlaşılmaktadır. Bettani’nin eserinin etkisi 17. yüzyılın ortalarına kadar devam etmiştir. Copernic’in (Kopernik) Bettani’ye ne kadar çok şey borçlu olduğu, Tycho Brahe’nin (Tiko Bırahe) çeşitli eserlerinde ve Ricioli’nin (Rikoli) Yeni Almagest adlı kitabında Kitabü’z-Zic’den ne kadar çok alıntı yaptıkları, Kepler ve Galileo’nun da Bettani’nin gözlemleriyle yakından ilgilendikleri bilinmektedir.' },
+{ q:'Kalpte iki karıncık arasında herhangi bir kanal bulunmadığını ilk defa ortaya koyan ve küçük kan dolaşımını keşfeden Müslüman tıp bilgini kimdir?',
+  a:['İbni Nefis','İbn Nefis','İbnü’n-Nefis','İbn-i Nefis','Nefis'], not:['İbn Sina','İbni Sina','Razi'],
+  hints:['13. yüzyılda Şam ve Kahire’de yaşamıştır.','Adı “İbn…” ile başlar, son kısmı “N” harfiyle başlar.'],
+  exp:'<b>İbni Nefis</b> (ö. 687/1288)' },
+{ q:'Günümüzde en fazla tanınan İslam bilginlerinden Biruni’nin uzmanlaştığı ilim dallarından beş tanesini yazınız.',
+  type:'list', n:5,
+  pool:[{a:['astronomi','astronom','gökbilim','astronomlu']},{a:['tarih','tarihçi','tarihçilik']},{a:['botanik','botanikçi','bitki bilimi']},{a:['eczacılık','eczacı','farmakoloji']},{a:['jeoloji','jeolog','yer bilimi','mineraloji']},{a:['şairlik','şair','şiir','edebiyat']},{a:['mütefekkir','düşünür','felsefe','filozof']},{a:['matematik','matematikçi']},{a:['coğrafya','coğrafyacı']},{a:['fizik','fizikçi']}],
+  hints:['Hem fen hem sosyal bilimlerde çalışmıştır.','Gökyüzü, bitkiler, ilaçlar ve taşlarla ilgili dallar da vardır.','Ayrıca sayılarla ve haritalarla ilgilenmiştir.'],
+  exp:'Biruni; astronom, tarihçi, botanikçi, eczacılık uzmanı, jeolog, şair, mütefekkir, matematikçi, coğrafyacıdır.' },
+{ q:'Müslüman bilim insanlarının Astronomi ve Kimya alanlarında bilim dünyasına yaptıkları özgün katkılara, birer bilim insanı ve onun en önemli çalışmasını örnek vererek açıklayınız.',
+  note:'Her alan için bir bilim insanı yazman yeterli.',
+  type:'parts', parts:[
+    {label:'Astronomi:', a:['Uluğ Bey','Ulug Bey','Battani','Bettani','Ali Kuşçu','Takiyüddin','Biruni','Zerkali','Ferganî']},
+    {label:'Kimya:', a:['Cabir bin Hayyan','Câbir bin Hayyân','Cabir','Câbir','Razi','Ebubekir Razi','Geber']}],
+  hints:['Semerkant’ta rasathane kuran Timurlu sultanı düşün.','Modern kimyanın kurucularından sayılan, sülfürik asidi keşfeden bilgin “C” ile başlar.'],
+  exp:'<b>Astronomi: Uluğ Bey.</b> Timur İmparatorluğu\'nun sultanı ve büyük bir astronomi âlimidir. Semerkant\'ta döneminin en modern rasathanesini kurmuş ve burada yaptığı hassas gözlemlerle "Zîc-i Uluğ Bey" (Uluğ Bey\'in Astronomi Cetvelleri) adlı eseri hazırlamıştır. Bu eserdeki yıldız katalogu ve gezegenlerin hareketlerine dair hesaplamalar, yüzyıllar boyunca alanındaki en güvenilir kaynaklardan biri olmuştur.<br><b>Kimya: Câbir bin Hayyân.</b> Modern kimyanın kurucularından kabul edilir. Laboratuvarında yaptığı deneylerle birçok kimyasal maddeyi (sülfürik asit, nitrik asit vb.) keşfetmiş ve kimyasal süreçleri (damıtma, süblimleşme, kristalleştirme) sistemleştirmiştir. Atomun parçalanabileceği fikrini ilk öne sürenlerdendir. Maddeleri "metal", "mineral" gibi başlıklar altında sınıflandırarak modern kimyanın temellerini atmıştır.' }
+];
+
+var ED_P1 = '<h4>I.METİN — ODALARDAN BİRİ</h4><p>…Fenerin ışığı yolun üstüne bir daha düştü; Suat uzaklaşmış bile; tek balığını sallıyor elinde. İstasyona yedi dakikada, evine on dakikada varır. Döndüm. Denize inen yolun başında ışığın sandalı aydınlatmasını bekliyorum. Sandal çırpıntılı ışığın içindeyken atıyorum balığı. Küt, kof, katılmış katılığın sesi geliyor. Eve gitmek uzun sürer. En azından on beş dakika; üşeniyorum. Usanç geldi bu yoldan. Babam kızmış, kapının sürgüsünü gene sürdürmüştür anneme. Otele gitsem. Ömrümde giremedim, gıcırtılı, esnedi esneyecek gibi duran kapısından içeri. Yıllardır da geçerim önünden. Ne zaman gelecektim sanki. Yatağımı, evimi severdim şimdiye kadar; oda demeli, oda demek daha doğru olur. Odamı, yalnız odamı severdim. Ondan da soğuttular sanki beni. Garip olacak, kılığım da pek uygunsuz, aldırma. Kapı sürgülü olsa bile bodrum penceresinden girerdim. O da olurdu. Otel, oteli denemeli. Yeni bir oda görürüm, sırası gelmişken… Param var. Nüfus cüzdanım yanımda değil. O gerekli sanırım. Adama, Sarıkumluyum da diyemem, evine gitseydin der, inanmaz da kapının sürgülenmesi hikâyesine, kuşkulanır, inansa bile bir türlü, otelin önünden geçemem bir daha…</p><p class="src">( Bilge KARASU )</p>'+
+ '<h4>II.METİN — SARI SICAK</h4><p>“…Çocuk bir ara bir kolunu çıkarıp dışarı atıverdi. Kol bir başparmak kalınlığında ancak var. Derisi kemikten dökülecekmiş gibi kırış kırış .. . Ananın gözü kola takıldı kaldı. Sonra, derinden "Of!" dedi, "yavrum ooof ... " Kımıldadı. İki yanına sallandı. Çocuğun yanından kalktı. Ay, gölgesini huğun sazlarının üstüne düşürüyordu. Ana hışımla, "Uyandırmam" dedi. "Uyandırmam. Acımızdan öleceksek de ölelim. Bir çocuğun çalışmasından ne olur?" Gözleri incecik kolda. "Acımızdan öleceksek de ölelim.\'\' Uzun, örgülü saçını ağzına alıp çiğnedi. Aşağıdan kocası bağırdı: "Gene uyanmadı mı?" Kadın, okşar, yalvarır bir sesle: "Ne istersin çocuktan?" dedi. "Daha parmak kadar. Kemikleri kırılacak, öyle ince işte ... " Koca huysuzlandı: \'\'Bugün mutlak uyanmalı. Uyanmalı diyorum sana! Çalışsın, alışmasın tembel. Çocuklukta pişmeli."…</p><p class="src">( YAŞAR KEMAL )</p><p style="color:var(--muted)">( İlk soruyu yukarıdaki metinlere göre cevaplayınız. )</p>';
+var ED_MODERNIST = [['Haldun Taner','Taner'],['Nezihe Meriç','Meriç'],['Adalet Ağaoğlu','Ağaoğlu'],['Oğuz Atay','Atay'],['Sait Faik Abasıyanık','Sait Faik','Abasıyanık'],['Bilge Karasu','Karasu'],['Ferit Edgü','Edgü'],['Leyla Erbil','Erbil'],['Yusuf Atılgan','Atılgan'],['Vüs’at O. Bener','Vüsat Bener','Bener'],['Tomris Uyar','Uyar'],['Sevim Burak'],['Onat Kutlar'],['Demir Özlü']].map(function(a){return {a:a};});
+var Q_EDEBIYAT = [
+{ passage:ED_P1, q:'1 a) 1960 sonrasına ait ilk metin hangi anlayışla( eğilimle) yazılmıştır? ( 4 Puan )',
+  a:['Modernist öykü anlayışı','modernist','modernizm','modernist eğilim','modern öykü','modernist anlayış'], not:['toplumcu gerçekçi','bireyci','milli','dini'],
+  hints:['Bilinç akışı, iç konuşma ve bireyin iç dünyası öne çıkıyor.','1960 sonrası öyküde geleneksel anlatımı yıkan, deneysel bir anlayış.','Anlayışın adı “modern” kelimesinden türemiştir.'],
+  exp:'<b>Modernist öykü anlayışıyla</b> yazılmıştır.' },
+{ passage:ED_P1, q:'b) ilk metindeki anlayışla eser veren yazarlardan ikisinin adını yazınız. ( 2 x 2  = 4 Puan )',
+  type:'list', n:2, pool:ED_MODERNIST,
+  hints:['Metnin yazarı Bilge Karasu da bu anlayıştadır; başka yazarları düşün.','“Tutunamayanlar”ın yazarı da bu anlayışla eser vermiştir.','“Keşanlı Ali Destanı” yazarı öyküleriyle de bu gruptadır.'],
+  exp:'Haldun Taner – Nezihe Meriç- Adalet Ağaoğlu- Oğuz Atay, Sait Faik Abasıyanık…modernist öykü tarzında yazmıştır.' },
+{ passage:ED_P1, q:'c) İlk metinde baskın olan anlatım tekniği nedir? ( 4 Puan )',
+  a:['Bilinç akışı','bilinç akışı tekniği','iç konuşma','iç monolog'], not:['geriye dönüş','leitmotiv','diyalog','montaj'],
+  hints:['Anlatıcının zihninden geçenler düzensizce, art arda aktarılıyor.','Düşünceler bir “akış” hâlinde verilir.'],
+  exp:'<b>Bilinç akışı</b> tekniği daha baskındır. ( İç konuşma yazana 2 puan )' },
+{ passage:ED_P1, q:'d) İkinci metindeki temel çatışmayı yazınız.  ( 4 Puan )',
+  long:true, keys:[['zenginlik','zengin','yoksulluk','yoksul','fakirlik','fakir'],['çalıştırma','çalışma','çalışsın','çalıştırıp','çalıştırmak']],
+  hints:['Ailenin geçim sıkıntısını düşün.','Anne ve baba çocuk konusunda farklı düşünüyor: Çocuk ne yapmalı?'],
+  exp:'<b>Zenginlik- yoksulluk</b> ( Anne ve babanın , zayıf ve güçsüz çocuğunu çalıştırıp çalıştırmama konusunda farklı düşünmeleri yazanı da kabul edebiliriz. )' },
+{ passage:ED_P1, q:'e) İkinci metindeki bakış açısını ve anlatımın kaçıncı kişi ağzından yapıldığını yazınız. ( 2 x 2  = 4 Puan )',
+  type:'parts', parts:[
+    {label:'Bakış Açısı:', a:['Gözlemci','gözlemci bakış açısı','gözlemci anlatıcı','dış bakış'], not:['ilahi','kahraman','hakim','tanrısal']},
+    {label:'Anlatım:', num:3, a:['3. kişili anlatım','üçüncü kişili','üçüncü kişi','o anlatım'], not:['birinci kişi','ikinci kişi']}],
+  hints:['Anlatıcı yalnızca gördüklerini ve duyduklarını aktarıyor, iç dünyaya girmiyor.','Anlatıcı olaylarda yer almıyor; “ben” değil “o” diye anlatıyor.'],
+  exp:'Bakış Açısı: <b>Gözlemcidir</b> · Anlatım: <b>3.kişili anlatım</b> vardır.' },
+{ q:'2. Aşağıdaki eserlerin yazarlarını yazınız. ( 5 x 2  = 10 puan )',
+  type:'parts', parts:[
+    {label:'Uzun Hikâye:', a:['Mustafa Kutlu','Kutlu']},
+    {label:'Parasız Yatılı:', a:['Fürûzan','Füruzan','Furuzan']},
+    {label:'Sancho’nun Sabah Yürüyüşü:', a:['Haldun Taner','Taner']},
+    {label:'Hilâl Görününce:', a:['Sevinç Çokum','Çokum']},
+    {label:'On İkiye Bir Var:', a:['Haldun Taner','Taner']}],
+  hints:['İki eser aynı yazara aittir (Sancho’nun Sabah Yürüyüşü ve On İkiye Bir Var).','Parasız Yatılı tek isimle bilinen bir kadın yazara aittir.','Uzun Hikâye’nin yazarı Dergâh çevresinden, soyadı “K” ile başlar.'],
+  exp:'Uzun Hikâye: Mustafa Kutlu · Parasız Yatılı: Fürûzan · Sancho’nun Sabah Yürüyüşü: Haldun Taner · Hilâl Görününce: Sevinç Çokum · On İkiye Bir Var: Haldun Taner' },
+{ passage:'<p>Popüler romanlar, bulunduğu dönemin okurlarının isteklerine göre önceden belirlenen kriterler doğrultusunda yazılır; yayınevlerinin ve medyanın desteğine ihtiyaç duyar. Gerçek sanat yapıtları ise <u><b>yüzgeçleri olmadan</b></u> da okura ulaşmayı mutlaka başarırlar.</p>',
+  q:'3.Yukarıda koyu ve altı çizili yazılı sözle anlatılmak isteneni yazınız. ( 5 Puan )',
+  long:true, keys:[['yardım','yardımsız','yardım almadan'],['destek','desteksiz','destek almadan'],['kendi başına','kendi gücüyle','kendi kendine','tek başına'],['reklam','reklamsız']],
+  hints:['Balık yüzgeçleri olmadan yüzmekte zorlanır; buradaki “yüzgeç” mecazdır.','Cümlenin öncesinde popüler romanların neye ihtiyaç duyduğu söyleniyor.'],
+  exp:'<b>Kimsenin yardımı olmadan</b> bir şeyler yapmayı anlatmaktadır.' },
+{ q:'4. Divanu Lügati’t-Türk : …… Muhakemetü’l Lugateyn : ……<br>a)Yukarıdaki eserlerin yazarını bırakılan boşluğa yazınız. ( 2 x 3 = 6 Puan )',
+  type:'parts', parts:[
+    {label:'Divanu Lügati’t-Türk:', a:['Kaşgarlı Mahmut','Kaşgarlı Mahmud','Kaşgarlı','Kâşgarlı Mahmud']},
+    {label:'Muhakemetü’l Lugateyn:', a:['Ali Şir Nevaî','Ali Şir Nevai','Alişir Nevai','Nevai','Nevaî']}],
+  hints:['İlk eser 11. yüzyılda Araplara Türkçeyi öğretmek için yazıldı.','İkinci eser Çağatayca ile Farsçayı karşılaştırır; yazarı Çağatay şairidir.'],
+  exp:'Divanu Lügati’t-Türk: <b>Kaşgarlı Mahmut</b> · Muhakemetü’l Lugateyn: <b>Ali Şir Nevaî</b>' },
+{ q:'b) İlk eserin dilimiz açısından önemini yazınız. ( 4 Puan )',
+  note:'İlk eser: Divanu Lügati’t-Türk',
+  long:true, keys:[['ilk sözlük','sözlük','sözlüğü','lügat'],['dil bilgisi','dilbilgisi','gramer']],
+  hints:['Eserin adındaki “lügat” kelimesinin anlamını düşün.','Türkçenin bu türdeki ilk eseridir.'],
+  exp:'<b>Türkçenin ilk sözlüğü</b> olması sebebiyle önemlidir.' },
+{ q:'5.Edebiyat - psikoloji ilişkisini açıklayınız. Edebiyat – psikoloji ilişkisine örnek olabilecek Türk ve dünya edebiyatından birer eser adı yazınız. (6 + 4 = 10 Puan )',
+  type:'parts', parts:[
+    {label:'İlişki:', long:true, keys:[['ruh','ruhsal','ruh dünyası','ruh hali','psikoloji','psikolojik','psikiyatri','iç dünya','duygu','bilinçaltı']]},
+    {label:'Türk edebiyatından eser:', a:['Dokuzuncu Hariciye Koğuşu','Eylül','Zehra','Kıskanmak','Aşk-ı Memnu','Mai ve Siyah','Huzur','Aylak Adam','Anayurt Oteli','Tutunamayanlar','Kürk Mantolu Madonna']},
+    {label:'Dünya edebiyatından eser:', a:['Suç ve Ceza','Bir İdam Mahkûmunun Son Günü','Karamazov Kardeşler','Dönüşüm','Yeraltından Notlar','Madam Bovary','Budala']}],
+  hints:['Yazar, kahramanlarının ruh dünyasını anlatırken hangi bilimden yararlanır?','Türk edebiyatı için: Mehmet Rauf’un psikolojik romanı “Eylül” örnek olabilir.','Dünya edebiyatı için: Dostoyevski’nin Raskolnikov’u anlattığı romanı.'],
+  exp:'Yazarın, şairin ruh dünyasının eserlere yansımasıyla ilgili ya da yazarların, şairlerin kahramanın ruh dünyasını okurlara daha iyi aktarabilmek amacıyla psikoloji ve psikiyatri biliminin verilerinden yararlandığıyla ilgili ifadeler doğru kabul edilir.<br><b>Türk:</b> Dokuzuncu Hariciye Koğuşu, Eylül, Zehra, Kıskanmak, Aşk-ı Memnu, Mai ve Siyah… <b>Dünya:</b> Suç ve Ceza, Bir İdam Mahkûmunun Son Günü, Karamazov Kardeşler…' },
+{ q:'6. Dilin değişimini etkileyen faktörlerden 3 tanesini yazıp bir tanesini örnek vererek açıklayınız. ( 6 + 4  = 10 Puan )',
+  type:'list', n:3, labels:['1. faktör','2. faktör','3. faktör'],
+  pool:[{a:['Din']},{a:['Kültür ve Medeniyet','kültür','medeniyet','uygarlık']},{a:['Coğrafya','coğrafi konum','komşuluk']},{a:['Teknolojik Gelişmeler','teknoloji','bilim ve teknoloji']},{a:['Siyasal Gelişmeler','siyaset','siyasi','politika']}],
+  extra:[{label:'Örnek açıklama', long:true, minWords:6, keys:[['coğrafya','komşu','teknoloji','televizyon','internet','telefon','rusça','farsça','arapça','ingilizce','fransızca','kelime','sözcük','din','islam','kültür','medeniyet','siyasi','siyaset']]}],
+  hints:['Bir dilin hangi dinin, hangi kültürün etkisinde kaldığını düşün.','Komşu ülkelerden kelime geçmesi hangi faktörle ilgili?','Televizyon, internet gibi kelimeler dilimize hangi gelişmeyle girdi?'],
+  exp:'Din, Kültür ve Medeniyet , Coğrafya, Teknolojik Gelişmeler, Siyasal Gelişmeler (herhangi üçü)<br><b>Örnek:</b> Orta Asya’daki Türk Cumhuriyetlerinde Rusça kelime sayısı daha fazlayken Türkiye Türkçesinde Farsça kelime sayısı daha fazladır çünkü Rusya onların komşusu, İran ise bizim komşumuzdur. Bu durum dilin değişiminde coğrafyanın etkisini göstermektedir. Teknolojinin gelişmesiyle televizyon, telefon, faks, internet gibi birçok yabancı kelime dilimize girmiştir.' },
+{ passage:'<p>Bir çoğunun sadece tarih okuduğu yaşa yaklaşdım. Bundan olacak dönüp dönüp değişik kaynaklardan osmanlı tarihi okuyorum. Beni gerçekten çarpan edebiyat gerçekten çok nadir çıkıyor. Bir tek istisna var : Yusuf Atılgan’ın ölümünden sonra yayımlanan son romanı canistan. Bu romanın iyi olacağını biliyordum ama bu kadar kusursuz birşey beklemiyordum.</p>',
+  q:'7 .Yukarıdaki metinde yanlış yazılmış sözcükleri düzeltiniz. ( 5 x 2  = 10 Puan )',
+  note:'Büyük/küçük harf ve boşluklar bu soruda önemlidir.',
+  type:'list', n:5,
+  pool:[{exact:true,a:['Birçoğunun','Birçok','birçoğunun']},{exact:true,a:['yaklaştım']},{exact:true,cap:true,a:['Osmanlı']},{exact:true,cap:true,a:['Canistan']},{exact:true,a:['bir şey']}],
+  hints:['Beş hata var: ikisi bitişik/ayrı yazım, ikisi büyük harf, biri ünsüz benzeşmesi.','Özel isimler (bir devlet adı ve bir roman adı) büyük harfle başlar.','“yaklaş-dım” sözcüğünde sert ünsüzden sonra gelen “d” ne olmalı? “birşey” ayrı mı bitişik mi yazılır?'],
+  exp:'Birçok(Birçoğunun) · yaklaştım · Osmanlı · Canistan · bir şey' },
+{ q:'8. “Bu tarihi bölgeyi, Eyüp ve çevresini, gezmek için buraya geldik.”  Cümlesinde virgül hangi görevde kullanılmıştır, açıklayınız.<br>Bu cümlede virgül yerine hangi noktalama işareti kullanılabileceğini yazınız. ( 3 + 2 = 5 puan )',
+  type:'parts', parts:[
+    {label:'Virgülün Görevi:', keys:[['ara söz','arasöz','ara sözü','ara cümle','açıklama','açıklayıcı']]},
+    {label:'Virgül Yerine Kullanılabilecek Noktalama İşareti:', raw:['-','–','—','- -'], a:['Kısa çizgi','tire','çizgi','kısa çizgiler'], not:['nokta','noktalı virgül','iki nokta','ünlem']}],
+  hints:['“Eyüp ve çevresi” ifadesi “tarihi bölge”yi açıklıyor.','Cümle içindeki bu tür ifadeler “ara …” diye adlandırılır; virgül yerine kısa bir yatay işaret de kullanılabilir.'],
+  exp:'Virgülün Görevi: <b>Ara sözü ayırmak</b> · Virgül Yerine Kullanılabilecek Noktalama İşareti: <b>Kısa çizgi</b>' },
+{ q:'9.Aşağıdaki kelimeleri istenen anlama uygun şekilde cümlede kullanınız. ( 3 + 3 + 4 = 10 Puan ) ( Bu sorunun cevabını sizin bulmanız istenmektedir.)',
+  note:'Her kutuya kelimeyi içeren bir cümle yaz.',
+  type:'parts', parts:[
+    {label:'Açı ( Terim Anlam ) :', long:false, minWords:3, keys:[['açı','açısı','açıyı','açının','açıları','açılar','açılarının','açıda','açıdan','açıların']], ph:'Örnek: Üçgenin iç … toplamı …'},
+    {label:'Sıcak ( Mecaz Anlam ) :', minWords:3, keys:[['sıcak','sıcacık','sıcakkanlı']]},
+    {label:'Kızmak/ kızdırmak ( Temel Anlam ) :', minWords:3, keys:[['kızdı','kızmış','kızdır','kızdırdı','kızdırmak','kızmak','kızar','kızıyor','kızgın','kızacak','kızınca','kızdırıp','kızdırılmış','kızdırınca','kızdırılan','kızmaya']]}],
+  hints:['“Açı” terim anlamıyla matematikte kullanılır.','Mecaz “sıcak”: içten, samimi anlamında (ör. sıcak bir karşılama).','“Kızmak”ın temel anlamı “çok ısınmak”tır (ör. tava kızdı).'],
+  exp:'Örnek cevaplar: <b>Açı:</b> Üçgenin iç açıları toplamı 180 derecedir. · <b>Sıcak:</b> Bizi çok sıcak bir gülümsemeyle karşıladılar. · <b>Kızmak:</b> Demirci, demiri ateşte iyice kızdırdı.<br><span style="color:var(--muted)">Kızmak/kızdırmak temel anlamda “çok ısınmak / ısıtmak” demektir; “öfkelenmek” mecaz anlamdır.</span>' },
+{ q:'10.  “Cumhuriyet Coşkusu, Heyecanı” konulu en az 10 cümleden oluşan bir küçürek öykü yazınız. ( 10 Puan  )',
+  note:'( Yazım ve noktalama kurallarına uyma da puanlamaya dâhildir.) ( Bu soruda içerik 7, yazım ve imla 3 puandır.) — Göndermek için Ctrl+Enter veya “Kontrol Et”.',
+  type:'free', check:{minSentences:10}, ph:'Öykünü buraya yaz… (en az 10 cümle)',
+  hints:['Öykün en az 10 cümle olmalı; her cümleyi nokta, ünlem veya soru işaretiyle bitir.','Küçürek öykü: kısa, yoğun, az kişili, çarpıcı bir sonla biten öykü.'],
+  exp:'Küçürek öykünün özelliklerini yansıtan, anlamlı ve yazımla noktalama kurallarına uygun paragraflara 10 puan verilecektir.' }
+];
+
+var IC = {
+  bio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 3c0 6 10 6 10 12s-10 6-10 6M17 3c0 6-10 6-10 12"/><path d="M8.5 6h7M8 18h8M10 9.5h4M10 14.5h4"/></svg>',
+  fiz:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-60 12 12)"/></svg>',
+  ink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M2 21h20M8 21v-6h8v6M9 11h6"/></svg>',
+  din:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v14c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-14c-3-.5-6 0-8 1.5z"/><path d="M12 6v14"/></svg>',
+  ed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5L9 20H4v-5z"/><path d="M13 6l5 5"/></svg>'
+};
+var SUBJECTS = [
+  {id:'biyoloji', name:'Biyoloji', desc:'Nükleik asitler · DNA replikasyonu · Protein sentezi', color:'#8cc49e', icon:IC.bio, questions:Q_BIYOLOJI},
+  {id:'fizik', name:'Fizik', desc:'Çembersel hareket · Dönme · Kütle çekimi', color:'#8fb4dd', icon:IC.fiz, questions:Q_FIZIK},
+  {id:'inkilap', name:'İnkılap Tarihi', desc:'Çalışma soruları (ilk 10)', color:'#de9aa3', icon:IC.ink, questions:Q_INKILAP},
+  {id:'din', name:'Din Kültürü', desc:'İslam ve bilim · 1. dönem 1. sınav', color:'#d9b56f', icon:IC.din, questions:Q_DIN},
+  {id:'edebiyat', name:'Edebiyat', desc:'1. dönem sınav soruları', color:'#b4a3dd', icon:IC.ed, questions:Q_EDEBIYAT}
+];
+window.SUBJECTS = SUBJECTS;
+
+(function(){
+  var SUBJECTS = window.SUBJECTS;
+  var $ = function(s,r){ return (r||document).querySelector(s); };
+  var app = $('#app');
+  var store = {
+    get: function(k,d){ try{ var v=localStorage.getItem('dersoyunu.'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+    set: function(k,v){ try{ localStorage.setItem('dersoyunu.'+k, JSON.stringify(v)); }catch(e){} }
+  };
+  var opts = store.get('opts', {count:10, shuffle:true});
+  var theme = store.get('theme', 'dark');
+  document.documentElement.setAttribute('data-theme', theme);
+  var G = null; // aktif oyun
+
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function trim(x,n){ return x.length>n ? x.slice(0,n-1)+'…' : x; }
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function themeBtn(){ return '<button class="icon-btn" id="themeBtn" title="Tema">'+(theme==='dark'?'☀ Açık tema':'☾ Koyu tema')+'</button>'; }
+  function bindTheme(){ var b=$('#themeBtn'); if(b) b.onclick=function(){ theme = theme==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',theme); store.set('theme',theme); b.outerHTML=themeBtn(); bindTheme(); }; }
+
+  /* ---------- ANA MENÜ ---------- */
+  function menu(){
+    G = null;
+    var best = store.get('best', {});
+    var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
+      '<section class="hero"><h1>Hangi dersle başlamak istersin?</h1><p>Cevaplarını kendi kelimelerinle yaz. Küçük yazım hataları sorun değil, her yanlışta bir ipucu açılır.</p></section>'+
+      '<div class="grid">';
+    SUBJECTS.forEach(function(s,i){
+      var b = best[s.id];
+      h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+'">'+
+        '<div class="ico">'+s.icon+'</div><h3>'+s.name+'</h3>'+
+        '<div class="tag">'+s.desc+'</div>'+
+        '<div class="meta"><span>'+s.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
+    });
+    h += '</div><div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
+      [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
+      '</div><label class="chk"><input type="checkbox" id="shf" '+(opts.shuffle?'checked':'')+'> Soruları karıştır</label></div>'+
+      '<div class="foot">Enter ile cevap gönderilir · Sorulardayken üstteki “Ana Menü” tuşuyla çıkabilirsin</div>';
+    app.innerHTML = h;
+    bindTheme();
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ start(SUBJECTS[+b.dataset.i]); }; });
+    app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
+    $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- OYUN ---------- */
+  function start(s){
+    var qs = s.questions.slice();
+    if(s.ordered){ if(opts.shuffle) qs = shuffle(qs); }
+    else if(opts.shuffle) qs = shuffle(qs);
+    if(opts.count && qs.length>opts.count) qs = qs.slice(0,opts.count);
+    G = {s:s, qs:qs, i:0, score:0, log:[]};
+    question();
+  }
+  function maxPts(){ return G.qs.length*10; }
+
+  function autoHint(q){
+    var first = function(spec){
+      if(spec.num!=null && !spec.a) return null;
+      var a = (spec.a||[])[0] || (spec.all? spec.all.map(function(g){return g[0];}).join(' – ') : null);
+      if(!a) return null;
+      var letters = a.replace(/[^A-Za-zÇĞİÖŞÜçğıöşüâîûÂÎÛ]/g,'').length;
+      return '“'+a.charAt(0).toLocaleUpperCase('tr')+'” ile başlıyor'+(letters>1?' ('+letters+' harf)':'');
+    };
+    if(q.type==='parts'){
+      var out=[]; q.parts.forEach(function(p,i){ if(!G.cur.done[i]){ var f=first(p); if(f) out.push((p.label?p.label.replace(/:$/,''):'')+': '+f); } });
+      return out.length? out.join(' · ') : null;
+    }
+    if(q.type==='list'){
+      var left = q.pool.filter(function(p,j){ return !G.cur.usedPool[j]; }).map(function(p){ return (p.a||[])[0] || (p.all||[]).map(function(g){return g[0];}).join(' – '); });
+      if(q.ordered) return null;
+      return left.length? 'Kabul edilen cevaplardan birinin baş harfi: “'+left[0].charAt(0)+'”' : null;
+    }
+    if(q.type==='free') return null;
+    return first(q);
+  }
+  function hintList(q){
+    var hs = (q.hints||[]).slice();
+    var ah = autoHint(q); if(ah) hs.push(ah);
+    return hs;
+  }
+
+  function fieldsHtml(q){
+    if(q.type==='parts') return q.parts.map(function(p,i){
+      return '<div class="field" data-k="'+i+'">'+(p.label?'<label>'+p.label+'</label>':'')+(p.long?'<textarea style="min-height:80px" spellcheck="false" placeholder="'+(p.ph||'Cevabın…')+'"></textarea>':'<input autocomplete="off" spellcheck="false" placeholder="'+(p.ph||'Cevabın…')+'">')+'</div>'; }).join('');
+    if(q.type==='list'){ var h=''; for(var i=0;i<q.n;i++) h+='<div class="field" data-k="'+i+'"><label>'+(q.labels?q.labels[i]:(i+1)+'.')+'</label><input autocomplete="off" spellcheck="false" placeholder="'+(q.ordered?(i+1)+'. sıradaki…':'Cevabın…')+'"></div>';
+      (q.extra||[]).forEach(function(p,j){ h+='<div class="field" data-k="'+(q.n+j)+'"><label>'+p.label+'</label>'+(p.long?'<textarea style="min-height:80px" spellcheck="false" placeholder="Cevabın…"></textarea>':'<input autocomplete="off" spellcheck="false" placeholder="Cevabın…">')+'</div>'; });
+      return h; }
+    if(q.type==='free') return '<div class="field" data-k="0"><textarea spellcheck="true" placeholder="'+(q.ph||'Cevabını buraya yaz…')+'"></textarea></div>';
+    if(q.long) return '<div class="field" data-k="0"><textarea style="min-height:90px" spellcheck="false" placeholder="Cevabını kendi cümlelerinle yaz…"></textarea></div>';
+    return '<div class="field" data-k="0"><input autocomplete="off" spellcheck="false" placeholder="Cevabını yaz…"></div>';
+  }
+
+  function question(){
+    var q = G.qs[G.i], s=G.s;
+    G.cur = {wrong:0, hints:0, done:{}, usedPool:{}, finished:false};
+    var pct = Math.round(G.i/G.qs.length*100);
+    var h = '<div class="bar" style="--sc:'+s.color+'">'+
+      '<button class="icon-btn" id="homeBtn">← Ana Menü</button>'+
+      '<div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+
+      '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
+      '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
+      '<div class="progress" style="--sc:'+s.color+'"><div style="width:'+pct+'%"></div></div>'+
+      '<div class="card qcard" id="qc" style="--sc:'+s.color+'">'+
+      '<div class="qnum"><span>'+(q.topic||'')+'</span><span>'+(q.src||'')+'</span></div>'+
+      (q.passage?'<div class="passage">'+q.passage+'</div>':'')+
+      '<div class="qtext">'+q.q+(q.note?'<span class="sub">'+q.note+'</span>':'')+'</div>'+
+      (q.svg?'<figure class="fig">'+q.svg+'</figure>':'')+
+      '<div class="inputs">'+fieldsHtml(q)+'</div>'+
+      '<div class="actions"><button class="btn primary" id="chk">Kontrol Et</button>'+
+      '<button class="btn ghost" id="pass">Pas geç</button><button class="btn ghost" id="show" style="display:none">Cevabı göster</button>'+
+      '<button class="btn primary" id="next" style="display:none">'+(G.i+1<G.qs.length?'Sonraki soru →':'Sonuçları gör →')+'</button>'+
+      '<span class="kbd">Enter ↵</span></div>'+
+      '<div class="hints" id="hints"></div><div id="fb"></div></div>';
+    app.innerHTML = h;
+    bindTheme();
+    $('#homeBtn').onclick = confirmHome;
+    $('#chk').onclick = submit;
+    $('#pass').onclick = function(){ reveal(true); };
+    $('#show').onclick = function(){ reveal(false); };
+    $('#next').onclick = next;
+    app.querySelectorAll('.field input, .field textarea').forEach(function(inp,idx,all){
+      inp.addEventListener('keydown',function(e){
+        if(e.key==='Enter' && !(inp.tagName==='TEXTAREA' && e.shiftKey)){
+          if(inp.tagName==='TEXTAREA' && q.type==='free') { if(!e.ctrlKey) return; }
+          e.preventDefault();
+          if(G.cur.finished){ next(); return; }
+          // çok alanlıysa boş bir sonraki alana geç
+          if(all.length>1){
+            for(var j=idx+1;j<all.length;j++){ if(!all[j].disabled && !all[j].value.trim()){ all[j].focus(); return; } }
+          }
+          submit();
+        }
+      });
+    });
+    var f = app.querySelector('.field input, .field textarea'); if(f) f.focus({preventScroll:true});
+    window.scrollTo(0,0);
+  }
+
+  function values(){ return Array.prototype.map.call(app.querySelectorAll('.field'), function(f){ var i=f.querySelector('input,textarea'); return i.value; }); }
+  function mark(k, ok){
+    var f = app.querySelector('.field[data-k="'+k+'"]'); if(!f) return;
+    f.classList.remove('ok','bad'); f.classList.add(ok?'ok':'bad');
+    if(ok){ var i=f.querySelector('input,textarea'); i.disabled=true; }
+  }
+
+  function evaluate(q, vals){
+    if(q.type==='parts'){
+      var all=true;
+      q.parts.forEach(function(p,i){
+        if(G.cur.done[i]) return;
+        var ok = M.check(vals[i], p); if(ok) G.cur.done[i]=true; else all=false;
+        mark(i, ok);
+      });
+      return all;
+    }
+    if(q.type==='list'){
+      var pool=q.pool, all2=true;
+      (q.extra||[]).forEach(function(p,j){ var k=q.n+j; if(G.cur.done[k]) return; var ok=M.check(vals[k],p); if(ok) G.cur.done[k]=true; else all2=false; mark(k,ok); });
+      vals.slice(0,q.n).forEach(function(v,i){
+        if(G.cur.done[i]) return;
+        var hit=-1;
+        if(q.ordered){ if(M.check(v,pool[i])) hit=i; }
+        else for(var j=0;j<pool.length;j++){ if(!G.cur.usedPool[j] && M.check(v,pool[j])){ hit=j; break; } }
+        if(hit>=0){ G.cur.usedPool[hit]=1; G.cur.done[i]=true; mark(i,true); }
+        else { all2=false; mark(i,false); }
+      });
+      return all2;
+    }
+    if(q.type==='free'){
+      var v=vals[0], c=q.check||{}, ok=true;
+      var sent = v.split(/[.!?…]+/).filter(function(x){ return x.trim().split(/\s+/).length>=2; }).length;
+      if(c.minSentences && sent < c.minSentences) ok=false;
+      if(c.minWords && v.trim().split(/\s+/).filter(Boolean).length < c.minWords) ok=false;
+      if(c.must) c.must.forEach(function(alts){ if(!M.check(v,{keys:[alts]})) ok=false; });
+      G.cur.freeInfo = {sent:sent};
+      mark(0, ok);
+      return ok;
+    }
+    var r = M.check(vals[0], q); mark(0, r); return r;
+  }
+
+  function submit(){
+    if(G.cur.finished) return;
+    var q=G.qs[G.i], vals=values();
+    var pending = app.querySelectorAll('.field input:not(:disabled), .field textarea:not(:disabled)');
+    var empty = Array.prototype.some.call(pending, function(i){ return !i.value.trim(); });
+    if(empty){ var e=Array.prototype.find.call(pending,function(i){return !i.value.trim();}); e.focus(); var qc=$('#qc'); qc.classList.remove('shake'); void qc.offsetWidth; qc.classList.add('shake'); return; }
+    var ok = evaluate(q, vals);
+    if(ok){ finish(true); return; }
+    G.cur.wrong++;
+    var qc=$('#qc'); qc.classList.remove('shake'); void qc.offsetWidth; qc.classList.add('shake');
+    var hs = hintList(q);
+    var box=$('#hints');
+    if(G.cur.hints < hs.length){
+      var hh=hs[G.cur.hints]; G.cur.hints++;
+      if(q.type==='free' && G.cur.freeInfo && q.check && q.check.minSentences) hh += ' (Şu an yaklaşık '+G.cur.freeInfo.sent+' cümle var.)';
+      box.insertAdjacentHTML('beforeend','<div class="hint"><b>İpucu '+G.cur.hints+'</b>'+hh+'</div>');
+    } else {
+      box.insertAdjacentHTML('beforeend','<div class="hint"><b>Bir daha dene</b>İpuçları bitti. İstersen “Cevabı göster”e basabilirsin.</div>');
+    }
+    if(G.cur.wrong>=2 || G.cur.hints>=hs.length) $('#show').style.display='';
+    var f = app.querySelector('.field input:not(:disabled), .field textarea:not(:disabled)'); if(f){ f.focus(); f.select && f.select(); }
+  }
+
+  function answerText(q){
+    if(q.exp) return q.exp;
+    if(q.type==='parts') return q.parts.map(function(p){ return (p.label||'')+' '+(p.a?p.a[0]:p.num); }).join('<br>');
+    if(q.type==='list') return q.pool.map(function(p){ return p.a?p.a[0]:(p.all||[]).map(function(g){return g[0];}).join(' – '); }).join(', ');
+    return q.a? q.a[0] : String(q.num);
+  }
+  function altText(q){
+    if(q.type || !q.a || q.a.length<2) return '';
+    var uniq=[]; q.a.forEach(function(x){ if(uniq.indexOf(x)<0) uniq.push(x); });
+    if(uniq.length<2) return '';
+    return '<div class="alt">Kabul edilen cevaplar: '+uniq.slice(0,8).map(esc).join(' · ')+'</div>';
+  }
+
+  function finish(ok){
+    var q=G.qs[G.i];
+    G.cur.finished=true;
+    var pts = ok ? Math.max(10 - G.cur.wrong*2, 2) : 0;
+    G.score += pts; $('#pts').textContent=G.score;
+    G.log.push({q:q, ok:ok, pts:pts, wrong:G.cur.wrong});
+    app.querySelectorAll('.field input, .field textarea').forEach(function(i){ i.disabled=true; });
+    var title = ok ? (G.cur.wrong? 'Doğru! (+'+pts+')' : 'Harika, ilk denemede doğru! (+10)') : 'Cevap';
+    var extra = (q.type==='free' && ok) ? '<div class="alt">Bu soru serbest yazım sorusu; değerlendirme ölçütünü aşağıda görebilirsin.</div>' : '';
+    $('#fb').innerHTML = '<div class="fb '+(ok?'ok':'bad')+'"><div class="h">'+title+'</div>'+answerText(q)+altText(q)+extra+'</div>';
+    $('#chk').style.display='none'; $('#pass').style.display='none'; $('#show').style.display='none';
+    var n=$('#next'); n.style.display=''; n.focus({preventScroll:true});
+    setTimeout(function(){ var fb=$('#fb'); if(fb && fb.getBoundingClientRect().bottom>window.innerHeight) fb.scrollIntoView({behavior:'smooth',block:'end'}); },50);
+  }
+  function reveal(){ finish(false); }
+  function next(){ if(!G) return; G.i++; if(G.i>=G.qs.length) results(); else question(); }
+
+  /* ---------- SONUÇ ---------- */
+  function results(){
+    var s=G.s, okc=G.log.filter(function(l){return l.ok;}).length;
+    var pct = Math.round(G.score/maxPts()*100);
+    var best=store.get('best',{}); if(best[s.id]==null || pct>best[s.id]){ best[s.id]=pct; store.set('best',best); }
+    var msg = pct>=85?'Çok iyi gidiyorsun!':pct>=60?'Güzel iş, biraz daha tekrarla mükemmel olur.':pct>=35?'Fena değil, yanlışları gözden geçir.':'Konuyu tekrar edip yeniden dene.';
+    var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
+      '<div class="card result" style="--sc:'+s.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
+      '<div class="stats"><div class="stat"><b>'+okc+'/'+G.qs.length+'</b><span>Doğru</span></div><div class="stat"><b>'+G.score+'</b><span>Puan</span></div>'+
+      '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div></div>'+
+      '<div class="actions" style="justify-content:center"><button class="btn primary" id="again">Tekrar oyna</button><button class="btn" id="home2">Ana menü</button></div>'+
+      '<div class="review">'+G.log.map(function(l,i){
+        var qt = l.q.q.replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,''); qt=trim(qt,140);
+        return '<div class="rv"><div class="st '+(l.ok?'ok':'bad')+'">'+(l.ok?'✓':'✗')+'</div><div><div>'+(i+1)+'. '+esc(qt)+'</div><div class="ans">'+esc(trim(answerText(l.q).replace(/<br\s*\/?>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&'),260))+'</div></div></div>';
+      }).join('')+'</div></div>';
+    app.innerHTML=h; bindTheme();
+    $('#homeBtn').onclick=menu; $('#home2').onclick=menu; $('#again').onclick=function(){ start(s); };
+    window.scrollTo(0,0);
+  }
+
+  function confirmHome(){
+    if(!G || (G.i===0 && !G.cur.wrong && !G.cur.finished)){ menu(); return; }
+    var d=document.createElement('div'); d.className='modal-bg';
+    d.innerHTML='<div class="modal"><h3>Ana menüye dön?</h3><p>Bu oyundaki ilerlemen kaydedilmeyecek.</p><div class="actions"><button class="btn ghost" id="mNo">Vazgeç</button><button class="btn primary" id="mYes">Ana menü</button></div></div>';
+    document.body.appendChild(d);
+    var close=function(){ d.remove(); document.removeEventListener('keydown',kd); };
+    var kd=function(e){ if(e.key==='Escape') close(); };
+    document.addEventListener('keydown',kd);
+    d.onclick=function(e){ if(e.target===d) close(); };
+    $('#mNo',d).onclick=close; $('#mYes',d).onclick=function(){ close(); menu(); };
+    $('#mYes',d).focus();
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && G && !document.querySelector('.modal-bg')) confirmHome();
+    if(e.key==='Enter' && G && G.cur && G.cur.finished && !(document.activeElement && /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) && !document.querySelector('.modal-bg')){ e.preventDefault(); next(); }
+  });
+  menu();
+})();
+
+</script>
+</body>
+</html>
