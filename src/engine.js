@@ -11,6 +11,74 @@
   document.documentElement.setAttribute('data-theme', theme);
   var G = null; // aktif oyun
 
+  /* ---------- OYUNCULAR ---------- */
+  var prof = store.get('profiles', null);
+  if(!prof || !prof.list){
+    prof = {cur:null, list:{}};
+    var oldBest = store.get('best', null);
+    if(oldBest && Object.keys(oldBest).length){ prof.list['Oyuncu 1']={best:oldBest,hist:{}}; prof.cur='Oyuncu 1'; }
+    store.set('profiles', prof);
+  }
+  function saveProf(){ store.set('profiles', prof); }
+  function curP(){ return prof.cur && prof.list[prof.cur] ? prof.list[prof.cur] : null; }
+  function addPlayer(name){
+    name = String(name||'').replace(/\s+/g,' ').trim().slice(0,24);
+    if(!name) return false;
+    if(!prof.list[name]) prof.list[name]={best:{},hist:{}};
+    prof.cur=name; saveProf(); return true;
+  }
+  function pad(n){ return ('0'+n).slice(-2); }
+  function fmtDate(t){ var d=new Date(t); return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'<i class="tm"> '+pad(d.getHours())+':'+pad(d.getMinutes())+'</i>'; }
+  function playerBar(){
+    if(!curP()) return '<div class="card player" id="pcard"><div class="ph"><b>Oyuncu</b><span>Puanların adına kaydedilsin</span></div>'+
+      '<form class="pform" id="pform"><input id="pname" maxlength="24" placeholder="Adını yaz…" autocomplete="off"><button class="btn primary">Kaydet</button></form></div>';
+    return '<div class="card player" id="pcard"><div class="ph"><b>Oyuncu</b><span>Puanlar oyuncuya göre ayrı tutulur</span></div><div class="prow">'+
+      '<select id="psel" aria-label="Oyuncu">'+Object.keys(prof.list).map(function(n){ return '<option'+(n===prof.cur?' selected':'')+'>'+esc(n)+'</option>'; }).join('')+'</select>'+
+      '<button class="btn" id="padd">+ Yeni oyuncu</button><button class="btn ghost" id="pdel">Sil</button></div></div>';
+  }
+  function scoreTable(){
+    var p=curP(); if(!p) return '';
+    var rows = SUBJECTS.map(function(s){
+      var h=p.hist[s.id]||[];
+      return '<tr><th><i style="background:'+s.color+'"></i>'+s.name+'</th>'+[0,1,2].map(function(k){
+        var r=h[k]; if(!r) return '<td class="empty">—</td>';
+        var cl = r.p>=70?'hi':r.p>=40?'mid':'lo';
+        return '<td><b class="'+cl+'">%'+r.p+'</b><small><span>'+r.ok+'/'+r.n+'<em> doğru</em></span><span class="dt"><em> · </em>'+fmtDate(r.t)+'</span></small></td>';
+      }).join('')+'</tr>';
+    }).join('');
+    return '<div class="card scores-card"><h3>'+esc(prof.cur)+' · son 3 tur</h3><div class="tbl-wrap"><table class="scores">'+
+      '<thead><tr><th>Ders</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  }
+  function modal(inner, bind){
+    var d=document.createElement('div'); d.className='modal-bg';
+    d.innerHTML='<div class="modal">'+inner+'</div>';
+    document.body.appendChild(d);
+    var close=function(){ d.remove(); document.removeEventListener('keydown',kd); };
+    var kd=function(e){ if(e.key==='Escape') close(); };
+    document.addEventListener('keydown',kd);
+    d.onclick=function(e){ if(e.target===d) close(); };
+    bind(d, close);
+  }
+  function bindPlayer(){
+    var pf=$('#pform');
+    if(pf) pf.onsubmit=function(e){ e.preventDefault(); if(addPlayer($('#pname').value)) menu(); else $('#pname').focus(); };
+    var ps=$('#psel'); if(ps) ps.onchange=function(){ prof.cur=this.value; saveProf(); menu(); };
+    var pa=$('#padd'); if(pa) pa.onclick=function(){
+      modal('<h3>Yeni oyuncu</h3><form id="mf"><input id="mn" class="minput" maxlength="24" placeholder="Adını yaz…" autocomplete="off"><div class="actions"><button type="button" class="btn ghost" id="mNo">Vazgeç</button><button class="btn primary" id="mYes">Ekle</button></div></form>', function(d, close){
+        $('#mNo',d).onclick=close;
+        $('#mf',d).onsubmit=function(e){ e.preventDefault(); if(addPlayer($('#mn',d).value)){ close(); menu(); } else $('#mn',d).focus(); };
+        $('#mn',d).focus();
+      });
+    };
+    var pd=$('#pdel'); if(pd) pd.onclick=function(){
+      modal('<h3>Oyuncu silinsin mi?</h3><p>“'+esc(prof.cur)+'” ve tüm puanları silinecek.</p><div class="actions"><button class="btn ghost" id="mNo">Vazgeç</button><button class="btn primary" id="mYes">Sil</button></div>', function(d, close){
+        $('#mNo',d).onclick=close;
+        $('#mYes',d).onclick=function(){ delete prof.list[prof.cur]; prof.cur=Object.keys(prof.list)[0]||null; saveProf(); close(); menu(); };
+        $('#mNo',d).focus();
+      });
+    };
+  }
+
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function trim(x,n){ return x.length>n ? x.slice(0,n-1)+'…' : x; }
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
@@ -20,10 +88,10 @@
   /* ---------- ANA MENÜ ---------- */
   function menu(){
     G = null;
-    var best = store.get('best', {});
+    var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<section class="hero"><h1>Hangi dersle başlamak istersin?</h1><p>Cevaplarını kendi kelimelerinle yaz. Küçük yazım hataları sorun değil, her yanlışta bir ipucu açılır.</p></section>'+
-      '<div class="grid">';
+      playerBar()+'<div class="grid">';
     SUBJECTS.forEach(function(s,i){
       var b = best[s.id];
       h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+'">'+
@@ -31,13 +99,17 @@
         '<div class="tag">'+s.desc+'</div>'+
         '<div class="meta"><span>'+s.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
     });
-    h += '</div><div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
+    h += '</div>'+scoreTable()+'<div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
       [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
       '</div><label class="chk"><input type="checkbox" id="shf" '+(opts.shuffle?'checked':'')+'> Soruları karıştır</label></div>'+
       '<div class="foot">Enter ile cevap gönderilir · Sorulardayken üstteki “Ana Menü” tuşuyla çıkabilirsin</div>';
     app.innerHTML = h;
     bindTheme();
-    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ start(SUBJECTS[+b.dataset.i]); }; });
+    bindPlayer();
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
+      if(!curP()){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); $('#pname').focus({preventScroll:true}); return; }
+      start(SUBJECTS[+b.dataset.i]);
+    }; });
     app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
     $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
     window.scrollTo(0,0);
@@ -237,7 +309,12 @@
   function results(){
     var s=G.s, okc=G.log.filter(function(l){return l.ok;}).length;
     var pct = Math.round(G.score/maxPts()*100);
-    var best=store.get('best',{}); if(best[s.id]==null || pct>best[s.id]){ best[s.id]=pct; store.set('best',best); }
+    var p=curP();
+    if(p){
+      if(p.best[s.id]==null || pct>p.best[s.id]) p.best[s.id]=pct;
+      p.hist[s.id]=[{p:pct, s:G.score, ok:okc, n:G.qs.length, t:Date.now()}].concat(p.hist[s.id]||[]).slice(0,3);
+      saveProf();
+    }
     var msg = pct>=85?'Çok iyi gidiyorsun!':pct>=60?'Güzel iş, biraz daha tekrarla mükemmel olur.':pct>=35?'Fena değil, yanlışları gözden geçir.':'Konuyu tekrar edip yeniden dene.';
     var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
       '<div class="card result" style="--sc:'+s.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
