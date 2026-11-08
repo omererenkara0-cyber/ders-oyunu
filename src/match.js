@@ -13,18 +13,18 @@ var M = (function(){
     if(a===b) return 0;
     var la=a.length, lb=b.length;
     if(Math.abs(la-lb)>max) return max+1;
-    var prev=new Array(lb+1), cur=new Array(lb+1), i, j;
+    var pp=new Array(lb+1), prev=new Array(lb+1), cur=new Array(lb+1), i, j;
     for(j=0;j<=lb;j++) prev[j]=j;
     for(i=1;i<=la;i++){
       cur[0]=i; var best=cur[0];
       for(j=1;j<=lb;j++){
         var c = a.charCodeAt(i-1)===b.charCodeAt(j-1)?0:1;
         cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+c);
-        if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) cur[j]=Math.min(cur[j],prev[j-2>=0?j-2:0]+c);
+        if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) cur[j]=Math.min(cur[j],pp[j-2]+1);
         if(cur[j]<best) best=cur[j];
       }
       if(best>max) return max+1;
-      var t=prev; prev=cur; cur=t;
+      var t=pp; pp=prev; prev=cur; cur=t;
     }
     return prev[lb];
   }
