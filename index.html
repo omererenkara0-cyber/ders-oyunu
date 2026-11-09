@@ -1212,8 +1212,9 @@ var FIZZ = (function(){
     return W(320,212,b);
   }
   function shmGraph(){
-    var pts=[]; for(var i=0;i<=48;i++){ var x=i/48*8; pts.push([x, 10+10*Math.sin(x/8*2*Math.PI)]); }
-    return graph(pts, {xmax:8, ymax:22, xl:'t (s)', yl:'x (cm)', xTicks:[2,4,6,8], yTicks:[10,20], dots:false, w:360, h:216, extra:t(60,24,'x–t grafiği',{a:'start',s:12,c:'mut'})});
+    var A=10, pts=[]; for(var i=0;i<=48;i++){ var x=i/48*8; pts.push([x, A*Math.sin(x/8*2*Math.PI)]); }
+    return graph(pts, {xmax:8, ymax:14, x0:48, y0:112, yh:80, xl:'t (s)', yl:'x (cm)', xTicks:[2,4,6,8], yTicks:[-10,10], dots:false, w:360, h:220,
+      extra:l(48,112,48,182,'ink')+t(64,26,'x–t grafiği',{a:'start',s:12,c:'mut'})});
   }
   function loopTop(){
     var cx=180, cy=128, R=72;
