@@ -155,6 +155,48 @@ svg .k3{stroke:var(--k3);fill:none;stroke-width:2.2} svg .k4{stroke:var(--k4);fi
 svg .t1{fill:var(--k1)} svg .t2{fill:var(--k2)} svg .t3{fill:var(--k3)} svg .t4{fill:var(--k4)} svg .t5{fill:var(--k5)}
 svg .mk{fill:var(--ink)} svg .mka{fill:var(--accent2)} svg .mk4{fill:var(--k4)} svg .mk1{fill:var(--k1)}
 svg .qb{fill:var(--accent2)} svg .qbt{fill:var(--bg);font-weight:800}
+
+/* özel kartlar (hata defteri / karışık sınav) */
+.subject.special .ico{background:color-mix(in srgb,var(--sc) 20%,transparent);color:var(--sc);font-size:20px;font-weight:700}
+.subject.special{border-style:dashed}
+
+/* konu seçimi */
+.pick{padding:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface2);border-radius:999px;padding:7px 14px;font-size:14px;color:var(--muted);transition:.15s}
+.chip:hover{border-color:var(--muted);color:var(--ink)}
+.chip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);font-weight:600}
+.pick-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.pick-foot span{color:var(--muted);font-size:14px}
+
+/* süre sayacı */
+.pill.timer{font-variant-numeric:tabular-nums;border-color:color-mix(in srgb,var(--accent2) 55%,transparent)}
+.pill.timer b{color:var(--accent2)}
+.pill.timer.low{border-color:var(--bad);animation:pulse 1s infinite}
+.pill.timer.low b{color:var(--bad)}
+
+/* konu analizi */
+.analysis{margin:20px 0 4px;text-align:left}
+.analysis h3{margin:0 0 2px;font-size:16px}
+.analysis .an-sub{margin:0 0 12px;color:var(--muted);font-size:13px}
+.an-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:14px}
+.an-name{flex:0 0 42%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-bar{flex:1;height:9px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.an-bar i{display:block;height:100%;border-radius:6px;transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.an-bar i.hi{background:var(--ok)} .an-bar i.mid{background:var(--accent2)} .an-bar i.lo{background:var(--bad)}
+.an-pct{flex:0 0 44px;text-align:right;font-weight:650;font-variant-numeric:tabular-nums}
+.an-pct.hi{color:var(--ok)} .an-pct.mid{color:var(--accent2)} .an-pct.lo{color:var(--bad)}
+
+/* animasyonlar */
+.subject{animation:cardIn .4s cubic-bezier(.2,.7,.3,1) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#pts.bump{display:inline-block;animation:bump .3s}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35);color:var(--accent2)}100%{transform:scale(1)}}
+.fb.ok{animation:pop .3s cubic-bezier(.2,.7,.3,1)}
+@keyframes pop{0%{transform:scale(.97)}60%{transform:scale(1.01)}100%{transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.opts .sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){
   table.scores{min-width:0;font-size:13px} .scores th,.scores td{padding:8px 5px} .scores tbody th{white-space:normal} .scores td small span{display:block} .scores td small em,.scores .tm{display:none} .scores td b{font-size:14px} .scores tbody th i{margin-right:5px}
   .hero h1{font-size:25px}
