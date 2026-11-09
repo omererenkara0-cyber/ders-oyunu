@@ -89,15 +89,29 @@ const din=g1.find(g=>g.s.id==='din'); WTEST('din havuzu sadece din', din && din.
 const bio=g1.find(g=>g.s.id==='biyoloji'); WTEST('biyoloji havuzu sadece biyoloji', bio && bio.pool.every(x=>x.s.id==='biyoloji'));
 // 2) weakTopicsFor ders dışı anahtarları yok sayar
 WTEST('weakTopicsFor din 1 konu', WK.weakTopicsFor(ts1,'din').length===1);
-WTEST('weakTopicsFor fizik yok (n=3 ama 1 konu, ok=0)', WK.weakTopicsFor(ts1,'fizik').length===1);
+WTEST('weakTopicsFor fizik 1 konu', WK.weakTopicsFor(ts1,'fizik').length===1);
 WTEST('weakTopicsFor edebiyat sadece Genel', WK.weakTopicsFor(ts1,'edebiyat')[0].topic==='Genel');
 // 3) Aynı adlı konu farklı derslerde bağımsız puanlanır
-const ts2={"biyoloji::Ortak":{ok:0,n:5},"fizik::Ortak":{ok:5,n:5}};
+const ts2={"biyoloji::Ortak":{ok:0,n:5,w:5},"fizik::Ortak":{ok:5,n:5,w:0}};
 WTEST('biyoloji::Ortak %0', WK.weakTopicsFor(ts2,'biyoloji')[0].pct===0);
-WTEST('fizik::Ortak %100 (zayıf sayılmaz, yine döner)', WK.weakTopicsFor(ts2,'fizik')[0].pct===100);
-// 4) min-N eşiği
-WTEST('n<2 yok sayılır', WK.weakTopicsFor({"din::X":{ok:0,n:1}},'din').length===0);
-// 5) Migrasyon: tek sahip taşınır, çok sahip silinir, :: olan korunur
+// 4) Çözülmemiş hatası olmayan konu (yani %100) zayıf listesine girmez
+WTEST('fizik::Ortak %100 zayıf sayılmaz (boş liste)', WK.weakTopicsFor(ts2,'fizik').length===0);
+// 5) Tek yanlış bile konuyu zayıf yapar (min-N eşiği yok)
+WTEST('tek yanlış zayıf yapar', WK.weakTopicsFor({"din::X":{ok:0,n:1,w:1}},'din').length===1);
+// 6) openErrors eski (w'siz) kayıtları ok/n'den türetir
+WTEST('openErrors eski kayıt', WK.openErrors({ok:1,n:3})===2);
+WTEST('openErrors yeni kayıt', WK.openErrors({ok:1,n:3,w:0})===0);
+// 7) recordResult: yanlış hata açar, doğru hatayı kapatır; hepsi kapanınca liste boşalır
+const rec=WK.recordResult({},false); WTEST('yanlış sonrası w=1', rec.w===1 && WK.weakTopicsFor({'din::K':rec},'din').length===1);
+WK.recordResult(rec,true); WTEST('doğru sonrası w=0', rec.w===0 && WK.weakTopicsFor({'din::K':rec},'din').length===0);
+WK.recordResult(rec,true); WTEST('w sıfırın altına inmez', rec.w===0);
+WK.recordResult(rec,false); WTEST('yeni yanlış yeniden açar', rec.w===1 && WK.weakTopicsFor({'din::K':rec},'din').length===1);
+// 8) Zayıf konular tamamlanınca ders grubu menüden kaybolur (0 konu)
+const tsC={"inkilap::Genel":{ok:10,n:10,w:0}};
+WTEST('tamamlanan konu grubu yok', WK.weakBySubject(tsC,ctx.SUBJECTS,allQ).length===0);
+const tsD={"inkilap::Genel":{ok:0,n:10,w:2}};
+WTEST('açık hata olan konu grubu var', WK.weakBySubject(tsD,ctx.SUBJECTS,allQ).length===1);
+// 9) Migrasyon: tek sahip taşınır, çok sahip silinir, :: olan korunur
 const ts3={"Nükleik asitlerin keşfi":{ok:0,n:2},"Hareket":{ok:1,n:2},"Genel":{ok:2,n:2},"Düzgün çembersel hareket":{ok:1,n:2},"fizik::Hareket":{ok:9,n:9}};
 WK.migrateTstats(ts3,ctx.SUBJECTS);
 WTEST('tek sahip biyolojiye taşındı', !!ts3['biyoloji::Nükleik asitlerin keşfi'] && !ts3['Nükleik asitlerin keşfi']);

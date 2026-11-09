@@ -1,23 +1,36 @@
-/* Ders bazlı zayıf konu analizi — saf yardımcılar (DOM'suz, test edilebilir). */
+/* Ders bazlı zayıf konu analizi — saf yardımcılar (DOM'suz, test edilebilir).
+   Bir konu, çözülmemiş hatası (w) olduğu sürece "zayıf" sayılır; doğru cevap
+   bir hatayı kapatır ve konu tamamlanınca listeden düşer. */
 (function(){
-  var WEAK_MIN_N = 2, WEAK_MAX_TOPICS = 4;
+  var WEAK_MAX_TOPICS = 4;
 
   function tkey(sid, topic){ return sid+'::'+(topic||'Genel'); }
 
   function questionsOf(s){ return s.levels ? s.levels.reduce(function(a,lv){ return a.concat(lv.questions); },[]) : s.questions; }
 
+  /* Çözülmemiş hata sayısı. Eski (w alanı olmayan) kayıtlarda ok/n'den türetilir. */
+  function openErrors(t){ return t.w==null ? Math.max((t.n||0)-(t.ok||0),0) : t.w; }
+
+  /* Bir cevabı kayda işler: yanlış hata açar, doğru bir hatayı kapatır. */
+  function recordResult(rec, ok){
+    rec.w = openErrors(rec);
+    rec.n = (rec.n||0)+1;
+    if(ok) rec.ok = (rec.ok||0)+1;
+    rec.w = Math.max(0, rec.w + (ok?-1:1));
+    return rec;
+  }
+
   /* Tek bir dersin zayıf konuları. Anahtar ders kapsamlı olduğu için dersler karışmaz. */
-  function weakTopicsFor(tstats, sid, minN){
-    minN = minN==null ? WEAK_MIN_N : minN;
+  function weakTopicsFor(tstats, sid){
     var ts=tstats||{}, out=[];
     Object.keys(ts).forEach(function(k){
       if(k.indexOf(sid+'::')!==0) return;
-      var t=ts[k]; if(t.n<minN) return;
-      out.push({topic:k.slice(sid.length+2), ok:t.ok, n:t.n, pct:Math.round(t.ok/t.n*100), last:t.last||0});
+      var t=ts[k], w=openErrors(t); if(w<=0) return;
+      out.push({topic:k.slice(sid.length+2), ok:t.ok||0, n:t.n||0, w:w,
+        pct:Math.round((t.ok||0)/(t.n||1)*100), last:t.last||0});
     });
-    out.sort(function(a,b){ return a.pct-b.pct || b.n-a.n || a.last-b.last; });
-    var weak = out.filter(function(x){ return x.pct<100; });
-    return weak.length ? weak.slice(0,WEAK_MAX_TOPICS) : out.slice(0,WEAK_MAX_TOPICS);
+    out.sort(function(a,b){ return b.w-a.w || a.pct-b.pct || b.n-a.n || a.last-b.last; });
+    return out.slice(0,WEAK_MAX_TOPICS);
   }
 
   /* Zayıf konuları ders ders gruplar. Her grupta o dersin zayıf konuları ve soru havuzu olur. */
@@ -27,7 +40,7 @@
       var names = weak.map(function(w){ return w.topic; });
       var pool = allQ.filter(function(x){ return x.s===s && names.indexOf(x.q.topic||'Genel')>=0; });
       if(!pool.length) return null;
-      return {s:s, weak:weak, pool:pool};
+      return {s:s, weak:weak, open:weak.reduce(function(a,w){ return a+w.w; },0), pool:pool};
     }).filter(Boolean);
   }
 
@@ -49,6 +62,7 @@
     return changed;
   }
 
-  window.WEAK = { tkey:tkey, weakTopicsFor:weakTopicsFor, weakBySubject:weakBySubject, migrateTstats:migrateTstats,
-    MIN_N:WEAK_MIN_N, MAX_TOPICS:WEAK_MAX_TOPICS };
+  window.WEAK = { tkey:tkey, openErrors:openErrors, recordResult:recordResult,
+    weakTopicsFor:weakTopicsFor, weakBySubject:weakBySubject, migrateTstats:migrateTstats,
+    MAX_TOPICS:WEAK_MAX_TOPICS };
 })();
