@@ -1487,7 +1487,9 @@ window.SUBJECTS = SUBJECTS;
     get: function(k,d){ try{ var v=localStorage.getItem('dersoyunu.'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
     set: function(k,v){ try{ localStorage.setItem('dersoyunu.'+k, JSON.stringify(v)); }catch(e){} }
   };
-  var opts = store.get('opts', {count:10, shuffle:true, mixedCount:20, mixedMin:20});
+  var opts = store.get('opts', {count:10, shuffle:true, mixedCount:20, mixedMin:10});
+  if(store.get('optsV', 0) < 2 && opts.mixedMin===20){ opts.mixedMin=10; store.set('opts',opts); }
+  store.set('optsV', 2);
   var theme = store.get('theme', 'dark');
   document.documentElement.setAttribute('data-theme', theme);
   var G = null; // aktif oyun
