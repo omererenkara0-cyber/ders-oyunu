@@ -1197,9 +1197,86 @@ var FIZZ = (function(){
     b+=info(['Sürtünmesiz ray, çember yarıçapı R'],8,20);
     return W(380,222,b);
   }
+  function pendulum(){
+    var ox=150, oy=30, L=158, ang=0.55;
+    var bx=ox+L*Math.sin(ang), by=oy+L*Math.cos(ang);
+    var b=l(12,oy,300,oy,'thin');
+    b+=p('M'+(ox-12)+','+oy+' L'+(ox+12)+','+oy+' L'+ox+','+(oy-13)+' Z','f3');
+    b+=l(ox,oy,bx,by,'ink');
+    b+=dot(ox,oy,4);
+    b+=l(ox,oy,ox,oy+L,'dash');
+    b+=p('M'+ox+','+(oy+48)+' A48,48 0 0 1 '+(ox+48*Math.sin(ang)).toFixed(1)+','+(oy+48*Math.cos(ang)).toFixed(1),'ink');
+    b+=t(ox+16,oy+66,'θ',{s:13,i:1});
+    b+=t((ox+bx)/2-15,(oy+by)/2,'L',{s:13,i:1});
+    b+=c(bx,by,13,'f4')+t(bx,by,'m',{s:12,b:1});
+    return W(320,212,b);
+  }
+  function shmGraph(){
+    var A=10, pts=[]; for(var i=0;i<=48;i++){ var x=i/48*8; pts.push([x, A*Math.sin(x/8*2*Math.PI)]); }
+    return graph(pts, {xmax:8, ymax:14, x0:48, y0:112, yh:80, xl:'t (s)', yl:'x (cm)', xTicks:[2,4,6,8], yTicks:[-10,10], dots:false, w:360, h:220,
+      extra:l(48,112,48,182,'ink')+t(64,26,'x–t grafiği',{a:'start',s:12,c:'mut'})});
+  }
+  function loopTop(){
+    var cx=180, cy=128, R=72;
+    var b=c(cx,cy,R,'ink')+dot(cx,cy,3.5)+t(cx-13,cy+15,'O',{s:12,i:1});
+    b+=l(cx,cy,cx+R,cy,'dash')+t(cx+R/2,cy-10,'r',{s:12,i:1});
+    var bx=cx, by=cy-R;
+    b+=c(bx,by,9,'f4')+t(bx,by,'m',{s:11,b:1});
+    b+=l(bx,by,bx+56,by,'k4','ar4')+t(bx+62,by,'v',{a:'start',i:1,b:1});
+    b+=l(bx,by,bx,by+48,'k1','ar1')+t(bx+7,by+26,'mg',{a:'start',s:12});
+    b+=t(cx,cy+R+24,'En üst nokta (raya değme sınırı)',{s:11.5,c:'mut'});
+    return W(370,240,b);
+  }
+  function spinningDisk(){
+    var cx=150, cy=118, R=68;
+    var b=c(cx,cy,R,'f3')+c(cx,cy,R*0.16,'f1')+dot(cx,cy);
+    b+=p('M'+(cx+34)+','+(cy-R-4)+' A76,76 0 0 1 '+(cx+R+4)+','+(cy-34),'ink','ar');
+    b+=t(cx+R+26,cy-R+8,'ω',{i:1,b:1,s:14});
+    b+=l(cx,cy,cx+R,cy,'dash')+t(cx+R/2,cy-10,'r',{s:12,i:1});
+    b+=t(cx,cy+R+24,'M kütleli, r yarıçaplı disk',{s:12,c:'mut'});
+    return W(330,236,b);
+  }
+  function satelliteHeight(){
+    var cx=100, cy=160, R=62;
+    var b=c(cx,cy,R,'f3')+t(cx,cy,'Dünya',{s:12,b:1,c:'mut'});
+    b+=l(cx,cy,cx+R,cy,'ink')+t(cx+R/2,cy-10,'R',{s:12,i:1});
+    var by=cy-R-66, bx=cx;
+    b+=l(cx,cy-R,cx,by,'dash')+t(cx-8,(cy-R+by)/2,'h',{a:'end',s:12,i:1});
+    b+=l(cx,cy,cx,by,'thin');
+    b+=c(bx,by,8,'f4')+t(bx+14,by,'uydu',{a:'start',s:12});
+    return W(300,240,b);
+  }
+  function springEnergy(){
+    var b=l(30,70,54,70,'ink');
+    for(var i=0;i<7;i++){ var x=54+i*26; b+=l(x,70,x+13,52,'ink')+l(x+13,52,x+26,70,'ink'); }
+    b+=l(236,70,290,70,'ink')+r(290,56,34,28,'f4',4)+t(307,70,'m',{s:12});
+    b+=l(30,70,30,164,'dash')+l(290,70,290,164,'dash');
+    b+=l(30,140,236,140,'k1','ar1')+t(133,128,'k = 200 N/m',{s:12,i:1});
+    b+=info(['x = 0,1 m sıkıştırma'],8,22);
+    return W(350,176,b);
+  }
+  function massSpring(){
+    var b=l(30,70,54,70,'ink');
+    for(var i=0;i<7;i++){ var x=54+i*26; b+=l(x,70,x+13,52,'ink')+l(x+13,52,x+26,70,'ink'); }
+    b+=l(236,70,290,70,'ink')+r(290,56,34,28,'f4',4)+t(307,70,'m',{s:12});
+    b+=l(30,70,30,150,'dash')+l(290,70,290,150,'dash');
+    b+=t(133,116,'k = 2 N/m',{s:12,i:1});
+    b+=info(['m = 0,5 kg  ·  sürtünmesiz yatay düzlem'],8,22);
+    return W(350,166,b);
+  }
+  function rollingSphere(){
+    var b=l(20,196,340,196,'ink')+c(170,126,70,'f1')+dot(170,126);
+    b+=l(170,126,232,126,'k4','ar4')+t(242,126,'v',{a:'start',i:1,b:1});
+    b+=l(170,56,170,126,'dash')+t(180,90,'r',{s:12,i:1});
+    b+=p('M214,72 A70,70 0 0 1 240,102','ink','ar');
+    b+=t(170,222,'Kaymadan yuvarlanan küre  (I = ⅖mr²)',{s:12,c:'mut'});
+    return W(360,236,b);
+  }
   return {compoundGears:compoundGears, conical:conical, rollingKE:rollingKE, rodMasses:rodMasses, keplerRatio:keplerRatio, escape:escape,
     vtGraph:vtGraph, massVolGraph:massVolGraph, pressureBlocks:pressureBlocks, mixture:mixture, river:river, spring:spring,
-    collision:collision, dropHeight:dropHeight, minLoopHeight:minLoopHeight};
+    collision:collision, dropHeight:dropHeight, minLoopHeight:minLoopHeight,
+    pendulum:pendulum, shmGraph:shmGraph, loopTop:loopTop, spinningDisk:spinningDisk, satelliteHeight:satelliteHeight,
+    springEnergy:springEnergy, massSpring:massSpring, rollingSphere:rollingSphere};
 })();
 
 var Q_FIZIK_ZOR = [
@@ -1255,7 +1332,47 @@ var Q_FIZIK_ZOR = [
   num:30, hints:['En alt noktada T − mg = m·v²/r.','T = m·g + m·v²/r'], exp:'T = 0,5·10 + 0,5·25/0,5 = 5 + 25 = <b>30 N</b>' },
 
 { topic:'Çembersel hareket uygulamaları', q:'Sürtünme katsayısı 0,4 olan yatay yolda 25 m yarıçaplı virajı kaymadan dönebilecek en büyük hız kaç m/s’dir? (g = 10 m/s²)',
-  num:10, hints:['Merkezcil kuvveti sürtünme sağlar: μ·m·g = m·v²/r.','v = √(μ·g·r)'], exp:'v = √(0,4·10·25) = √100 = <b>10 m/s</b>' }
+  num:10, hints:['Merkezcil kuvveti sürtünme sağlar: μ·m·g = m·v²/r.','v = √(μ·g·r)'], exp:'v = √(0,4·10·25) = √100 = <b>10 m/s</b>' },
+
+/* ---- 12. sınıf · 1. yazılı: basit harmonik hareket ---- */
+{ topic:'Basit harmonik hareket · sarkaç', svg:FIZZ.pendulum(), q:'Şekildeki basit sarkacın ip uzunluğu 1 m’dir. Küçük salınımlar için sarkacın periyodu yaklaşık kaç saniyedir? (g = 10 m/s², π ≈ 3,14)',
+  num:2, hints:['Basit sarkacın periyodu: T = 2π·√(L/g).','√(1/10) ≈ 0,316'], exp:'T = 2π·√(L/g) = 2·3,14·√0,1 ≈ <b>2 s</b>' },
+
+{ topic:'Basit harmonik hareket · kütle–yay', svg:FIZZ.massSpring(), q:'Şekildeki sürtünmesiz yatay düzlemde yay sabiti 2 N/m olan yaya 0,5 kg kütle bağlanarak salındırılıyor. Sistemin periyodu kaç saniyedir? (π ≈ 3,14)',
+  num:3.14, hints:['Kütle–yay periyodu: T = 2π·√(m/k).','√(0,5/2) = √0,25 = 0,5'], exp:'T = 2π·√(m/k) = 2π·√(0,5/2) = 2π·0,5 = <b>π ≈ 3,14 s</b>' },
+
+{ topic:'Basit harmonik hareket · grafik', svg:FIZZ.shmGraph(), q:'Basit harmonik hareket yapan bir cismin uzunluk–zaman (x–t) grafiği şekilde verilmiştir. Grafikten yararlanarak hareketin genliğini (cm), periyodunu (s) ve frekansını (Hz) bulunuz.',
+  type:'parts', parts:[
+    {label:'Genlik (cm):', num:10},
+    {label:'Periyot (s):', num:8},
+    {label:'Frekans (Hz):', num:0.125}], hints:['Genlik = denge konumundan en büyük uzaklık.','Bir tam salınımın süresi periyottur; grafikte tepe noktaları arası 8 s.','Frekans f = 1/T'], exp:'Genlik <b>10 cm</b> · Periyot <b>8 s</b> · Frekans f = 1/8 = <b>0,125 Hz</b>' },
+
+{ topic:'Basit harmonik hareket · enerji', svg:FIZZ.springEnergy(), q:'Yay sabiti 200 N/m olan yay 0,1 m sıkıştırılarak önündeki 0,5 kg kütleli cisim serbest bırakılıyor. Sürtünmeler önemsizse cisim yaydan ayrıldığı anda hızı kaç m/s’dir?',
+  num:2, hints:['Yaydaki esneklik potansiyeli kinetik enerjiye dönüşür: ½·k·x² = ½·m·v²','v = √(k·x²/m)'], exp:'v = √(200·0,01/0,5) = √4 = <b>2 m/s</b>' },
+
+/* ---- 12. sınıf · 1. yazılı: düşey düzlemde çembersel hareket ---- */
+{ topic:'Düşey düzlemde çembersel hareket', svg:FIZZ.loopTop(), q:'Bir cisim, yarıçapı 0,9 m olan sürtünmesiz düşey çember şeklindeki rayın en üst noktasından raya değmeden (raydan ayrılmadan) geçebilmektedir. Cismin en üst noktadaki hızı en az kaç m/s’dir? (g = 10 m/s²)',
+  num:3, hints:['En üst noktada ray tepki kuvveti sıfır olurken yalnızca ağırlık merkezcil kuvveti sağlar.','m·g = m·v²/r → v = √(g·r)'], exp:'v = √(g·r) = √(10·0,9) = √9 = <b>3 m/s</b>' },
+
+{ topic:'Düşey düzlemde çembersel hareket', q:'Yarıçapı 0,5 m olan sürtünmesiz düşey çembersel rayın en alt noktasından geçen cismin, çemberi tam olarak tamamlayabilmesi için bu noktadaki hızı en az kaç m/s olmalıdır? (g = 10 m/s²)',
+  num:5, hints:['En üst noktada en az v_üst = √(g·r) olmalıdır.','Enerji korunumu: ½·v_alt² = ½·v_üst² + g·(2r) → v_alt = √(5·g·r)'], exp:'v_alt = √(5·g·r) = √(5·10·0,5) = √25 = <b>5 m/s</b>' },
+
+/* ---- 12. sınıf · 1. yazılı: dönme ve açısal momentum ---- */
+{ topic:'Açısal momentum · dönen disk', svg:FIZZ.spinningDisk(), q:'Kütlesi 4 kg, yarıçapı 0,5 m olan düzgün türdeş bir disk (I = ½·M·r²) kendi ekseni çevresinde 6 rad/s açısal hızla dönmektedir. Diskin açısal momentumu kaç kg·m²/s’dir?',
+  num:3, hints:['Eylemsizlik momenti: I = ½·M·r²','Açısal momentum: L = I·ω'], exp:'I = ½·4·0,5² = 0,5 kg·m² → L = I·ω = 0,5·6 = <b>3 kg·m²/s</b>' },
+
+{ topic:'Dönerek öteleme · enerji', svg:FIZZ.rollingSphere(), q:'Bir küre (I = ⅖·m·r²) yatay zeminde kaymadan yuvarlanmaktadır. Kürenin toplam kinetik enerjisi, yalnızca öteleme kinetik enerjisinin kaç katıdır?',
+  num:1.4, a:['7/5','1,4','1.4'], hints:['Toplam KE = ½·m·v² + ½·I·ω²','Kaymadan yuvarlanma: v = ω·r → ½·I·ω² = ½·(⅖·m·r²)·(v/r)² = ⅕·m·v²'], exp:'E_toplam = ½mv² + ⅕mv² = (7/10)mv² → oran = (7/10)/(5/10) = <b>7/5</b>' },
+
+/* ---- 12. sınıf · 1. yazılı: kütle çekimi ve Kepler ---- */
+{ topic:'Kütle çekimi ve Kepler · uydu', svg:FIZZ.satelliteHeight(), q:'Dünya yüzeyinden yüksekliği, Dünya’nın yarıçapı R kadar olan (yani merkezden 2R uzaklıkta) dairesel yörüngede dolanan bir uydunun periyodunun, yüzeye çok yakın dolanan bir uydunun periyoduna oranı kaçtır?',
+  num:2.83, a:['2√2','2,83','2.83','kök 8','√8'], hints:['Kepler’in 3. yasası: T² ∝ r³ → T ∝ r^{3/2}','Yörünge yarıçapı 2 katına çıkıyor: (2)^(3/2)'], exp:'T/T₀ = (2R/R)^{3/2} = 2^{3/2} = 2√2 ≈ <b>2,83</b>' },
+
+/* ---- 12. sınıf · 1. yazılı: düzgün çembersel hareket ---- */
+{ topic:'Düzgün çembersel hareket', q:'Yarıçapı 2 m olan çembersel yörüngede 4 m/s sabit süratle düzgün çembersel hareket yapan bir cismin açısal hızını (rad/s) ve merkezcil ivmesini (m/s²) bulunuz.',
+  type:'parts', parts:[
+    {label:'Açısal hız (rad/s):', num:2},
+    {label:'Merkezcil ivme (m/s²):', num:8}], hints:['Açısal hız: ω = v/r','Merkezcil ivme: a = v²/r'], exp:'ω = v/r = 4/2 = <b>2 rad/s</b> · a = v²/r = 16/2 = <b>8 m/s²</b>' }
 ];
 
 var Q_INKILAP = [
@@ -1487,7 +1604,9 @@ window.SUBJECTS = SUBJECTS;
     get: function(k,d){ try{ var v=localStorage.getItem('dersoyunu.'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
     set: function(k,v){ try{ localStorage.setItem('dersoyunu.'+k, JSON.stringify(v)); }catch(e){} }
   };
-  var opts = store.get('opts', {count:10, shuffle:true, mixedCount:20, mixedMin:20});
+  var opts = store.get('opts', {count:10, shuffle:true, mixedCount:20, mixedMin:10});
+  if(store.get('optsV', 0) < 2 && opts.mixedMin===20){ opts.mixedMin=10; store.set('opts',opts); }
+  store.set('optsV', 2);
   var theme = store.get('theme', 'dark');
   document.documentElement.setAttribute('data-theme', theme);
   var G = null; // aktif oyun
