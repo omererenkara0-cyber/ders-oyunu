@@ -603,6 +603,117 @@ var Q_BIYOLOJI = [
   a:['Ribozom','ribozomlar'], not:['lizozom','çekirdek','mitokondri'], hints:['Zarsız, çok küçük bir organeldir; rRNA ve proteinden oluşur.','“R” ile başlar.'], exp:'<b>Ribozom</b>' }
 ];
 
+/* Zor seviye: nükleik asitler · replikasyon · protein sentezi (çizimli, açık uçlu, yazı toleranslı) */
+var BIOZ = (function(){
+  var t=S.t, l=S.l, c=S.c, r=S.r, p=S.p, q=S.q, W=S.wrap;
+  function seq(){
+    var b='', s=['A','T','G','C','C','A'];
+    b+=t(16,18,'KALIP DNA (soldan sağa okunur)',{a:'start',s:12,c:'mut'});
+    for(var i=0;i<6;i++) b+=r(24+58*i,28,44,28,'f1',6)+t(46+58*i,43,s[i],{b:1});
+    b+=t(16,84,'Sentezlenen mRNA',{a:'start',s:12,c:'mut'});
+    for(var j=0;j<6;j++) b+=r(24+58*j,94,44,28,'f5',6)+q(46+58*j,108,'?');
+    return W(380,132,b);
+  }
+  function gel(){
+    var b='';
+    b+=t(16,18,'Meselson–Stahl deneyi · ¹⁴N ortamında 1. eşlenme',{a:'start',s:12,c:'mut'});
+    b+='<rect x="40" y="30" width="80" height="150" rx="8" class="f5"/>';
+    b+=l(80,44,80,150,'thin');
+    [['ağır (¹⁵N)',58],['ara / hibrit',105],['hafif (¹⁴N)',150]].forEach(function(o){
+      b+=l(28,o[1],44,o[1],'dash')+t(130,o[1],o[0],{a:'start',s:12,c:'mut'});
+    });
+    b+=t(80,196,'deney tüpü',{s:11,c:'mut'});
+    b+=t(16,216,'1. eşlenme sonunda kaç bant oluşur, hangi yoğunlukta bulunur?',{a:'start',s:12.5,c:'mut'});
+    return W(420,228,b);
+  }
+  function cen(){
+    var b='';
+    b+=l(30,110,470,110,'dash')+t(466,100,'metafaz plak',{a:'end',s:11,c:'mut'});
+    for(var i=0;i<6;i++){ var x=78+62*i;
+      b+=l(x-13,50,x+13,96,'k1')+l(x+13,50,x-13,96,'k4');
+      b+=c(x,73,5,'f3');
+    }
+    b+=t(16,26,'2n = 6 kromozomlu hücre · mitoz metafazı',{a:'start',s:12,c:'mut'});
+    return W(480,126,b);
+  }
+  function kod(){
+    var b='', cod=['AUG','UAC','GGA','UAA'];
+    b+=t(16,18,'Ribozomda okunan kodonlar (soldan sağa)',{a:'start',s:12,c:'mut'});
+    for(var i=0;i<4;i++) b+=r(24+96*i,30,80,30,'f1',6)+t(64+96*i,45,cod[i],{b:1});
+    b+=t(16,92,'tRNA antikodonları (kodonların karşısına yaz)',{a:'start',s:12,c:'mut'});
+    for(var j=0;j<4;j++) b+=r(24+96*j,102,80,30,'f5',6)+t(64+96*j,117,'?',{b:1});
+    b+=t(16,156,'Okunan kodon sayısı 4’tür; polipeptitte kaç amino asit bulunur?',{a:'start',s:12,c:'mut'});
+    return W(420,170,b);
+  }
+  return {seq:seq, gel:gel, cen:cen, kod:kod};
+})();
+
+var Q_BIYOLOJI_ZOR = [
+{ topic:'Zor · Transkripsiyon', svg:BIOZ.seq(), q:'Şekildeki kalıp DNA zincirinden sentezlenen mRNA’nın baz dizilimini yazınız.',
+  strict:true, a:['UACGGU','UAC GGU'], hints:['RNA’da timin yerine urasil (U) bulunur.','A’nın karşısına U, T’nin karşısına A, G’nin karşısına C gelir.','Dizi “UAC…” ile başlar; toplam altı baz yaz.'], exp:'Kalıp DNA: ATGCCA → mRNA: <b>UACGGU</b> (A–U, T–A, G–C, C–G)' },
+
+{ topic:'Zor · Yarı korunumlu eşlenme', svg:BIOZ.gel(), q:'Meselson–Stahl deneyinde ¹⁵N’li (ağır) DNA, ¹⁴N ortamında bir kez eşlenmiştir. Deney tüpünde kaç bant oluşur ve bu bant(lar) hangi yoğunlukta bulunur?',
+  all:[['tek','bir bant','1 bant','yalnız bir'],['ara','hibrit','orta','ortada']], hints:['Yarı korunumlu modele göre her yavru DNA’da bir eski (¹⁵N), bir yeni (¹⁴N) iplik vardır.','Tüm yavru DNA’lar aynı yoğunluğa sahiptir.','“Tek bant” ve “ara (hibrit)” ifadelerini birlikte kullan.'], exp:'<b>Tek bant</b> oluşur ve bu bant <b>ara (hibrit)</b> yoğunluktadır; çünkü her yavru DNA bir ağır (¹⁵N) bir hafif (¹⁴N) iplikten oluşur.' },
+
+{ topic:'Zor · Hücre döngüsü', svg:BIOZ.cen(), q:'Şekildeki hücre (2n = 6) mitoz bölünmenin metafazındadır. Bu hücrede kaç kromozom, kaç kromatit ve kaç DNA molekülü bulunur?',
+  type:'parts', parts:[
+    {label:'Kromozom sayısı:', num:6},
+    {label:'Kromatit sayısı:', num:12},
+    {label:'DNA molekülü sayısı:', num:12}], hints:['Metafazda her kromozom iki kromatitlidir.','Kromozom sayısı tür için sabittir (2n = 6).','Kromatit = 2 × kromozom; DNA molekülü sayısı = kromatit sayısı.'], exp:'<b>6 kromozom · 12 kromatit · 12 DNA molekülü</b>' },
+
+{ topic:'Zor · Şifre–antikodon', svg:BIOZ.kod(), q:'Şekilde ribozomda okunan dört kodon verilmiştir. Bu dizideki her kodonun karşısına gelecek tRNA antikodonlarını sırasıyla yazınız.',
+  type:'parts', parts:[
+    {label:'1. antikodon:', strict:true, a:['UAC']},
+    {label:'2. antikodon:', strict:true, a:['AUG']},
+    {label:'3. antikodon:', strict:true, a:['CCU']},
+    {label:'4. antikodon:', strict:true, a:['AUU']}], hints:['Antikodon, kodonun tamamlayıcısıdır (A–U, G–C).','AUG’un karşısına UAC, UAA’nın karşısına AUU gelir.','Sıra: UAC · AUG · CCU · AUU.'], exp:'Kodon → antikodon: AUG→<b>UAC</b> · UAC→<b>AUG</b> · GGA→<b>CCU</b> · UAA→<b>AUU</b>' },
+
+{ topic:'Zor · Protein sentezi', svg:BIOZ.kod(), q:'Şekildeki dört kodon okunduktan sonra ribozomda sentezlenen polipeptitte kaç amino asit bulunur?',
+  num:3, hints:['UAA bir durdurucu (stop) kodondur.','Durdurucu kodon amino asit şifrelemez; sentezi sonlandırır.','İlk üç kodonu say.'], exp:'<b>3 amino asit</b> (UAA durdurucu kodon olduğundan amino asit şifrelemez)' },
+
+{ topic:'Zor · DNA hesaplama', q:'300 nükleotitlik çift zincirli bir DNA molekülünde 60 adenin bulunmaktadır. Bu DNA’da kaç guanin vardır?',
+  num:90, hints:['Toplam nükleotit 300 ise A+T+G+C = 300’dür.','A = T olduğundan T de 60’tır; geriye G+C = 180 kalır.','G = C olduğundan G = 180 ÷ 2.'], exp:'A=T=60 → G+C = 300−120 = 180 → G = C = <b>90</b>' },
+
+{ topic:'Zor · DNA hesaplama', q:'Bir DNA molekülünde toplam 900 hidrojen bağı ve 150 adenin bulunmaktadır. Bu DNA’da kaç guanin vardır?',
+  num:200, hints:['A–T arasında 2, G–C arasında 3 hidrojen bağı vardır.','A = T = 150 ise A–T bağları 150×2 = 300 hidrojen bağı eder.','Kalan 600 bağ G–C’ye aittir; her G–C çifti 3 bağ kurar: G = 600 ÷ 3.'], exp:'A=T=150 → A–T bağları 300 · Kalan 900−300 = 600 → G = C = 600 ÷ 3 = <b>200</b>' },
+
+{ topic:'Zor · Replikasyon', q:'1200 nükleotitlik çift zincirli bir DNA molekülü bir kez eşlendiğinde, yeni sentezlenen ipliklerde toplam kaç nükleotit bulunur?',
+  num:1200, hints:['Her DNA ipliği 600 nükleotittir.','Her yavru DNA’da bir iplik eski, bir iplik yenidir.','İki yavru DNA’da toplam 2 yeni iplik vardır: 2 × 600.'], exp:'Ana DNA 2×600 nükleotit → yeni sentezlenen iplikler 2×600 = <b>1200</b> nükleotit' },
+
+{ topic:'Zor · Protein sentezi', q:'1200 nükleotitlik çift zincirli bir DNA’dan sentezlenebilecek en uzun polipeptitte en fazla kaç amino asit bulunur?',
+  num:200, hints:['Yalnızca bir zincir (kalıp zincir) şifre olarak okunur.','Kalıp zincir 600 nükleotittir.','Her amino asit 3 nükleotitlik (kodon) şifreyle belirlenir: 600 ÷ 3.'], exp:'600 ÷ 3 = <b>200</b> amino asit (en fazla)' },
+
+{ topic:'Zor · Replikasyon', svg:BIO.origins(), q:'Aynı uzunluktaki bir DNA parçasını; prokaryot tek bir orijinden, ökaryot ise üç orijinden eşler. Buna göre ökaryottaki eşlenme süresi prokaryottakine göre nasıl değişir?',
+  a:['Kısalır','azalır','daha kısa','kısa','azalacak','kısalacak','azalıyor','daha kısa sürer'], not:['uzar','artar','aynı kalır','değişmez'], hints:['Birden fazla orijin, aynı anda birden fazla noktadan eşlenme başlatır.','İşi paylaşmak süreyi kısaltır mı uzatır mı?'], exp:'Birden çok orijinden eşzamanlı eşlenme başladığı için ökaryotta eşlenme süresi <b>kısalır (azalır)</b>.' },
+
+{ topic:'Zor · Yarı korunumlu eşlenme', svg:BIO.semicons(), q:'Yarı korunumlu eşlenmeye göre ¹⁴N ortamında üç kez eşlenen bir DNA için; ortamdaki toplam DNA sayısı, tamamen hafif (¹⁴N) DNA sayısı ve hibrit DNA sayısı sırasıyla kaçtır?',
+  type:'parts', parts:[
+    {label:'Toplam DNA:', num:8},
+    {label:'Hibrit DNA:', num:2},
+    {label:'Tamamen hafif DNA:', num:6}], hints:['Her eşlenmede DNA sayısı iki katına çıkar: 2ⁿ.','Hibrit DNA sayısı her zaman 2’dir (eski ağır iplikler yalnızca iki tanedir).','Kalan DNA’lar tamamen hafiftir.'], exp:'3 eşlenme → 2³ = <b>8 DNA</b> · <b>2 hibrit</b> · <b>6 tamamen hafif</b>' },
+
+{ topic:'Zor · Mutasyon', q:'Orak hücreli anemiye yol açan mutasyonda DNA’daki GAG şifresi GTG’ye dönüşür. Bu mutasyonun protein düzeyindeki sonucunu kısaca yazınız.',
+  long:true, keys:[['amino asit','aminoasit'],['değişir','değişmiş','değişikliğe','farklı','yer değiştir'],['glutamik','valin','orak','hemoglobin']], hints:['Bir baz değişince oluşan yeni kodon hangi amino asidi şifreler?','Glutamik asit yerine valin geçer.','Amino asit değişince proteinin yapısı ve işlevi bozulur; alyuvar orak şeklini alır.'], exp:'Şifre GAG→GTG olunca kodon değişir; glutamik asit yerine <b>valin</b> gelir. <b>Amino asit değiştiği için hemoglobin yapısı (protein işlevi) bozulur</b> ve alyuvarlar orak şeklini alır.' },
+
+{ topic:'Zor · Translasyon', q:'Bir mRNA’nın yalnızca ilk üç nükleotidi (başlangıç kodonu) değişecek biçimde mutasyona uğrarsa protein sentezi neden hiç başlamayabilir?',
+  long:true, keys:[['başlangıç','başlama','start','AUG'],['metiyonin','metionin'],['kodon','şifre']], hints:['Translasyonun başlaması için özel bir kodon tanınır.','Bu kodon AUG’dir ve metiyonin şifreler.','Başlangıç kodonu tanınmazsa ribozom senteze başlayamaz.'], exp:'Protein sentezi <b>AUG (başlangıç/metiyonin)</b> kodonundan başlar. Başlangıç kodonu bozulursa ribozom şifreyi tanıyamaz ve translasyon <b>başlamaz</b>.' },
+
+{ topic:'Zor · Kalıtım yorumu', q:'Bir canlının karaciğer hücresi ile deri hücresinde DNA içeriği aynı olmasına rağmen ürettikleri proteinler farklıdır. Bunun nedenini açıklayınız.',
+  long:true, keys:[['gen','genler'],['aktif','ifade','kullanı','çalış','okun','sentezlen'],['farklı','ayrı','her hücrede'],['protein','enzim']], hints:['Hücrelerde tüm genler aynı anda çalışır mı?','Bir hücrede bazı genler aktif, bazıları baskılanmıştır.','Aktif genler hangi proteinlerin üretileceğini belirler.'], exp:'Tüm vücut hücrelerinde aynı DNA (genom) bulunur; ancak her hücrede <b>farklı genler aktif (ifade edilir)</b>. Bu nedenle karaciğer ve deri hücreleri farklı protein ve enzimler üretir.' },
+
+{ topic:'Zor · Nükleik asit yapısı', q:'Bir DNA molekülündeki iki iplik ters yönlüdür (antiparalel). Buna göre bir ipliğin 5′ ucu ile diğer ipliğin hangi ucu karşı karşıyadır?',
+  a:['3','3 ucu','3′ ucu','3\' ucu','üç','üç ucu'], hints:['İplikler zıt yönlerde uzanır.','Bir zincirin 5′ ucunun hizasına diğer zincirin hangi ucu gelir?','5′ ↔ 3′ eşleşir.'], exp:'İplikler antiparaleldir: bir zincirin <b>5′</b> ucunun karşısında diğer zincirin <b>3′</b> ucu bulunur.' },
+
+{ topic:'Zor · Nükleotit', svg:BIO.ladder(['A','A','T','G','C','G'],true,'Üstteki zincire göre alttaki zinciri yaz'), q:'Şekildeki DNA’nın üst zinciri AATGCG ise alttaki tamamlayıcı zincirin baz dizilimini yazınız.',
+  strict:true, a:['TTACGC','TTA CGC'], hints:['A’nın karşısına T, G’nin karşısına C gelir.','Dizi “TT…” ile başlar.','Altı bazın tamamını yaz.'], exp:'<b>TTACGC</b>' },
+
+{ topic:'Zor · Replikasyon', svg:BIO.fork(), q:'DNA replikasyonu ile transkripsiyonu; kullanılan kalıp ve sentezlenen ürün açısından karşılaştırarak bir fark yazınız.',
+  long:true, keys:[['dna','mrna','rna'],['tüm','tamamı','her iki','iki zincir','bir zincir','kalıp zincir'],['ürün','oluşan','sentezlenen']], hints:['Replikasyonda DNA’nın tamamı mı, bir bölümü mü kopyalanır?','Transkripsiyonun ürünü hangi moleküldür?','Replikasyon tüm DNA’yı, transkripsiyon gen bölgesini (bir zinciri) kalıp kullanır.'], exp:'Replikasyonda kalıp <b>DNA’nın her iki ipliği</b> olabilir ve ürün <b>DNA</b>’dır; transkripsiyonda kalıp <b>DNA’nın bir ipliği (gen bölgesi)</b>, ürün ise <b>mRNA</b>’dır.' },
+
+{ topic:'Zor · Protein sentezi', q:'Bir hücrede 100 amino asitlik bir polipeptit sentezleniyorsa bu proteinin şifresini taşıyan mRNA’da en az kaç nükleotit bulunur? (Yalnızca amino asit şifrelerini hesapla.)',
+  num:300, hints:['Her amino asit 3 nükleotitlik bir kodonla şifrelenir.','100 amino asit × 3 nükleotit.','Başlangıç ve durdurucu kodonları hesaba katma.'], exp:'100 × 3 = <b>300</b> nükleotit' }
+];
+
 var FIZ = (function(){
   var t=S.t, l=S.l, c=S.c, r=S.r, p=S.p, q=S.q, W=S.wrap, dot=S.dot;
   function info(lines,x,y){ return lines.map(function(s,i){ return t(x||12,(y||20)+i*20,s,{a:'start',s:13.5}); }).join(''); }
@@ -1112,7 +1223,11 @@ var IC = {
   ed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5L9 20H4v-5z"/><path d="M13 6l5 5"/></svg>'
 };
 var SUBJECTS = [
-  {id:'biyoloji', name:'Biyoloji', desc:'Nükleik asitler · DNA replikasyonu · Protein sentezi', color:'#8cc49e', icon:IC.bio, questions:Q_BIYOLOJI},
+  {id:'biyoloji', name:'Biyoloji', desc:'Nükleik asitler · DNA replikasyonu · Protein sentezi', color:'#8cc49e', icon:IC.bio, questions:Q_BIYOLOJI,
+    levels:[
+      {id:'kolay', name:'Kolay–Orta', desc:'Çalışma soruları · açık uçlu', questions:Q_BIYOLOJI},
+      {id:'zor', name:'Zor', desc:'Çizimli · hesaplama · yorum', questions:Q_BIYOLOJI_ZOR}
+    ]},
   {id:'fizik', name:'Fizik', desc:'Çembersel hareket · Dönme · Kütle çekimi', color:'#8fb4dd', icon:IC.fiz, questions:Q_FIZIK},
   {id:'inkilap', name:'İnkılap Tarihi', desc:'Çalışma soruları (ilk 10)', color:'#de9aa3', icon:IC.ink, questions:Q_INKILAP},
   {id:'din', name:'Din Kültürü', desc:'İslam ve bilim · 1. dönem 1. sınav', color:'#d9b56f', icon:IC.din, questions:Q_DIN},
@@ -1160,13 +1275,21 @@ window.SUBJECTS = SUBJECTS;
   }
   function scoreTable(){
     var p=curP(); if(!p) return '';
-    var rows = SUBJECTS.map(function(s){
-      var h=p.hist[s.id]||[];
-      return '<tr><th><i style="background:'+s.color+'"></i>'+s.name+'</th>'+[0,1,2].map(function(k){
+    var rowFor = function(name, key){
+      var h=p.hist[key]||[];
+      return '<tr><th>'+name+'</th>'+[0,1,2].map(function(k){
         var r=h[k]; if(!r) return '<td class="empty">—</td>';
         var cl = r.p>=70?'hi':r.p>=40?'mid':'lo';
         return '<td><b class="'+cl+'">%'+r.p+'</b><small><span>'+r.ok+'/'+r.n+'<em> doğru</em></span><span class="dt"><em> · </em>'+fmtDate(r.t)+'</span></small></td>';
       }).join('')+'</tr>';
+    };
+    var rows = SUBJECTS.map(function(s){
+      if(s.levels){
+        return s.levels.map(function(lv){
+          return rowFor('<i style="background:'+s.color+'"></i>'+s.name+' · '+lv.name, s.id+':'+lv.id);
+        }).join('');
+      }
+      return rowFor('<i style="background:'+s.color+'"></i>'+s.name, s.id);
     }).join('');
     return '<div class="card scores-card"><h3>'+esc(prof.cur)+' · son 3 tur</h3><div class="tbl-wrap"><table class="scores">'+
       '<thead><tr><th>Ders</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
@@ -1216,10 +1339,13 @@ window.SUBJECTS = SUBJECTS;
       playerBar()+'<div class="grid">';
     SUBJECTS.forEach(function(s,i){
       var b = best[s.id];
+      var total = s.levels ? s.levels.reduce(function(a,lv){return a+lv.questions.length;},0) : s.questions.length;
+      var cnt = s.levels ? (s.levels.length+' seviye · '+total+' soru') : (total+' soru');
+      var bestTxt = s.levels ? 'İki seviye' : (b!=null?'En iyi: %'+b:'Henüz oynanmadı');
       h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+'">'+
         '<div class="ico">'+s.icon+'</div><h3>'+s.name+'</h3>'+
         '<div class="tag">'+s.desc+'</div>'+
-        '<div class="meta"><span>'+s.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
+        '<div class="meta"><span>'+cnt+'</span><span>'+bestTxt+'</span></div></button>';
     });
     h += '</div>'+scoreTable()+'<div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
       [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
@@ -1230,20 +1356,44 @@ window.SUBJECTS = SUBJECTS;
     bindPlayer();
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
       if(!curP()){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); $('#pname').focus({preventScroll:true}); return; }
-      start(SUBJECTS[+b.dataset.i]);
+      var s = SUBJECTS[+b.dataset.i];
+      if(s.levels) levelSelect(s); else start(s);
     }; });
     app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
     $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
     window.scrollTo(0,0);
   }
 
+  /* ---------- SEVİYE SEÇİMİ ---------- */
+  function levelSelect(s){
+    G = null;
+    var best = curP() ? curP().best : {};
+    var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
+      '<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div></div>'+
+      '<section class="hero"><h1>'+s.name+' · hangi seviyeyle başlamak istersin?</h1><p>Kolay–orta seviyede çalışma soruları, zor seviyede ise çizimli, hesaplamalı ve yorum gerektiren sorular bulunur.</p></section>'+
+      '<div class="grid">';
+    s.levels.forEach(function(lv,i){
+      var b = best[s.id+':'+lv.id];
+      h += '<button class="card subject" data-l="'+i+'" style="--sc:'+s.color+'">'+
+        '<div class="ico">'+s.icon+'</div><h3>'+lv.name+'</h3>'+
+        '<div class="tag">'+lv.desc+'</div>'+
+        '<div class="meta"><span>'+lv.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
+    });
+    h += '</div><div class="foot">Zor seviyede cevaplar için yazım hataları tolere edilir; yine de doğru terimi yazmaya çalış.</div>';
+    app.innerHTML = h;
+    bindTheme();
+    $('#homeBtn').onclick = menu;
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ start(s, s.levels[+b.dataset.l]); }; });
+    window.scrollTo(0,0);
+  }
+
   /* ---------- OYUN ---------- */
-  function start(s){
-    var qs = s.questions.slice();
-    if(s.ordered){ if(opts.shuffle) qs = shuffle(qs); }
-    else if(opts.shuffle) qs = shuffle(qs);
+  function start(s, lv){
+    var pool = lv ? lv.questions : s.questions;
+    var qs = pool.slice();
+    if(opts.shuffle) qs = shuffle(qs);
     if(opts.count && qs.length>opts.count) qs = qs.slice(0,opts.count);
-    G = {s:s, qs:qs, i:0, score:0, log:[]};
+    G = {s:s, lv:lv||null, key:s.id+(lv?':'+lv.id:''), qs:qs, i:0, score:0, log:[]};
     question();
   }
   function maxPts(){ return G.qs.length*10; }
@@ -1291,7 +1441,7 @@ window.SUBJECTS = SUBJECTS;
     var pct = Math.round(G.i/G.qs.length*100);
     var h = '<div class="bar" style="--sc:'+s.color+'">'+
       '<button class="icon-btn" id="homeBtn">← Ana Menü</button>'+
-      '<div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+
+      '<div class="title"><i></i>'+s.name+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
       '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
       '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
       '<div class="progress" style="--sc:'+s.color+'"><div style="width:'+pct+'%"></div></div>'+
@@ -1433,12 +1583,12 @@ window.SUBJECTS = SUBJECTS;
     var pct = Math.round(G.score/maxPts()*100);
     var p=curP();
     if(p){
-      if(p.best[s.id]==null || pct>p.best[s.id]) p.best[s.id]=pct;
-      p.hist[s.id]=[{p:pct, s:G.score, ok:okc, n:G.qs.length, t:Date.now()}].concat(p.hist[s.id]||[]).slice(0,3);
+      if(p.best[G.key]==null || pct>p.best[G.key]) p.best[G.key]=pct;
+      p.hist[G.key]=[{p:pct, s:G.score, ok:okc, n:G.qs.length, t:Date.now()}].concat(p.hist[G.key]||[]).slice(0,3);
       saveProf();
     }
     var msg = pct>=85?'Çok iyi gidiyorsun!':pct>=60?'Güzel iş, biraz daha tekrarla mükemmel olur.':pct>=35?'Fena değil, yanlışları gözden geçir.':'Konuyu tekrar edip yeniden dene.';
-    var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
+    var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
       '<div class="card result" style="--sc:'+s.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
       '<div class="stats"><div class="stat"><b>'+okc+'/'+G.qs.length+'</b><span>Doğru</span></div><div class="stat"><b>'+G.score+'</b><span>Puan</span></div>'+
       '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div></div>'+
@@ -1448,7 +1598,7 @@ window.SUBJECTS = SUBJECTS;
         return '<div class="rv"><div class="st '+(l.ok?'ok':'bad')+'">'+(l.ok?'✓':'✗')+'</div><div><div>'+(i+1)+'. '+esc(qt)+'</div><div class="ans">'+esc(trim(answerText(l.q).replace(/<br\s*\/?>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&'),260))+'</div></div></div>';
       }).join('')+'</div></div>';
     app.innerHTML=h; bindTheme();
-    $('#homeBtn').onclick=menu; $('#home2').onclick=menu; $('#again').onclick=function(){ start(s); };
+    $('#homeBtn').onclick=menu; $('#home2').onclick=menu; $('#again').onclick=function(){ start(s, G.lv); };
     window.scrollTo(0,0);
   }
 
