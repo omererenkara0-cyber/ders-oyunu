@@ -182,7 +182,7 @@
       [10,20,30].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.mixedMin===n?'on':'')+'">'+n+' dk</button>'; }).join('')+
       '</div></div>'+
       '<div class="foot">Enter ile cevap gönderilir · Sorulardayken üstteki “Ana Menü” tuşuyla çıkabilirsin</div>';
-    app.innerHTML = h;
+    ANIM.render(app, h);
     bindTheme();
     bindPlayer();
     var needPlayer = function(){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); var f=$('#pname'); if(f) f.focus({preventScroll:true}); };
@@ -217,7 +217,7 @@
         '<div class="meta"><span>'+lv.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
     });
     h += '</div><div class="foot">Zor seviyede cevaplar için yazım hataları tolere edilir; yine de doğru terimi yazmaya çalış.</div>';
-    app.innerHTML = h;
+    ANIM.render(app, h);
     bindTheme();
     $('#homeBtn').onclick = menu;
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ pickScreen(s, s.levels[+b.dataset.l]); }; });
@@ -240,7 +240,7 @@
       topics.map(function(t,i){ return '<button class="chip" data-t="'+i+'">'+esc(t)+'</button>'; }).join('')+
       '</div><div class="pick-foot"><span id="pcount">'+pool.length+' soru</span><button class="btn primary" id="pstart">Başla →</button></div></div>'+
       '<div class="foot">Konu seçmezsen tüm sorular gelir.</div>';
-    app.innerHTML = h;
+    ANIM.render(app, h);
     bindTheme();
     $('#backBtn').onclick = function(){ if(lv) levelSelect(s); else menu(); };
     var chips = app.querySelectorAll('.chip');
@@ -381,7 +381,7 @@
       '<button class="btn primary" id="next" style="display:none">'+(G.i+1<G.qs.length?'Sonraki soru →':'Sonuçları gör →')+'</button>'+
       '<span class="kbd">Enter ↵</span></div>'+
       '<div class="hints" id="hints"></div><div id="fb"></div></div>';
-    app.innerHTML = h;
+    ANIM.render(app, h);
     bindTheme();
     $('#homeBtn').onclick = confirmHome;
     $('#chk').onclick = submit;
@@ -530,7 +530,13 @@
     var extra = (q.type==='free' && ok) ? '<div class="alt">Bu soru serbest yazım sorusu; değerlendirme ölçütünü aşağıda görebilirsin.</div>' : '';
     if(bonus>0) extra += '<div class="alt">Kombo bonusu: +'+bonus+' puan (ardışık ilk-deneme doğruları).</div>';
     if(!ok && G.special!=='mistakes') extra += '<div class="alt">Bu soru “Yanlışlarım”a eklendi; ana menüden tekrar çözebilirsin.</div>';
-    $('#fb').innerHTML = '<div class="fb '+(ok?'ok':'bad')+'"><div class="h">'+title+'</div>'+answerText(q)+altText(q)+extra+'</div>';
+    var mark = ok ? '<svg class="check-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>' : '';
+    $('#fb').innerHTML = '<div class="fb '+(ok?'ok':'bad')+'"><div class="h">'+mark+title+'</div>'+answerText(q)+altText(q)+extra+'</div>';
+    if(ok){
+      var combo = G.streak>=2;
+      ANIM.confetti(app, combo ? 26 : 14);
+      ANIM.floatPoints($('#pts'), '+'+pts+(bonus>0?' 🔥':''), bonus>0?'bonus':'');
+    }
     $('#chk').style.display='none'; $('#pass').style.display='none'; $('#show').style.display='none';
     var n=$('#next'); n.style.display=''; n.focus({preventScroll:true});
     setTimeout(function(){ var fb=$('#fb'); if(fb && fb.getBoundingClientRect().bottom>window.innerHeight) fb.scrollIntoView({behavior:'smooth',block:'end'}); },50);
@@ -562,18 +568,21 @@
       saveProf();
     }
     var msg = pct>=85?'Çok iyi gidiyorsun!':pct>=60?'Güzel iş, biraz daha tekrarla mükemmel olur.':pct>=35?'Fena değil, yanlışları gözden geçir.':'Konuyu tekrar edip yeniden dene.';
+    var firstTry = G.log.filter(function(l){return l.ok&&!l.wrong;}).length;
+    var stat = function(val, label, i){ return '<div class="stat" style="animation-delay:'+(0.08*i).toFixed(2)+'s"><b>'+val+'</b><span>'+label+'</span></div>'; };
     var h='<div class="bar" style="--sc:'+G.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
-      '<div class="card result" style="--sc:'+G.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
-      '<div class="stats"><div class="stat"><b>'+okc+'/'+G.qs.length+'</b><span>Doğru</span></div><div class="stat"><b>'+G.score+'</b><span>Puan</span></div>'+
-      '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div>'+
-      '<div class="stat"><b>'+(G.bestStreak>=2?('🔥 '+G.bestStreak):'—')+'</b><span>En uzun seri</span></div></div>'+
+      '<div class="card result" style="--sc:'+G.color+'"><div class="big" id="bigPct">%0</div><div class="sub">'+msg+'</div>'+
+      '<div class="stats">'+stat(okc+'/'+G.qs.length,'Doğru',0)+stat(G.score,'Puan',1)+stat(firstTry,'İlk denemede',2)+
+      stat(G.bestStreak>=2?('🔥 '+G.bestStreak):'—','En uzun seri',3)+'</div>'+
       '<div class="actions" style="justify-content:center"><button class="btn primary" id="again">Tekrar oyna</button><button class="btn" id="home2">Ana menü</button></div>'+
       topicAnalysis()+
       '<div class="review">'+G.log.map(function(l,i){
         var qt = l.q.q.replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,''); qt=trim(qt,140);
-        return '<div class="rv"><div class="st '+(l.ok?'ok':'bad')+'">'+(l.ok?'✓':'✗')+'</div><div><div>'+(i+1)+'. '+esc(qt)+'</div><div class="ans">'+esc(trim(answerText(l.q).replace(/<br\s*\/?>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&'),260))+'</div></div></div>';
+        return '<div class="rv" style="animation-delay:'+Math.min(0.5,0.04*i).toFixed(2)+'s"><div class="st '+(l.ok?'ok':'bad')+'">'+(l.ok?'✓':'✗')+'</div><div><div>'+(i+1)+'. '+esc(qt)+'</div><div class="ans">'+esc(trim(answerText(l.q).replace(/<br\s*\/?>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&'),260))+'</div></div></div>';
       }).join('')+'</div></div>';
-    app.innerHTML=h; bindTheme();
+    ANIM.render(app, h); bindTheme();
+    ANIM.countUp($('#bigPct'), pct, 900, '%');
+    if(pct>=85) ANIM.confetti(app, 30);
     $('#homeBtn').onclick=menu; $('#home2').onclick=menu;
     $('#again').onclick=function(){
       if(G.special==='mistakes') startMistakes();
