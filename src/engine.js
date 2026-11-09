@@ -1,5 +1,10 @@
 (function(){
   var SUBJECTS = window.SUBJECTS;
+  var qSubj = new Map();
+  SUBJECTS.forEach(function(s){
+    var qs = s.levels ? s.levels.reduce(function(a,lv){ return a.concat(lv.questions); },[]) : s.questions;
+    qs.forEach(function(q){ if(!qSubj.has(q)) qSubj.set(q, s); });
+  });
   var $ = function(s,r){ return (r||document).querySelector(s); };
   var app = $('#app');
   var store = {
@@ -23,6 +28,9 @@
     store.set('profiles', prof);
   }
   Object.keys(prof.list).forEach(function(n){ if(!prof.list[n].mistakes) prof.list[n].mistakes={}; if(!prof.list[n].tstats) prof.list[n].tstats={}; });
+  var tstatsChanged = false;
+  Object.keys(prof.list).forEach(function(n){ if(window.WEAK.migrateTstats(prof.list[n].tstats, SUBJECTS)) tstatsChanged = true; });
+  if(tstatsChanged) store.set('profiles', prof);
   function saveProf(){ store.set('profiles', prof); }
   function curP(){ return prof.cur && prof.list[prof.cur] ? prof.list[prof.cur] : null; }
   function addPlayer(name){
@@ -120,24 +128,12 @@
     return out;
   }
 
-  /* ---------- ZAYIF KONU ANALİZİ ---------- */
-  var WEAK_MIN_N = 2, WEAK_MAX_TOPICS = 4, WEAK_MAX_Q = 15;
-  function weakTopics(){
-    var p=curP(); if(!p) return [];
-    var ts=p.tstats||{}, out=[];
-    Object.keys(ts).forEach(function(k){
-      var t=ts[k]; if(t.n<WEAK_MIN_N) return;
-      out.push({topic:k, ok:t.ok, n:t.n, pct:Math.round(t.ok/t.n*100), last:t.last||0});
-    });
-    out.sort(function(a,b){ return a.pct-b.pct || b.n-a.n || a.last-b.last; });
-    var weak = out.filter(function(x){ return x.pct<100; });
-    return weak.length ? weak.slice(0,WEAK_MAX_TOPICS) : out.slice(0,WEAK_MAX_TOPICS);
-  }
-  function weakPool(){
-    var weak = weakTopics(); if(!weak.length) return [];
-    var names = weak.map(function(w){ return w.topic; });
-    return allQuestions().filter(function(x){ return names.indexOf(x.q.topic||'Genel')>=0; });
-  }
+  /* ---------- ZAYIF KONU ANALİZİ (ders bazlı; mantık src/weak.js) ---------- */
+  var WEAK = window.WEAK;
+  var WEAK_MAX_Q = 15;
+  function tkey(sid, topic){ return WEAK.tkey(sid, topic); }
+  /* Zayıf konuları ders ders gruplar; her grupta o dersin zayıf konuları ve soru havuzu olur. */
+  function weakBySubject(){ return curP() ? WEAK.weakBySubject(curP().tstats, SUBJECTS, allQuestions()) : []; }
 
   /* ---------- ANA MENÜ ---------- */
   function menu(){
@@ -159,12 +155,13 @@
         '<div class="ico">⚡</div><h3>Karışık Sınav</h3><div class="tag">Tüm derslerden rastgele · süreli</div>'+
         '<div class="meta"><span>'+opts.mixedCount+' soru · '+opts.mixedMin+' dk</span><span>Deneme</span></div></button>';
     }
-    var wt = weakTopics();
-    if(curP() && wt.length){
-      extra += '<button class="card subject special" data-weak="1" style="--sc:var(--ok)">'+
-        '<div class="ico">🎯</div><h3>Zayıf Konularım</h3><div class="tag">'+wt.map(function(w){ return esc(trim(w.topic,22)); }).join(' · ')+'</div>'+
-        '<div class="meta"><span>%'+wt[0].pct+' · '+wt.length+' konu</span><span>Hedefli çalış</span></div></button>';
-    }
+    var wbs = weakBySubject();
+    wbs.forEach(function(g){
+      extra += '<button class="card subject special" data-weaks="'+g.s.id+'" style="--sc:var(--ok)">'+
+        '<div class="ico">🎯</div><h3>Zayıf Konularım · '+esc(g.s.name)+'</h3>'+
+        '<div class="tag">'+g.weak.map(function(w){ return esc(trim(w.topic,22)); }).join(' · ')+'</div>'+
+        '<div class="meta"><span>%'+g.weak[0].pct+' · '+g.weak.length+' konu</span><span>Hedefli çalış</span></div></button>';
+    });
     h += extra;
     SUBJECTS.forEach(function(s,i){
       var b = best[s.id];
@@ -193,7 +190,7 @@
       if(!curP()){ needPlayer(); return; }
       if(b.dataset.mistakes){ startMistakes(); return; }
       if(b.dataset.mixed){ mixedExam(); return; }
-      if(b.dataset.weak){ startWeak(); return; }
+      if(b.dataset.weaks){ startWeak(b.dataset.weaks); return; }
       var s = SUBJECTS[+b.dataset.i];
       if(s.levels) levelSelect(s); else pickScreen(s, null);
     }; });
@@ -285,14 +282,16 @@
     var qs = all.map(function(x){ return x.q; });
     startGame({name:'Karışık Sınav', color:'#cfae74', questions:qs, key:'karisik', timed:(opts.mixedMin||20)*60});
   }
-  function startWeak(){
-    var weak = weakTopics();
-    var pool = weakPool();
-    if(!weak.length || !pool.length){ menu(); return; }
-    var qs = shuffle(pool.map(function(x){ return x.q; }));
+  function startWeak(sid){
+    var groups = weakBySubject();
+    var g = null;
+    for(var i=0;i<groups.length;i++) if(groups[i].s.id===sid){ g=groups[i]; break; }
+    if(!g){ menu(); return; }
+    var qs = shuffle(g.pool.map(function(x){ return x.q; }));
     if(qs.length>WEAK_MAX_Q) qs = qs.slice(0,WEAK_MAX_Q);
-    var label = weak.map(function(w){ return w.topic; }).join(' · ');
-    startGame({name:'Zayıf Konularım', color:'#8cc49e', questions:qs, key:'zayif', special:'weak', focus:label});
+    var label = g.weak.map(function(w){ return w.topic; }).join(' · ');
+    startGame({name:'Zayıf Konularım · '+g.s.name, color:g.s.color, questions:qs, key:'zayif:'+g.s.id,
+      special:'weak', weakSubj:g.s.id, focus:label});
   }
 
   /* ---------- OYUN ---------- */
@@ -302,7 +301,7 @@
     if(opts.shuffle && cfg.special!=='mistakes') qs = shuffle(qs);
     if(opts.count && !cfg.timed && cfg.special!=='weak' && qs.length>opts.count) qs = qs.slice(0,opts.count);
     G = {name:cfg.name, color:cfg.color||'var(--accent)', lv:cfg.lv||null, key:cfg.key,
-         special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, qs:qs, i:0, score:0, log:[], topics:{},
+         special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, weakSubj:cfg.weakSubj||null, qs:qs, i:0, score:0, log:[], topics:{},
          timed:cfg.timed||0, left:cfg.timed||0, streak:0, bestStreak:0};
     question();
   }
@@ -513,7 +512,12 @@
     var t = G.topics[tk] || (G.topics[tk]={ok:0,n:0});
     t.n++; if(ok) t.ok++;
     var p=curP();
-    if(p){ if(!p.tstats) p.tstats={}; var tt=p.tstats[tk]||(p.tstats[tk]={ok:0,n:0}); tt.n++; if(ok) tt.ok++; tt.last=Date.now(); }
+    if(p){
+      if(!p.tstats) p.tstats={};
+      var sid = (qSubj.get(q)||{}).id || 'genel';
+      var key = tkey(sid, tk);
+      var tt=p.tstats[key]||(p.tstats[key]={ok:0,n:0}); tt.n++; if(ok) tt.ok++; tt.last=Date.now();
+    }
     if(ok) delMistake(q); else addMistake(q);
     saveProf();
     G.log.push({q:q, ok:ok, pts:pts, bonus:bonus, streak:G.streak, wrong:G.cur.wrong});
@@ -573,7 +577,7 @@
     $('#homeBtn').onclick=menu; $('#home2').onclick=menu;
     $('#again').onclick=function(){
       if(G.special==='mistakes') startMistakes();
-      else if(G.special==='weak') startWeak();
+      else if(G.special==='weak') startWeak(G.weakSubj);
       else if(G.s) startGame({s:G.s, lv:G.lv, questions:(G.lv?G.lv.questions:G.s.questions), key:G.key, name:G.name, color:G.color});
       else mixedExam();
     };

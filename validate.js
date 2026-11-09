@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js'])
+for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js','weak.js'])
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
 const M=ctx.M; let bad=0;
 const firstOf=s=> s.num!=null? String(s.num) : s.a? s.a[0] : s.all? s.all.map(g=>g[0]).join(' ') : s.keys? s.keys[0][0] : null;
@@ -75,4 +75,33 @@ T('fizik:zor','45 m yükseklikten','30',true); T('fizik:zor','45 m yükseklikten
 T('fizik:zor','en az hangi yükseklikten','2,5',true); T('fizik:zor','en az hangi yükseklikten','5/2',true); T('fizik:zor','en az hangi yükseklikten','1,5',false);
 T('fizik:zor','en alt noktasından 5 m/s','30',true); T('fizik:zor','en alt noktasından 5 m/s','20',false);
 T('fizik:zor','virajı kaymadan dönebilecek en büyük hız','10',true); T('fizik:zor','virajı kaymadan dönebilecek en büyük hız','100',false);
+// zayıf konu analizi: ders bazlı ayrım (src/weak.js)
+const WK=ctx.window.WEAK;
+const allQ=[]; for(const S of ctx.SUBJECTS){ const qs=S.levels?S.levels.reduce((a,lv)=>a.concat(lv.questions),[]):S.questions; qs.forEach(q=>allQ.push({q,s:S})); }
+const WTEST=(name,cond)=>{ if(!cond){bad++;console.log('FAIL weak',name);} };
+// 1) Dersler ayrı gruplanır; "Genel" konusu din/edebiyat/inkilap arasında karışmaz
+const ts1={"biyoloji::Nükleotit":{ok:0,n:3},"din::Genel":{ok:0,n:3},"edebiyat::Genel":{ok:0,n:3},"fizik::Hareket":{ok:0,n:3}};
+const g1=WK.weakBySubject(ts1,ctx.SUBJECTS,allQ);
+WTEST('grup sayısı 4', g1.length===4);
+WTEST('her grup tek ders', g1.every(g=>g.pool.every(x=>x.s===g.s)));
+const ede=g1.find(g=>g.s.id==='edebiyat'); WTEST('edebiyat havuzu sadece edebiyat', ede && ede.pool.length===15 && ede.pool.every(x=>x.s.id==='edebiyat'));
+const din=g1.find(g=>g.s.id==='din'); WTEST('din havuzu sadece din', din && din.pool.length===10);
+const bio=g1.find(g=>g.s.id==='biyoloji'); WTEST('biyoloji havuzu sadece biyoloji', bio && bio.pool.every(x=>x.s.id==='biyoloji'));
+// 2) weakTopicsFor ders dışı anahtarları yok sayar
+WTEST('weakTopicsFor din 1 konu', WK.weakTopicsFor(ts1,'din').length===1);
+WTEST('weakTopicsFor fizik yok (n=3 ama 1 konu, ok=0)', WK.weakTopicsFor(ts1,'fizik').length===1);
+WTEST('weakTopicsFor edebiyat sadece Genel', WK.weakTopicsFor(ts1,'edebiyat')[0].topic==='Genel');
+// 3) Aynı adlı konu farklı derslerde bağımsız puanlanır
+const ts2={"biyoloji::Ortak":{ok:0,n:5},"fizik::Ortak":{ok:5,n:5}};
+WTEST('biyoloji::Ortak %0', WK.weakTopicsFor(ts2,'biyoloji')[0].pct===0);
+WTEST('fizik::Ortak %100 (zayıf sayılmaz, yine döner)', WK.weakTopicsFor(ts2,'fizik')[0].pct===100);
+// 4) min-N eşiği
+WTEST('n<2 yok sayılır', WK.weakTopicsFor({"din::X":{ok:0,n:1}},'din').length===0);
+// 5) Migrasyon: tek sahip taşınır, çok sahip silinir, :: olan korunur
+const ts3={"Nükleik asitlerin keşfi":{ok:0,n:2},"Hareket":{ok:1,n:2},"Genel":{ok:2,n:2},"Düzgün çembersel hareket":{ok:1,n:2},"fizik::Hareket":{ok:9,n:9}};
+WK.migrateTstats(ts3,ctx.SUBJECTS);
+WTEST('tek sahip biyolojiye taşındı', !!ts3['biyoloji::Nükleik asitlerin keşfi'] && !ts3['Nükleik asitlerin keşfi']);
+WTEST('çok sahipli Genel silindi', !ts3['Genel']);
+WTEST('çok sahipli (kolay+zor) silindi', !ts3['Düzgün çembersel hareket']);
+WTEST('mevcut kapsamlı anahtar korundu', ts3['fizik::Hareket'].ok===9 && !ts3['Hareket']);
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');
