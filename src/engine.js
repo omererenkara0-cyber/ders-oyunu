@@ -273,6 +273,7 @@
   function fmtTime(sec){ var m=Math.floor(sec/60), s=sec%60; return pad(m)+':'+pad(s); }
   function startTimer(){
     if(!G.timed) return;
+    clearTimer();
     timerId = setInterval(function(){
       if(!G){ clearTimer(); return; }
       G.left--;
