@@ -40,7 +40,58 @@ var BIOZ = (function(){
     b+=t(16,156,'Okunan kodon sayısı 4’tür; polipeptitte kaç amino asit bulunur?',{a:'start',s:12,c:'mut'});
     return W(420,170,b);
   }
-  return {seq:seq, gel:gel, cen:cen, kod:kod};
+  function enzim(){
+    var b='';
+    b+=t(16,18,'Replikasyon çatalı',{a:'start',s:12,c:'mut'});
+    b+=l(20,92,168,92,'k1')+l(20,112,168,112,'k4');
+    for(var x=30;x<168;x+=16) b+=l(x,94,x,110,'thin');
+    b+=l(168,92,438,42,'k1');
+    b+=l(168,112,438,178,'k4');
+    b+='<ellipse cx="172" cy="102" rx="14" ry="24" class="f3"/>';
+    b+=p('M424,58 L184,96','k2','ar');
+    var seg=function(t1,t2){ var x1=168+270*t1,y1=112+66*t1-14,x2=168+270*t2,y2=112+66*t2-14; return p('M'+x1+','+y1+' L'+x2+','+y2,'k2','ar'); };
+    b+=seg(0.10,0.30)+seg(0.38,0.60)+seg(0.68,0.90);
+    b+=S.dot(168+270*0.34,112+66*0.34-14,5,'acc')+S.dot(168+270*0.64,112+66*0.64-14,5,'acc');
+    b+=q(172,58,'A')+l(172,69,172,80,'thin');
+    b+=q(300,38,'B')+l(295,48,270,78,'thin');
+    b+=q(210,152,'C')+l(220,143,252,126,'thin');
+    b+=q(320,152,'D')+l(314,143,302,138,'thin');
+    b+=t(470,34,'öncü (sürekli) iplik',{a:'end',s:11,c:'mut'});
+    b+=t(96,138,'kalıp DNA',{s:11.5,c:'mut'});
+    return W(480,196,b);
+  }
+  function dnarna(){
+    var b='', s1='M40,60', s2='M40,60';
+    for(var x=40;x<=220;x+=5){ var y=Math.sin((x-40)/16)*13; s1+=' L'+x+','+(60+y).toFixed(1); s2+=' L'+x+','+(60-y).toFixed(1); }
+    b+=p(s1,'k1')+p(s2,'k4');
+    for(var x2=49;x2<220;x2+=9){ var y2=Math.sin((x2-40)/16)*13; b+=l(x2,60+y2,x2,60-y2,'thin'); }
+    b+=t(130,110,'DNA (çift sarmal)',{s:12,c:'mut'});
+    var s3='M300,60';
+    for(var x3=300;x3<=470;x3+=5){ var y3=Math.sin((x3-300)/16)*13; s3+=' L'+x3+','+(60+y3).toFixed(1); }
+    b+=p(s3,'k2');
+    b+=t(385,110,'RNA (tek zincir)',{s:12,c:'mut'});
+    b+=t(260,60,'|',{s:26,c:'mut'});
+    return W(510,126,b);
+  }
+  function rnabar(){
+    var b='', v=[['rRNA',80],['tRNA',15],['mRNA',5]];
+    b+=S.axes(50,170,260,150,'RNA tipi','oran (%)');
+    v.forEach(function(o,i){ var x=85+80*i, h=o[1]*1.6; b+=r(x,170-h,44,h,'f'+(i+1),4)+t(x+22,186,o[0],{b:1})+t(x+22,160-h,'%'+o[1],{s:12}); });
+    return W(340,200,b);
+  }
+  function codtable(){
+    var rows=[['AUG','Metiyonin (Met)'],['UUU','Fenilalanin (Phe)'],['GGU','Glisin (Gli)'],['UAA','DUR (stop)']];
+    var b='';
+    b+=t(16,18,'Kodon tablosu (kısaltılmış)',{a:'start',s:12,c:'mut'});
+    b+=r(20,32,150,26,'f1',4)+t(95,45,'Kodon',{b:1});
+    b+=r(174,32,220,26,'f3',4)+t(284,45,'Amino asit',{b:1});
+    rows.forEach(function(o,i){ var y=58+28*i;
+      b+=r(20,y,150,26,'f5',0)+t(95,y+13,o[0],{b:1});
+      b+=r(174,y,220,26,'f5',0)+t(284,y+13,o[1],{s:12.5});
+    });
+    return W(410,180,b);
+  }
+  return {seq:seq, gel:gel, cen:cen, kod:kod, enzim:enzim, dnarna:dnarna, rnabar:rnabar, codtable:codtable};
 })();
 
 var Q_BIYOLOJI_ZOR = [
@@ -106,5 +157,74 @@ var Q_BIYOLOJI_ZOR = [
   long:true, keys:[['dna','mrna','rna'],['tüm','tamamı','her iki','iki zincir','bir zincir','kalıp zincir'],['ürün','oluşan','sentezlenen']], hints:['Replikasyonda DNA’nın tamamı mı, bir bölümü mü kopyalanır?','Transkripsiyonun ürünü hangi moleküldür?','Replikasyon tüm DNA’yı, transkripsiyon gen bölgesini (bir zinciri) kalıp kullanır.'], exp:'Replikasyonda kalıp <b>DNA’nın her iki ipliği</b> olabilir ve ürün <b>DNA</b>’dır; transkripsiyonda kalıp <b>DNA’nın bir ipliği (gen bölgesi)</b>, ürün ise <b>mRNA</b>’dır.' },
 
 { topic:'Zor · Protein sentezi', q:'Bir hücrede 100 amino asitlik bir polipeptit sentezleniyorsa bu proteinin şifresini taşıyan mRNA’da en az kaç nükleotit bulunur? (Yalnızca amino asit şifrelerini hesapla.)',
-  num:300, hints:['Her amino asit 3 nükleotitlik bir kodonla şifrelenir.','100 amino asit × 3 nükleotit.','Başlangıç ve durdurucu kodonları hesaba katma.'], exp:'100 × 3 = <b>300</b> nükleotit' }
+  num:300, hints:['Her amino asit 3 nükleotitlik bir kodonla şifrelenir.','100 amino asit × 3 nükleotit.','Başlangıç ve durdurucu kodonları hesaba katma.'], exp:'100 × 3 = <b>300</b> nükleotit' },
+
+{ topic:'Zor · Replikasyon enzimleri', svg:BIOZ.enzim(), q:'Şekilde replikasyon çatalında A, B, C ve D ile gösterilen yapı/enzimleri; (a) hidrojen bağlarını kıran, (b) kesintili sentezde Okazaki parçalarını birleştiren, (c) kalıp zincire yeni nükleotit ekleyen enzimlerle eşleştiriniz.',
+  type:'parts', parts:[
+    {label:'A (hidrojen bağlarını kırar):', a:['helikaz','helicase']},
+    {label:'B (yeni nükleotit ekler):', a:['dna polimeraz','polimeraz']},
+    {label:'C (Okazaki parçalarını birleştirir):', a:['dna ligaz','ligaz']},
+    {label:'D (kesintili parça):', a:['okazaki','okazaki parçası','okazaki fragmenti']}],
+  hints:['Çatalın ucundaki “fermuar”ı açan enzim hidrojen bağlarını kırar.','Okazaki parçaları arasında fosfodiester bağı kuran enzim “ligaz”dır.','Kalıp zincire yeni nükleotitleri ekleyen enzim polimerazdır; D ise bu kesintili parçaların adıdır.'],
+  exp:'A → <b>helikaz</b> · B → <b>DNA polimeraz</b> · C → <b>DNA ligaz</b> · D → <b>Okazaki parçası</b>' },
+
+{ topic:'Zor · Okazaki ve öncü iplik', q:'Bir replikasyon çatalında kalıp zincirlerden biri 5′→3′, diğeri 3′→5′ yönünde okunur. DNA polimeraz yalnızca 5′→3′ yönünde sentez yapabildiğine göre, bu durumun Okazaki parçalarının oluşmasına nasıl yol açtığını açıklayınız.',
+  long:true, keys:[['3','3′','üç','5','5′','beş'],['kesintili','parça','okazaki','sürekli','öncü','gecikmeli'],['yön','ters','zıt','çatala doğru','çataldan']],
+  hints:['Polimeraz yalnızca 5′→3′ yönde çalışır, ama çatal açılırken iki kalıp zincirin yönü zıttır.','Çataldan uzaklaşan yönde sentez kesintili olmak zorundadır.','Kesintili sentezlenen kısa parçalar “Okazaki parçaları”dır ve ligazla birleştirilir.'],
+  exp:'İki kalıp zincirin yönü zıt olduğundan polimeraz bir zincirde çatala doğru <b>sürekli (öncü iplik)</b>, diğerinde çataldan uzaklaşarak <b>kesintili</b> sentez yapar. Kesintili sentezlenen kısa parçalar <b>Okazaki parçaları</b>dır ve DNA ligaz ile birleştirilir.' },
+
+{ topic:'Zor · Prokaryot–ökaryot', svg:BIO.origins(), q:'Şekildeki prokaryot ve ökaryot DNA replikasyonunu; orijin sayısı, gerçekleştiği yer ve eşlenme hızı bakımından karşılaştırarak iki fark yazınız.',
+  long:true, keys:[['orijin','başlangıç noktası','tek','birden fazla','çoklu'],['çekirdek','çekirdekte','sitoplazma','sitoplazmada'],['hızlı','hız','yavaş','süre']],
+  hints:['Prokaryotta kaç orijin var, ökaryotta kaç?','Biri sitoplazmada, diğeri çekirdekte gerçekleşir.','Birden çok orijin eşlenmeyi hızlandırır.'],
+  exp:'Prokaryotta <b>tek orijin</b> ve replikasyon <b>sitoplazmada</b> gerçekleşir; ökaryotta <b>birden fazla orijin</b> ve replikasyon <b>çekirdekte</b> gerçekleşir. Çoklu orijin sayesinde ökaryot replikasyonu daha <b>hızlı</b> tamamlanır.' },
+
+{ topic:'Zor · DNA–RNA karşılaştırma', svg:BIOZ.dnarna(), q:'Şekildeki DNA ve RNA moleküllerini karşılaştırarak; şeker, baz ve zincir sayısı bakımından birer fark yazınız.',
+  type:'parts', parts:[
+    {label:'Şeker farkı:', a:['deoksiriboz','riboz']},
+    {label:'Baz farkı:', a:['timin','urasil','t','u']},
+    {label:'Zincir sayısı:', a:['çift','tek','iki','bir','çift zincir','tek zincir']}],
+  hints:['DNA’da deoksiriboz, RNA’da riboz şekeri bulunur.','DNA’da timin, RNA’da urasil bulunur.','DNA çift sarmal, RNA tek zincirdir.'],
+  exp:'DNA’da <b>deoksiriboz</b>, RNA’da <b>riboz</b> şekeri bulunur; DNA’da <b>timin</b>, RNA’da <b>urasil</b> bazı bulunur; DNA <b>çift</b>, RNA <b>tek</b> zincirlidir.' },
+
+{ topic:'Zor · RNA oranları', svg:BIOZ.rnabar(), q:'Grafikte bir hücredeki RNA tiplerinin oranları verilmiştir. Buna göre en fazla ve en az bulunan RNA tiplerini yazıp, en fazla bulunanın hücredeki temel görevini açıklayınız.',
+  type:'parts', parts:[
+    {label:'En fazla bulunan:', a:['rrna','ribozomal rna','ribozomal']},
+    {label:'En az bulunan:', a:['mrna','mesajcı rna','haberci rna','mesajci']},
+    {label:'rRNA görevi:', a:['ribozom','ribozomun yapısını oluştur','ribozom alt birim']}],
+  hints:['Protein sentezinde en çok kullanılan RNA, ribozomun yapı taşıdır.','Şifreyi taşıyan mRNA hücrede en az bulunur.','rRNA ribozomun yapısına katılır.'],
+  exp:'En fazla <b>rRNA</b>, en az <b>mRNA</b> bulunur. rRNA <b>ribozomun yapısını oluşturarak</b> protein sentezinde görev alır.' },
+
+{ topic:'Zor · Kodon tablosu', svg:BIOZ.codtable(), q:'Şekilde kısaltılmış kodon tablosu verilmiştir. AUG – UUU – GGU – UAA kodonları okunduğunda ribozomda sentezlenen polipeptitte kaç amino asit bulunur ve dizilimi ne olur?',
+  type:'parts', parts:[
+    {label:'Amino asit sayısı:', num:3},
+    {label:'1. amino asit:', a:['metiyonin','met','metionin']},
+    {label:'2. amino asit:', a:['fenilalanin','phe','fenil alanin']},
+    {label:'3. amino asit:', a:['glisin','gli','gly']}],
+  hints:['UAA bir durdurucu (stop) kodondur, amino asit şifrelemez.','Tabloya göre AUG→Metiyonin, UUU→Fenilalanin, GGU→Glisin.','Durdurucu kodon sentezi bitirir; yalnızca ilk üç kodon sayılır.'],
+  exp:'UAA durdurucu olduğundan <b>3 amino asit</b> sentezlenir: <b>Metiyonin – Fenilalanin – Glisin</b>.' },
+
+{ topic:'Zor · Keşif deneyleri', q:'Griffith deneyinde “aktarılan madde”nin ne olduğu anlaşılamamıştı; Avery–MacLeod–McCarty deneyinde ise bu maddenin DNA olduğu gösterildi. Bu iki deney arasındaki temel farkı ve bilimin doğasına ilişkin çıkarımı yazınız.',
+  long:true, keys:[['enzim','protein','rna','parçala','yık','ayrıştır'],['dna','deoksiribonükleik'],['bilgi','değiş','geliş','kanıt','deney']],
+  hints:['Avery ekibi deneyde hangi maddeleri parçalayarak hangi maddenin kalıcı olduğunu test etti?','Protein ve RNA parçalandığında özellik aktarılmaya devam etti; DNA parçalandığında aktarım durdu.','Bu süreç bilimsel bilginin kanıtlarla nasıl değişip geliştiğini gösterir.'],
+  exp:'Avery ekibi deneyde <b>enzimler kullanarak protein ve RNA’yı parçaladı</b>; aktarım sürdü. <b>DNA parçalandığında aktarım durdu</b> ve özelliği aktaran maddenin <b>DNA</b> olduğu kanıtlandı. Bu, bilimsel bilginin yeni <b>kanıtlarla değişip geliştiğini</b> gösterir.' },
+
+{ topic:'Zor · Yarı korunumlu eşlenme', q:'¹⁴N ortamında iki kez eşlenen (2 eşlenme) bir DNA için; ortamdaki toplam DNA molekülü sayısı, hibrit DNA sayısı ve tamamen hafif DNA sayısı sırasıyla kaçtır?',
+  type:'parts', parts:[
+    {label:'Toplam DNA:', num:4},
+    {label:'Hibrit DNA:', num:2},
+    {label:'Tamamen hafif DNA:', num:2}],
+  hints:['Her eşlenmede DNA sayısı ikiye katlanır: 2ⁿ.','Eski ağır iplikler yalnızca iki tanedir, bu yüzden hibrit DNA her zaman 2’dir.','Kalan DNA’lar tamamen hafiftir.'],
+  exp:'2 eşlenme → 2² = <b>4 DNA</b> · <b>2 hibrit</b> · <b>2 tamamen hafif</b>' },
+
+{ topic:'Zor · Replikasyon hesaplama', q:'600 nükleotitlik tek zincirli bir DNA parçası üç kez eşlenirse, sonuçta oluşan DNA moleküllerindeki toplam nükleotit sayısı kaç olur?',
+  num:4800, hints:['Tek zincir 600 nükleotit ise çift zincirli DNA 1200 nükleotittir.','3 eşlenmede DNA sayısı 2³ = 8 olur.','8 DNA × 1200 nükleotit.'],
+  exp:'Çift zincirli DNA 1200 nükleotit · 3 eşlenme → 2³ = 8 DNA · 8 × 1200 = <b>4800</b> nükleotit' },
+
+{ topic:'Zor · Transkripsiyon', svg:BIOZ.seq(), q:'Şekildeki kalıp DNA zincirinden sentezlenen mRNA’daki toplam baz sayısı ile kalıp DNA’daki toplam baz sayısı arasındaki ilişkiyi yazınız.',
+  a:['eşit','aynı','eşittir','aynıdır','birbirine eşit','eşit sayıda'], hints:['Transkripsiyonda kalıp DNA’nın her bazı mRNA’ya kopyalanır.','Altı bazlık kalıp DNA’dan altı bazlık mRNA sentezlenir.','Sayılar birbirine eşittir.'],
+  exp:'Her baz kopyalandığı için mRNA’daki baz sayısı kalıp DNA’daki baz sayısına <b>eşittir</b>.' },
+
+{ topic:'Zor · Protein sentezi', q:'60 amino asitlik bir polipeptidin şifresini taşıyan mRNA’da başlangıç ve durdurucu kodonlar da dâhil olmak üzere toplam kaç nükleotit bulunur?',
+  num:186, hints:['60 amino asidin şifresi 60 kodon eder.','Kodonlara başlangıç ve durdurucu kodonlar da eklenir: 60 + 2 = 62 kodon.','62 kodon × 3 nükleotit.'],
+  exp:'(60 + 2) kodon × 3 = <b>186</b> nükleotit' }
 ];

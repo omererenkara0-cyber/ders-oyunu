@@ -19,16 +19,16 @@
   if(!prof || !prof.list){
     prof = {cur:null, list:{}};
     var oldBest = store.get('best', null);
-    if(oldBest && Object.keys(oldBest).length){ prof.list['Oyuncu 1']={best:oldBest,hist:{},mistakes:{}}; prof.cur='Oyuncu 1'; }
+    if(oldBest && Object.keys(oldBest).length){ prof.list['Oyuncu 1']={best:oldBest,hist:{},mistakes:{},tstats:{}}; prof.cur='Oyuncu 1'; }
     store.set('profiles', prof);
   }
-  Object.keys(prof.list).forEach(function(n){ if(!prof.list[n].mistakes) prof.list[n].mistakes={}; });
+  Object.keys(prof.list).forEach(function(n){ if(!prof.list[n].mistakes) prof.list[n].mistakes={}; if(!prof.list[n].tstats) prof.list[n].tstats={}; });
   function saveProf(){ store.set('profiles', prof); }
   function curP(){ return prof.cur && prof.list[prof.cur] ? prof.list[prof.cur] : null; }
   function addPlayer(name){
     name = String(name||'').replace(/\s+/g,' ').trim().slice(0,24);
     if(!name) return false;
-    if(!prof.list[name]) prof.list[name]={best:{},hist:{},mistakes:{}};
+    if(!prof.list[name]) prof.list[name]={best:{},hist:{},mistakes:{},tstats:{}};
     prof.cur=name; saveProf(); return true;
   }
   function pad(n){ return ('0'+n).slice(-2); }
@@ -120,6 +120,25 @@
     return out;
   }
 
+  /* ---------- ZAYIF KONU ANALİZİ ---------- */
+  var WEAK_MIN_N = 2, WEAK_MAX_TOPICS = 4, WEAK_MAX_Q = 15;
+  function weakTopics(){
+    var p=curP(); if(!p) return [];
+    var ts=p.tstats||{}, out=[];
+    Object.keys(ts).forEach(function(k){
+      var t=ts[k]; if(t.n<WEAK_MIN_N) return;
+      out.push({topic:k, ok:t.ok, n:t.n, pct:Math.round(t.ok/t.n*100), last:t.last||0});
+    });
+    out.sort(function(a,b){ return a.pct-b.pct || b.n-a.n || a.last-b.last; });
+    var weak = out.filter(function(x){ return x.pct<100; });
+    return weak.length ? weak.slice(0,WEAK_MAX_TOPICS) : out.slice(0,WEAK_MAX_TOPICS);
+  }
+  function weakPool(){
+    var weak = weakTopics(); if(!weak.length) return [];
+    var names = weak.map(function(w){ return w.topic; });
+    return allQuestions().filter(function(x){ return names.indexOf(x.q.topic||'Genel')>=0; });
+  }
+
   /* ---------- ANA MENÜ ---------- */
   function menu(){
     G = null; clearTimer();
@@ -139,6 +158,12 @@
       extra += '<button class="card subject special" data-mixed="1" style="--sc:var(--accent2)">'+
         '<div class="ico">⚡</div><h3>Karışık Sınav</h3><div class="tag">Tüm derslerden rastgele · süreli</div>'+
         '<div class="meta"><span>'+opts.mixedCount+' soru · '+opts.mixedMin+' dk</span><span>Deneme</span></div></button>';
+    }
+    var wt = weakTopics();
+    if(curP() && wt.length){
+      extra += '<button class="card subject special" data-weak="1" style="--sc:var(--ok)">'+
+        '<div class="ico">🎯</div><h3>Zayıf Konularım</h3><div class="tag">'+wt.map(function(w){ return esc(trim(w.topic,22)); }).join(' · ')+'</div>'+
+        '<div class="meta"><span>%'+wt[0].pct+' · '+wt.length+' konu</span><span>Hedefli çalış</span></div></button>';
     }
     h += extra;
     SUBJECTS.forEach(function(s,i){
@@ -168,6 +193,7 @@
       if(!curP()){ needPlayer(); return; }
       if(b.dataset.mistakes){ startMistakes(); return; }
       if(b.dataset.mixed){ mixedExam(); return; }
+      if(b.dataset.weak){ startWeak(); return; }
       var s = SUBJECTS[+b.dataset.i];
       if(s.levels) levelSelect(s); else pickScreen(s, null);
     }; });
@@ -259,18 +285,29 @@
     var qs = all.map(function(x){ return x.q; });
     startGame({name:'Karışık Sınav', color:'#cfae74', questions:qs, key:'karisik', timed:(opts.mixedMin||20)*60});
   }
+  function startWeak(){
+    var weak = weakTopics();
+    var pool = weakPool();
+    if(!weak.length || !pool.length){ menu(); return; }
+    var qs = shuffle(pool.map(function(x){ return x.q; }));
+    if(qs.length>WEAK_MAX_Q) qs = qs.slice(0,WEAK_MAX_Q);
+    var label = weak.map(function(w){ return w.topic; }).join(' · ');
+    startGame({name:'Zayıf Konularım', color:'#8cc49e', questions:qs, key:'zayif', special:'weak', focus:label});
+  }
 
   /* ---------- OYUN ---------- */
   function startGame(cfg){
     clearTimer();
     var qs = cfg.questions.slice();
     if(opts.shuffle && cfg.special!=='mistakes') qs = shuffle(qs);
-    if(opts.count && !cfg.timed && qs.length>opts.count) qs = qs.slice(0,opts.count);
+    if(opts.count && !cfg.timed && cfg.special!=='weak' && qs.length>opts.count) qs = qs.slice(0,opts.count);
     G = {name:cfg.name, color:cfg.color||'var(--accent)', lv:cfg.lv||null, key:cfg.key,
-         special:cfg.special||null, s:cfg.s||null, qs:qs, i:0, score:0, log:[], topics:{}, timed:cfg.timed||0, left:cfg.timed||0};
+         special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, qs:qs, i:0, score:0, log:[], topics:{},
+         timed:cfg.timed||0, left:cfg.timed||0, streak:0, bestStreak:0};
     question();
   }
   function maxPts(){ return G.qs.length*10; }
+  function streakBonus(s){ return Math.min(Math.max(s-1,0)*2, 10); }
   function clearTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
   function fmtTime(sec){ var m=Math.floor(sec/60), s=sec%60; return pad(m)+':'+pad(s); }
   function startTimer(){
@@ -330,9 +367,11 @@
       '<div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
       (G.timed?'<span class="pill timer'+(G.left<=60?' low':'')+'">⏱ <b id="tleft">'+fmtTime(Math.max(G.left,0))+'</b></span>':'')+
       '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
+      (G.streak>=2?'<span class="pill streak" id="streakPill">🔥 Seri <b>'+G.streak+'</b> · +'+streakBonus(G.streak)+'</span>':'')+
       '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
       '<div class="progress" style="--sc:'+G.color+'"><div style="width:'+pct+'%"></div></div>'+
       '<div class="card qcard" id="qc" style="--sc:'+G.color+'">'+
+      (G.focus?'<div class="focus-note">🎯 Odak: '+esc(G.focus)+'</div>':'')+
       '<div class="qnum"><span>'+(q.topic||'')+'</span><span>'+(q.src||'')+'</span></div>'+
       (q.passage?'<div class="passage">'+q.passage+'</div>':'')+
       '<div class="qtext">'+q.q+(q.note?'<span class="sub">'+q.note+'</span>':'')+'</div>'+
@@ -462,17 +501,30 @@
   function finish(ok){
     var q=G.qs[G.i];
     G.cur.finished=true;
-    var pts = ok ? Math.max(10 - G.cur.wrong*2, 2) : 0;
+    var firstTry = ok && G.cur.wrong===0;
+    var bonus = 0;
+    if(ok){
+      if(firstTry){ G.streak++; if(G.streak>G.bestStreak) G.bestStreak=G.streak; bonus = streakBonus(G.streak); }
+      else G.streak = 0;
+    } else G.streak = 0;
+    var pts = ok ? Math.max(10 - G.cur.wrong*2, 2) + bonus : 0;
     G.score += pts;
     var tk = q.topic||'Genel';
     var t = G.topics[tk] || (G.topics[tk]={ok:0,n:0});
     t.n++; if(ok) t.ok++;
+    var p=curP();
+    if(p){ if(!p.tstats) p.tstats={}; var tt=p.tstats[tk]||(p.tstats[tk]={ok:0,n:0}); tt.n++; if(ok) tt.ok++; tt.last=Date.now(); }
     if(ok) delMistake(q); else addMistake(q);
-    G.log.push({q:q, ok:ok, pts:pts, wrong:G.cur.wrong});
+    saveProf();
+    G.log.push({q:q, ok:ok, pts:pts, bonus:bonus, streak:G.streak, wrong:G.cur.wrong});
     animateScore(G.score);
     app.querySelectorAll('.field input, .field textarea').forEach(function(i){ i.disabled=true; });
-    var title = ok ? (G.cur.wrong? 'Doğru! (+'+pts+')' : 'Harika, ilk denemede doğru! (+10)') : 'Cevap';
+    var title;
+    if(!ok) title = 'Cevap';
+    else if(bonus>0) title = 'Doğru! 🔥 '+G.streak+'’li seri (+'+pts+')';
+    else title = G.cur.wrong ? 'Doğru! (+'+pts+')' : 'Harika, ilk denemede doğru! (+10)';
     var extra = (q.type==='free' && ok) ? '<div class="alt">Bu soru serbest yazım sorusu; değerlendirme ölçütünü aşağıda görebilirsin.</div>' : '';
+    if(bonus>0) extra += '<div class="alt">Kombo bonusu: +'+bonus+' puan (ardışık ilk-deneme doğruları).</div>';
     if(!ok && G.special!=='mistakes') extra += '<div class="alt">Bu soru “Yanlışlarım”a eklendi; ana menüden tekrar çözebilirsin.</div>';
     $('#fb').innerHTML = '<div class="fb '+(ok?'ok':'bad')+'"><div class="h">'+title+'</div>'+answerText(q)+altText(q)+extra+'</div>';
     $('#chk').style.display='none'; $('#pass').style.display='none'; $('#show').style.display='none';
@@ -498,7 +550,7 @@
   function results(){
     clearTimer();
     var s=G.s, okc=G.log.filter(function(l){return l.ok;}).length;
-    var pct = Math.round(G.score/maxPts()*100);
+    var pct = Math.min(100, Math.round(G.score/maxPts()*100));
     var p=curP();
     if(p){
       if(p.best[G.key]==null || pct>p.best[G.key]) p.best[G.key]=pct;
@@ -509,7 +561,8 @@
     var h='<div class="bar" style="--sc:'+G.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
       '<div class="card result" style="--sc:'+G.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
       '<div class="stats"><div class="stat"><b>'+okc+'/'+G.qs.length+'</b><span>Doğru</span></div><div class="stat"><b>'+G.score+'</b><span>Puan</span></div>'+
-      '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div></div>'+
+      '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div>'+
+      '<div class="stat"><b>'+(G.bestStreak>=2?('🔥 '+G.bestStreak):'—')+'</b><span>En uzun seri</span></div></div>'+
       '<div class="actions" style="justify-content:center"><button class="btn primary" id="again">Tekrar oyna</button><button class="btn" id="home2">Ana menü</button></div>'+
       topicAnalysis()+
       '<div class="review">'+G.log.map(function(l,i){
@@ -520,6 +573,7 @@
     $('#homeBtn').onclick=menu; $('#home2').onclick=menu;
     $('#again').onclick=function(){
       if(G.special==='mistakes') startMistakes();
+      else if(G.special==='weak') startWeak();
       else if(G.s) startGame({s:G.s, lv:G.lv, questions:(G.lv?G.lv.questions:G.s.questions), key:G.key, name:G.name, color:G.color});
       else mixedExam();
     };
