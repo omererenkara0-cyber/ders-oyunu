@@ -160,7 +160,7 @@
       extra += '<button class="card subject special" data-weaks="'+g.s.id+'" style="--sc:var(--ok)">'+
         '<div class="ico">🎯</div><h3>Zayıf Konularım · '+esc(g.s.name)+'</h3>'+
         '<div class="tag">'+g.weak.map(function(w){ return esc(trim(w.topic,22)); }).join(' · ')+'</div>'+
-        '<div class="meta"><span>%'+g.weak[0].pct+' · '+g.weak.length+' konu</span><span>Hedefli çalış</span></div></button>';
+        '<div class="meta"><span>'+g.weak.length+' konu · '+g.open+' açık soru</span><span>Hedefli çalış</span></div></button>';
     });
     h += extra;
     SUBJECTS.forEach(function(s,i){
@@ -516,7 +516,7 @@
       if(!p.tstats) p.tstats={};
       var sid = (qSubj.get(q)||{}).id || 'genel';
       var key = tkey(sid, tk);
-      var tt=p.tstats[key]||(p.tstats[key]={ok:0,n:0}); tt.n++; if(ok) tt.ok++; tt.last=Date.now();
+      var tt=p.tstats[key]||(p.tstats[key]={ok:0,n:0,w:0}); WEAK.recordResult(tt, ok); tt.last=Date.now();
     }
     if(ok) delMistake(q); else addMistake(q);
     saveProf();
