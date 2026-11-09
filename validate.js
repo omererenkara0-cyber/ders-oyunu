@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js','weak.js'])
+for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js','weak.js','anim.js'])
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
 const M=ctx.M; let bad=0;
 const firstOf=s=> s.num!=null? String(s.num) : s.a? s.a[0] : s.all? s.all.map(g=>g[0]).join(' ') : s.keys? s.keys[0][0] : null;
@@ -104,4 +104,15 @@ WTEST('tek sahip biyolojiye taşındı', !!ts3['biyoloji::Nükleik asitlerin ke�
 WTEST('çok sahipli Genel silindi', !ts3['Genel']);
 WTEST('çok sahipli (kolay+zor) silindi', !ts3['Düzgün çembersel hareket']);
 WTEST('mevcut kapsamlı anahtar korundu', ts3['fizik::Hareket'].ok===9 && !ts3['Hareket']);
+// animasyon: konfeti spec üretimi (saf)
+const AN=ctx.ANIM;
+const seq=(vals)=>{let i=0;return()=>vals[i++%vals.length];};
+const specs=AN.confettiSpecs(5, seq([0.0,0.5,0.25,0.75,0.1,0.9,0.3,0.6,0.2,0.8]));
+WTEST('konfeti adedi', specs.length===5);
+WTEST('konfeti left 0-100', specs.every(p=>p.left>=0&&p.left<=100));
+WTEST('konfeti süre aralığı', specs.every(p=>p.dur>=900&&p.dur<=1600));
+WTEST('konfeti boyut aralığı', specs.every(p=>p.size>=6&&p.size<=13));
+WTEST('konfeti geçerli renk', specs.every(p=>/^#[0-9a-f]{6}$/i.test(p.color)));
+WTEST('konfeti round bool', specs.every(p=>typeof p.round==='boolean'));
+WTEST('konfeti n=0 boş', AN.confettiSpecs(0, seq([0.5])).length===0);
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');
