@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js'])
+for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js'])
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
 const M=ctx.M; let bad=0;
 const firstOf=s=> s.num!=null? String(s.num) : s.a? s.a[0] : s.all? s.all.map(g=>g[0]).join(' ') : s.keys? s.keys[0][0] : null;
@@ -30,4 +30,23 @@ T('biyoloji:zor','eşlenme süresi prokaryottakine','kısalır',true); T('biyolo
 T('biyoloji:zor','5′ ucu ile','3',true); T('biyoloji:zor','5′ ucu ile','5',false);
 T('biyoloji:zor','kalıp DNA zincirinden sentezlenen mRNA','uacggu',true);
 T('biyoloji:zor','üst zinciri AATGCG','TTACGC',true); T('biyoloji:zor','üst zinciri AATGCG','AATGCG',false);
+// fizik zor seviye
+T('fizik:zor','Kayışla birbirine bağlı','5',true); T('fizik:zor','Kayışla birbirine bağlı','45',false);
+T('fizik:zor','konik sarkaç','0,8',true); T('fizik:zor','konik sarkaç','1,25',false);
+T('fizik:zor','yuvarlanan bir silindirin','3/2',true); T('fizik:zor','yuvarlanan bir silindirin','1',false);
+T('fizik:zor','çubuğa, dönme ekseninden','6',true); T('fizik:zor','çubuğa, dönme ekseninden','3',false);
+T('fizik:zor','ikinci bir disk düşüyor','12',true); T('fizik:zor','ikinci bir disk düşüyor','8',false);
+T('fizik:zor','T_Y / T_X oranı','8',true); T('fizik:zor','T_Y / T_X oranı','2',false);
+T('fizik:zor','kaçış hızı bunun','kök 2',true); T('fizik:zor','kaçış hızı bunun','2',false);
+T('fizik:zor','0–8 s arasında toplam','60',true); T('fizik:zor','0–8 s arasında toplam','40',false);
+T('fizik:zor','özkütlesi kaç','3',true); T('fizik:zor','özkütlesi kaç','30',false);
+T('fizik:zor','basınçların oranı','2',true); T('fizik:zor','basınçların oranı','1',false);
+T('fizik:zor','denge sıcaklığı','44',true); T('fizik:zor','denge sıcaklığı','50',false);
+T('fizik:zor','Kayığın yere','13',true); T('fizik:zor','Kayığın yere','7',false);
+T('fizik:zor','esneklik potansiyel enerjisi','4',true); T('fizik:zor','esneklik potansiyel enerjisi','8',false);
+T('fizik:zor','birlikte hareket ediyor','1,2',true); T('fizik:zor','birlikte hareket ediyor','6/5',true); T('fizik:zor','birlikte hareket ediyor','5',false);
+T('fizik:zor','45 m yükseklikten','30',true); T('fizik:zor','45 m yükseklikten','90',false);
+T('fizik:zor','en az hangi yükseklikten','2,5',true); T('fizik:zor','en az hangi yükseklikten','5/2',true); T('fizik:zor','en az hangi yükseklikten','1,5',false);
+T('fizik:zor','en alt noktasından 5 m/s','30',true); T('fizik:zor','en alt noktasından 5 m/s','20',false);
+T('fizik:zor','virajı kaymadan dönebilecek en büyük hız','10',true); T('fizik:zor','virajı kaymadan dönebilecek en büyük hız','100',false);
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');

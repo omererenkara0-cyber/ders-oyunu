@@ -6,25 +6,27 @@
     get: function(k,d){ try{ var v=localStorage.getItem('dersoyunu.'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
     set: function(k,v){ try{ localStorage.setItem('dersoyunu.'+k, JSON.stringify(v)); }catch(e){} }
   };
-  var opts = store.get('opts', {count:10, shuffle:true});
+  var opts = store.get('opts', {count:10, shuffle:true, mixedCount:20, mixedMin:20});
   var theme = store.get('theme', 'dark');
   document.documentElement.setAttribute('data-theme', theme);
   var G = null; // aktif oyun
+  var timerId = null;
 
   /* ---------- OYUNCULAR ---------- */
   var prof = store.get('profiles', null);
   if(!prof || !prof.list){
     prof = {cur:null, list:{}};
     var oldBest = store.get('best', null);
-    if(oldBest && Object.keys(oldBest).length){ prof.list['Oyuncu 1']={best:oldBest,hist:{}}; prof.cur='Oyuncu 1'; }
+    if(oldBest && Object.keys(oldBest).length){ prof.list['Oyuncu 1']={best:oldBest,hist:{},mistakes:{}}; prof.cur='Oyuncu 1'; }
     store.set('profiles', prof);
   }
+  Object.keys(prof.list).forEach(function(n){ if(!prof.list[n].mistakes) prof.list[n].mistakes={}; });
   function saveProf(){ store.set('profiles', prof); }
   function curP(){ return prof.cur && prof.list[prof.cur] ? prof.list[prof.cur] : null; }
   function addPlayer(name){
     name = String(name||'').replace(/\s+/g,' ').trim().slice(0,24);
     if(!name) return false;
-    if(!prof.list[name]) prof.list[name]={best:{},hist:{}};
+    if(!prof.list[name]) prof.list[name]={best:{},hist:{},mistakes:{}};
     prof.cur=name; saveProf(); return true;
   }
   function pad(n){ return ('0'+n).slice(-2); }
@@ -54,6 +56,7 @@
       }
       return rowFor('<i style="background:'+s.color+'"></i>'+s.name, s.id);
     }).join('');
+    rows += rowFor('<i style="background:var(--accent2)"></i>Karışık Sınav', 'karisik');
     return '<div class="card scores-card"><h3>'+esc(prof.cur)+' · son 3 tur</h3><div class="tbl-wrap"><table class="scores">'+
       '<thead><tr><th>Ders</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
@@ -93,43 +96,89 @@
   function themeBtn(){ return '<button class="icon-btn" id="themeBtn" title="Tema">'+(theme==='dark'?'☀ Açık tema':'☾ Koyu tema')+'</button>'; }
   function bindTheme(){ var b=$('#themeBtn'); if(b) b.onclick=function(){ theme = theme==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',theme); store.set('theme',theme); b.outerHTML=themeBtn(); bindTheme(); }; }
 
+  /* ---------- SORU KİMLİĞİ & HATA DEFTERİ ---------- */
+  function qkey(q){ return q.q; }
+  function mistakes(){ var p=curP(); return p ? p.mistakes : {}; }
+  function mistakeCount(){ return Object.keys(mistakes()).length; }
+  function addMistake(q){ var p=curP(); if(!p) return; p.mistakes[qkey(q)]={q:q}; saveProf(); }
+  function delMistake(q){ var p=curP(); if(!p) return; delete p.mistakes[qkey(q)]; saveProf(); }
+  function mistakeList(){ return Object.keys(mistakes()).map(function(k){ return mistakes()[k]; }); }
+
+  /* ---------- SORU HAVUZU YARDIMCILARI ---------- */
+  function allQuestions(){
+    var out=[];
+    SUBJECTS.forEach(function(s){
+      if(s.levels) s.levels.forEach(function(lv){ lv.questions.forEach(function(q){ out.push({q:q, s:s, lv:lv}); }); });
+      else s.questions.forEach(function(q){ out.push({q:q, s:s, lv:null}); });
+    });
+    return out;
+  }
+  function topicsOf(list){
+    var out=[]; list.forEach(function(q){ var t=q.topic||'Genel'; if(out.indexOf(t)<0) out.push(t); });
+    return out;
+  }
+
   /* ---------- ANA MENÜ ---------- */
   function menu(){
-    G = null;
+    G = null; clearTimer();
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<section class="hero"><h1>Hangi dersle başlamak istersin?</h1><p>Cevaplarını kendi kelimelerinle yaz. Küçük yazım hataları sorun değil, her yanlışta bir ipucu açılır.</p></section>'+
-      playerBar()+'<div class="grid">';
+      playerBar();
+    var mc = mistakeCount();
+    h += '<div class="grid">';
+    var extra = '';
+    if(curP() && mc){
+      extra += '<button class="card subject special" data-mistakes="1" style="--sc:var(--bad)">'+
+        '<div class="ico">✎</div><h3>Yanlışlarım</h3><div class="tag">Hata defteri · '+mc+' soru</div>'+
+        '<div class="meta"><span>'+mc+' soru</span><span>Tekrar çöz</span></div></button>';
+    }
+    if(curP()){
+      extra += '<button class="card subject special" data-mixed="1" style="--sc:var(--accent2)">'+
+        '<div class="ico">⚡</div><h3>Karışık Sınav</h3><div class="tag">Tüm derslerden rastgele · süreli</div>'+
+        '<div class="meta"><span>'+opts.mixedCount+' soru · '+opts.mixedMin+' dk</span><span>Deneme</span></div></button>';
+    }
+    h += extra;
     SUBJECTS.forEach(function(s,i){
       var b = best[s.id];
       var total = s.levels ? s.levels.reduce(function(a,lv){return a+lv.questions.length;},0) : s.questions.length;
       var cnt = s.levels ? (s.levels.length+' seviye · '+total+' soru') : (total+' soru');
       var bestTxt = s.levels ? 'İki seviye' : (b!=null?'En iyi: %'+b:'Henüz oynanmadı');
-      h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+'">'+
+      h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+';animation-delay:'+((i+(extra?2:0))*.05).toFixed(2)+'s">'+
         '<div class="ico">'+s.icon+'</div><h3>'+s.name+'</h3>'+
         '<div class="tag">'+s.desc+'</div>'+
         '<div class="meta"><span>'+cnt+'</span><span>'+bestTxt+'</span></div></button>';
     });
     h += '</div>'+scoreTable()+'<div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
       [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
-      '</div><label class="chk"><input type="checkbox" id="shf" '+(opts.shuffle?'checked':'')+'> Soruları karıştır</label></div>'+
+      '</div><label class="chk"><input type="checkbox" id="shf" '+(opts.shuffle?'checked':'')+'> Soruları karıştır</label>'+
+      '<span class="sep"></span><span>Karışık sınav</span><div class="seg" id="mcnt">'+
+      [10,20,30].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.mixedCount===n?'on':'')+'">'+n+'</button>'; }).join('')+
+      '</div><div class="seg" id="mmin">'+
+      [10,20,30].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.mixedMin===n?'on':'')+'">'+n+' dk</button>'; }).join('')+
+      '</div></div>'+
       '<div class="foot">Enter ile cevap gönderilir · Sorulardayken üstteki “Ana Menü” tuşuyla çıkabilirsin</div>';
     app.innerHTML = h;
     bindTheme();
     bindPlayer();
+    var needPlayer = function(){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); var f=$('#pname'); if(f) f.focus({preventScroll:true}); };
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
-      if(!curP()){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); $('#pname').focus({preventScroll:true}); return; }
+      if(!curP()){ needPlayer(); return; }
+      if(b.dataset.mistakes){ startMistakes(); return; }
+      if(b.dataset.mixed){ mixedExam(); return; }
       var s = SUBJECTS[+b.dataset.i];
-      if(s.levels) levelSelect(s); else start(s);
+      if(s.levels) levelSelect(s); else pickScreen(s, null);
     }; });
     app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
+    app.querySelectorAll('#mcnt button').forEach(function(b){ b.onclick=function(){ opts.mixedCount=+b.dataset.n; store.set('opts',opts); menu(); }; });
+    app.querySelectorAll('#mmin button').forEach(function(b){ b.onclick=function(){ opts.mixedMin=+b.dataset.n; store.set('opts',opts); menu(); }; });
     $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
     window.scrollTo(0,0);
   }
 
   /* ---------- SEVİYE SEÇİMİ ---------- */
   function levelSelect(s){
-    G = null;
+    G = null; clearTimer();
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div></div>'+
@@ -137,7 +186,7 @@
       '<div class="grid">';
     s.levels.forEach(function(lv,i){
       var b = best[s.id+':'+lv.id];
-      h += '<button class="card subject" data-l="'+i+'" style="--sc:'+s.color+'">'+
+      h += '<button class="card subject" data-l="'+i+'" style="--sc:'+s.color+';animation-delay:'+(i*.05).toFixed(2)+'s">'+
         '<div class="ico">'+s.icon+'</div><h3>'+lv.name+'</h3>'+
         '<div class="tag">'+lv.desc+'</div>'+
         '<div class="meta"><span>'+lv.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
@@ -146,20 +195,91 @@
     app.innerHTML = h;
     bindTheme();
     $('#homeBtn').onclick = menu;
-    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ start(s, s.levels[+b.dataset.l]); }; });
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ pickScreen(s, s.levels[+b.dataset.l]); }; });
     window.scrollTo(0,0);
   }
 
-  /* ---------- OYUN ---------- */
-  function start(s, lv){
+  /* ---------- KONU FİLTRESİ ---------- */
+  var pickSel = null;
+  function pickScreen(s, lv){
+    G = null; clearTimer();
     var pool = lv ? lv.questions : s.questions;
-    var qs = pool.slice();
-    if(opts.shuffle) qs = shuffle(qs);
+    var topics = topicsOf(pool);
+    if(topics.length<=1){ startGame({s:s, lv:lv, questions:pool, key:s.id+(lv?':'+lv.id:''), name:s.name, color:s.color}); return; }
+    pickSel = {};
+    var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
+      '<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="backBtn">← Geri</button><div class="title"><i></i>'+s.name+(lv?' · '+lv.name:'')+'</div></div>'+
+      '<section class="hero"><h1>Hangi konuları çalışmak istersin?</h1><p>İstediğin konuları seç ya da tümüyle başla. Seçili konulara göre sorular hazırlanır.</p></section>'+
+      '<div class="card pick"><div class="chips" id="chips">'+
+      '<button class="chip" data-all="1">Tümü</button>'+
+      topics.map(function(t,i){ return '<button class="chip" data-t="'+i+'">'+esc(t)+'</button>'; }).join('')+
+      '</div><div class="pick-foot"><span id="pcount">'+pool.length+' soru</span><button class="btn primary" id="pstart">Başla →</button></div></div>'+
+      '<div class="foot">Konu seçmezsen tüm sorular gelir.</div>';
+    app.innerHTML = h;
+    bindTheme();
+    $('#backBtn').onclick = function(){ if(lv) levelSelect(s); else menu(); };
+    var chips = app.querySelectorAll('.chip');
+    var update = function(){
+      var sel = topics.filter(function(t,i){ return pickSel[i]; });
+      var n = pool.filter(function(q){ return !sel.length || sel.indexOf(q.topic||'Genel')>=0; }).length;
+      $('#pcount').textContent = n+' soru';
+      chips.forEach(function(c){
+        if(c.dataset.all) c.classList.toggle('on', sel.length===0);
+        else c.classList.toggle('on', !!pickSel[+c.dataset.t]);
+      });
+    };
+    chips.forEach(function(c){ c.onclick=function(){
+      if(c.dataset.all){ pickSel={}; }
+      else { var i=+c.dataset.t; if(pickSel[i]) delete pickSel[i]; else pickSel[i]=1; }
+      update();
+    }; });
+    $('#pstart').onclick=function(){
+      var sel = topics.filter(function(t,i){ return pickSel[i]; });
+      var qs = sel.length ? pool.filter(function(q){ return sel.indexOf(q.topic||'Genel')>=0; }) : pool;
+      startGame({s:s, lv:lv, questions:qs, key:s.id+(lv?':'+lv.id:''), name:s.name, color:s.color});
+    };
+    update();
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- HATA DEFTERİ / KARIŞIK SINAV ---------- */
+  function startMistakes(){
+    var list = mistakeList();
+    if(!list.length){ menu(); return; }
+    var qs = shuffle(list.map(function(m){ return m.q; }));
     if(opts.count && qs.length>opts.count) qs = qs.slice(0,opts.count);
-    G = {s:s, lv:lv||null, key:s.id+(lv?':'+lv.id:''), qs:qs, i:0, score:0, log:[]};
+    startGame({name:'Yanlışlarım', color:'#dc9090', questions:qs, key:'yanlislar', special:'mistakes'});
+  }
+  function mixedExam(){
+    var all = shuffle(allQuestions());
+    var n = opts.mixedCount || 20;
+    if(all.length>n) all = all.slice(0,n);
+    var qs = all.map(function(x){ return x.q; });
+    startGame({name:'Karışık Sınav', color:'#cfae74', questions:qs, key:'karisik', timed:(opts.mixedMin||20)*60});
+  }
+
+  /* ---------- OYUN ---------- */
+  function startGame(cfg){
+    clearTimer();
+    var qs = cfg.questions.slice();
+    if(opts.shuffle && cfg.special!=='mistakes') qs = shuffle(qs);
+    if(opts.count && !cfg.timed && qs.length>opts.count) qs = qs.slice(0,opts.count);
+    G = {name:cfg.name, color:cfg.color||'var(--accent)', lv:cfg.lv||null, key:cfg.key,
+         special:cfg.special||null, s:cfg.s||null, qs:qs, i:0, score:0, log:[], topics:{}, timed:cfg.timed||0, left:cfg.timed||0};
     question();
   }
   function maxPts(){ return G.qs.length*10; }
+  function clearTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+  function fmtTime(sec){ var m=Math.floor(sec/60), s=sec%60; return pad(m)+':'+pad(s); }
+  function startTimer(){
+    if(!G.timed) return;
+    timerId = setInterval(function(){
+      if(!G){ clearTimer(); return; }
+      G.left--;
+      var el=$('#tleft'); if(el){ el.textContent=fmtTime(Math.max(G.left,0)); var p=el.parentNode; if(p) p.classList.toggle('low', G.left<=60); }
+      if(G.left<=0){ clearTimer(); results(); }
+    }, 1000);
+  }
 
   function autoHint(q){
     var first = function(spec){
@@ -202,13 +322,14 @@
     var q = G.qs[G.i], s=G.s;
     G.cur = {wrong:0, hints:0, done:{}, usedPool:{}, finished:false};
     var pct = Math.round(G.i/G.qs.length*100);
-    var h = '<div class="bar" style="--sc:'+s.color+'">'+
+    var h = '<div class="bar" style="--sc:'+G.color+'">'+
       '<button class="icon-btn" id="homeBtn">← Ana Menü</button>'+
-      '<div class="title"><i></i>'+s.name+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
+      '<div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
+      (G.timed?'<span class="pill timer'+(G.left<=60?' low':'')+'">⏱ <b id="tleft">'+fmtTime(Math.max(G.left,0))+'</b></span>':'')+
       '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
       '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
-      '<div class="progress" style="--sc:'+s.color+'"><div style="width:'+pct+'%"></div></div>'+
-      '<div class="card qcard" id="qc" style="--sc:'+s.color+'">'+
+      '<div class="progress" style="--sc:'+G.color+'"><div style="width:'+pct+'%"></div></div>'+
+      '<div class="card qcard" id="qc" style="--sc:'+G.color+'">'+
       '<div class="qnum"><span>'+(q.topic||'')+'</span><span>'+(q.src||'')+'</span></div>'+
       (q.passage?'<div class="passage">'+q.passage+'</div>':'')+
       '<div class="qtext">'+q.q+(q.note?'<span class="sub">'+q.note+'</span>':'')+'</div>'+
@@ -232,7 +353,6 @@
           if(inp.tagName==='TEXTAREA' && q.type==='free') { if(!e.ctrlKey) return; }
           e.preventDefault();
           if(G.cur.finished){ next(); return; }
-          // çok alanlıysa boş bir sonraki alana geç
           if(all.length>1){
             for(var j=idx+1;j<all.length;j++){ if(!all[j].disabled && !all[j].value.trim()){ all[j].focus(); return; } }
           }
@@ -240,6 +360,7 @@
         }
       });
     });
+    startTimer();
     var f = app.querySelector('.field input, .field textarea'); if(f) f.focus({preventScroll:true});
     window.scrollTo(0,0);
   }
@@ -323,15 +444,33 @@
     return '<div class="alt">Kabul edilen cevaplar: '+uniq.slice(0,8).map(esc).join(' · ')+'</div>';
   }
 
+  function animateScore(to){
+    var el=$('#pts'); if(!el) return;
+    var from = parseInt(el.textContent,10)||0;
+    if(from===to) return;
+    var steps = Math.min(Math.abs(to-from), 12), k=0;
+    var iv = setInterval(function(){
+      k++; el.textContent = Math.round(from+(to-from)*k/steps);
+      el.classList.add('bump');
+      if(k>=steps){ clearInterval(iv); el.textContent=to; setTimeout(function(){ el.classList.remove('bump'); },200); }
+    }, 30);
+  }
+
   function finish(ok){
     var q=G.qs[G.i];
     G.cur.finished=true;
     var pts = ok ? Math.max(10 - G.cur.wrong*2, 2) : 0;
-    G.score += pts; $('#pts').textContent=G.score;
+    G.score += pts;
+    var tk = q.topic||'Genel';
+    var t = G.topics[tk] || (G.topics[tk]={ok:0,n:0});
+    t.n++; if(ok) t.ok++;
+    if(ok) delMistake(q); else addMistake(q);
     G.log.push({q:q, ok:ok, pts:pts, wrong:G.cur.wrong});
+    animateScore(G.score);
     app.querySelectorAll('.field input, .field textarea').forEach(function(i){ i.disabled=true; });
     var title = ok ? (G.cur.wrong? 'Doğru! (+'+pts+')' : 'Harika, ilk denemede doğru! (+10)') : 'Cevap';
     var extra = (q.type==='free' && ok) ? '<div class="alt">Bu soru serbest yazım sorusu; değerlendirme ölçütünü aşağıda görebilirsin.</div>' : '';
+    if(!ok && G.special!=='mistakes') extra += '<div class="alt">Bu soru “Yanlışlarım”a eklendi; ana menüden tekrar çözebilirsin.</div>';
     $('#fb').innerHTML = '<div class="fb '+(ok?'ok':'bad')+'"><div class="h">'+title+'</div>'+answerText(q)+altText(q)+extra+'</div>';
     $('#chk').style.display='none'; $('#pass').style.display='none'; $('#show').style.display='none';
     var n=$('#next'); n.style.display=''; n.focus({preventScroll:true});
@@ -341,7 +480,20 @@
   function next(){ if(!G) return; G.i++; if(G.i>=G.qs.length) results(); else question(); }
 
   /* ---------- SONUÇ ---------- */
+  function topicAnalysis(){
+    var ks = Object.keys(G.topics);
+    if(ks.length<2) return '';
+    ks.sort(function(a,b){ var ra=G.topics[a].ok/G.topics[a].n, rb=G.topics[b].ok/G.topics[b].n; return ra-rb; });
+    return '<div class="analysis"><h3>Konu analizi</h3><p class="an-sub">En çok zorlandığın konular üstte.</p>'+
+      ks.map(function(k){
+        var t=G.topics[k], p=Math.round(t.ok/t.n*100);
+        var cl = p>=70?'hi':p>=40?'mid':'lo';
+        return '<div class="an-row"><span class="an-name">'+esc(k)+'</span><span class="an-bar"><i class="'+cl+'" style="width:'+p+'%"></i></span><span class="an-pct '+cl+'">%'+p+'</span></div>';
+      }).join('')+'</div>';
+  }
+
   function results(){
+    clearTimer();
     var s=G.s, okc=G.log.filter(function(l){return l.ok;}).length;
     var pct = Math.round(G.score/maxPts()*100);
     var p=curP();
@@ -351,17 +503,23 @@
       saveProf();
     }
     var msg = pct>=85?'Çok iyi gidiyorsun!':pct>=60?'Güzel iş, biraz daha tekrarla mükemmel olur.':pct>=35?'Fena değil, yanlışları gözden geçir.':'Konuyu tekrar edip yeniden dene.';
-    var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
-      '<div class="card result" style="--sc:'+s.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
+    var h='<div class="bar" style="--sc:'+G.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
+      '<div class="card result" style="--sc:'+G.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
       '<div class="stats"><div class="stat"><b>'+okc+'/'+G.qs.length+'</b><span>Doğru</span></div><div class="stat"><b>'+G.score+'</b><span>Puan</span></div>'+
       '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div></div>'+
       '<div class="actions" style="justify-content:center"><button class="btn primary" id="again">Tekrar oyna</button><button class="btn" id="home2">Ana menü</button></div>'+
+      topicAnalysis()+
       '<div class="review">'+G.log.map(function(l,i){
         var qt = l.q.q.replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,''); qt=trim(qt,140);
         return '<div class="rv"><div class="st '+(l.ok?'ok':'bad')+'">'+(l.ok?'✓':'✗')+'</div><div><div>'+(i+1)+'. '+esc(qt)+'</div><div class="ans">'+esc(trim(answerText(l.q).replace(/<br\s*\/?>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&'),260))+'</div></div></div>';
       }).join('')+'</div></div>';
     app.innerHTML=h; bindTheme();
-    $('#homeBtn').onclick=menu; $('#home2').onclick=menu; $('#again').onclick=function(){ start(s, G.lv); };
+    $('#homeBtn').onclick=menu; $('#home2').onclick=menu;
+    $('#again').onclick=function(){
+      if(G.special==='mistakes') startMistakes();
+      else if(G.s) startGame({s:G.s, lv:G.lv, questions:(G.lv?G.lv.questions:G.s.questions), key:G.key, name:G.name, color:G.color});
+      else mixedExam();
+    };
     window.scrollTo(0,0);
   }
 
