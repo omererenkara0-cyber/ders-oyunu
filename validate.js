@@ -30,6 +30,32 @@ T('biyoloji:zor','eşlenme süresi prokaryottakine','kısalır',true); T('biyolo
 T('biyoloji:zor','5′ ucu ile','3',true); T('biyoloji:zor','5′ ucu ile','5',false);
 T('biyoloji:zor','kalıp DNA zincirinden sentezlenen mRNA','uacggu',true);
 T('biyoloji:zor','üst zinciri AATGCG','TTACGC',true); T('biyoloji:zor','üst zinciri AATGCG','AATGCG',false);
+// biyoloji zor: yeni sorular (enzim/Okazaki/prokaryot/DNA-RNA/RNA oranı/kodon)
+const TP=(sid,qsub,label,inp,exp)=>{const qs=LISTS.find(s=>s.id===sid).questions; const q=qs.find(x=>x.q.includes(qsub)); if(!q||!q.parts){bad++;console.log('FAIL part missing',sid,qsub);return;} const p=q.parts.find(x=>(x.label||'').includes(label)); if(!p){bad++;console.log('FAIL part label',sid,label);return;} const g=M.check(inp,p); if(g!==exp){bad++;console.log('FAIL part case',sid,label,inp,g);}};
+TP('biyoloji:zor','A, B, C ve D ile gösterilen','A (','helikaz',true);
+TP('biyoloji:zor','A, B, C ve D ile gösterilen','C (','ligaz',true);
+TP('biyoloji:zor','A, B, C ve D ile gösterilen','B (','polimeraz',true);
+TP('biyoloji:zor','A, B, C ve D ile gösterilen','D (','okazaki',true);
+TP('biyoloji:zor','A, B, C ve D ile gösterilen','A (','ligaz',false);
+TP('biyoloji:zor','DNA ve RNA moleküllerini karşılaştırarak','Şeker','deoksiriboz',true);
+TP('biyoloji:zor','DNA ve RNA moleküllerini karşılaştırarak','Baz','urasil',true);
+TP('biyoloji:zor','DNA ve RNA moleküllerini karşılaştırarak','Zincir','çift',true);
+TP('biyoloji:zor','RNA tiplerinin oranları','En fazla','rrna',true);
+TP('biyoloji:zor','RNA tiplerinin oranları','En az','mrna',true);
+TP('biyoloji:zor','RNA tiplerinin oranları','görevi','ribozom',true);
+TP('biyoloji:zor','kısaltılmış kodon tablosu','1. amino','metiyonin',true);
+TP('biyoloji:zor','kısaltılmış kodon tablosu','3. amino','glisin',true);
+TP('biyoloji:zor','iki kez eşlenen (2 eşlenme)','Toplam','4',true);
+TP('biyoloji:zor','iki kez eşlenen (2 eşlenme)','Hibrit','2',true);
+TP('biyoloji:zor','iki kez eşlenen (2 eşlenme)','hafif','2',true);
+T('biyoloji:zor','Okazaki parçalarının oluşmasına','polimeraz yalnızca 5\' yönünde sentez yapar, çataldan uzaklaşan zincirde kesintili parçalar oluşur',true);
+T('biyoloji:zor','prokaryot ve ökaryot DNA replikasyonunu','ökaryotta birden fazla orijin ve çekirdekte hızlı gerçekleşir',true);
+T('biyoloji:zor','Griffith deneyinde','protein ve rna parçalandı, dna parçalandığında aktarım durdu',true);
+T('biyoloji:zor','600 nükleotitlik tek zincirli','4800',true);
+T('biyoloji:zor','600 nükleotitlik tek zincirli','1200',false);
+T('biyoloji:zor','60 amino asitlik bir polipeptidin','186',true);
+T('biyoloji:zor','60 amino asitlik bir polipeptidin','180',false);
+T('biyoloji:zor','kalıp DNA zincirinden sentezlenen mRNA’daki toplam baz','eşit',true);
 // fizik zor seviye
 T('fizik:zor','Kayışla birbirine bağlı','5',true); T('fizik:zor','Kayışla birbirine bağlı','45',false);
 T('fizik:zor','konik sarkaç','0,8',true); T('fizik:zor','konik sarkaç','1,25',false);
