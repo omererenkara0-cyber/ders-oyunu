@@ -38,13 +38,21 @@
   }
   function scoreTable(){
     var p=curP(); if(!p) return '';
-    var rows = SUBJECTS.map(function(s){
-      var h=p.hist[s.id]||[];
-      return '<tr><th><i style="background:'+s.color+'"></i>'+s.name+'</th>'+[0,1,2].map(function(k){
+    var rowFor = function(name, key){
+      var h=p.hist[key]||[];
+      return '<tr><th>'+name+'</th>'+[0,1,2].map(function(k){
         var r=h[k]; if(!r) return '<td class="empty">—</td>';
         var cl = r.p>=70?'hi':r.p>=40?'mid':'lo';
         return '<td><b class="'+cl+'">%'+r.p+'</b><small><span>'+r.ok+'/'+r.n+'<em> doğru</em></span><span class="dt"><em> · </em>'+fmtDate(r.t)+'</span></small></td>';
       }).join('')+'</tr>';
+    };
+    var rows = SUBJECTS.map(function(s){
+      if(s.levels){
+        return s.levels.map(function(lv){
+          return rowFor('<i style="background:'+s.color+'"></i>'+s.name+' · '+lv.name, s.id+':'+lv.id);
+        }).join('');
+      }
+      return rowFor('<i style="background:'+s.color+'"></i>'+s.name, s.id);
     }).join('');
     return '<div class="card scores-card"><h3>'+esc(prof.cur)+' · son 3 tur</h3><div class="tbl-wrap"><table class="scores">'+
       '<thead><tr><th>Ders</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
@@ -94,10 +102,13 @@
       playerBar()+'<div class="grid">';
     SUBJECTS.forEach(function(s,i){
       var b = best[s.id];
+      var total = s.levels ? s.levels.reduce(function(a,lv){return a+lv.questions.length;},0) : s.questions.length;
+      var cnt = s.levels ? (s.levels.length+' seviye · '+total+' soru') : (total+' soru');
+      var bestTxt = s.levels ? 'İki seviye' : (b!=null?'En iyi: %'+b:'Henüz oynanmadı');
       h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+'">'+
         '<div class="ico">'+s.icon+'</div><h3>'+s.name+'</h3>'+
         '<div class="tag">'+s.desc+'</div>'+
-        '<div class="meta"><span>'+s.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
+        '<div class="meta"><span>'+cnt+'</span><span>'+bestTxt+'</span></div></button>';
     });
     h += '</div>'+scoreTable()+'<div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
       [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
@@ -108,20 +119,44 @@
     bindPlayer();
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
       if(!curP()){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); $('#pname').focus({preventScroll:true}); return; }
-      start(SUBJECTS[+b.dataset.i]);
+      var s = SUBJECTS[+b.dataset.i];
+      if(s.levels) levelSelect(s); else start(s);
     }; });
     app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
     $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
     window.scrollTo(0,0);
   }
 
+  /* ---------- SEVİYE SEÇİMİ ---------- */
+  function levelSelect(s){
+    G = null;
+    var best = curP() ? curP().best : {};
+    var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
+      '<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div></div>'+
+      '<section class="hero"><h1>'+s.name+' · hangi seviyeyle başlamak istersin?</h1><p>Kolay–orta seviyede çalışma soruları, zor seviyede ise çizimli, hesaplamalı ve yorum gerektiren sorular bulunur.</p></section>'+
+      '<div class="grid">';
+    s.levels.forEach(function(lv,i){
+      var b = best[s.id+':'+lv.id];
+      h += '<button class="card subject" data-l="'+i+'" style="--sc:'+s.color+'">'+
+        '<div class="ico">'+s.icon+'</div><h3>'+lv.name+'</h3>'+
+        '<div class="tag">'+lv.desc+'</div>'+
+        '<div class="meta"><span>'+lv.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
+    });
+    h += '</div><div class="foot">Zor seviyede cevaplar için yazım hataları tolere edilir; yine de doğru terimi yazmaya çalış.</div>';
+    app.innerHTML = h;
+    bindTheme();
+    $('#homeBtn').onclick = menu;
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ start(s, s.levels[+b.dataset.l]); }; });
+    window.scrollTo(0,0);
+  }
+
   /* ---------- OYUN ---------- */
-  function start(s){
-    var qs = s.questions.slice();
-    if(s.ordered){ if(opts.shuffle) qs = shuffle(qs); }
-    else if(opts.shuffle) qs = shuffle(qs);
+  function start(s, lv){
+    var pool = lv ? lv.questions : s.questions;
+    var qs = pool.slice();
+    if(opts.shuffle) qs = shuffle(qs);
     if(opts.count && qs.length>opts.count) qs = qs.slice(0,opts.count);
-    G = {s:s, qs:qs, i:0, score:0, log:[]};
+    G = {s:s, lv:lv||null, key:s.id+(lv?':'+lv.id:''), qs:qs, i:0, score:0, log:[]};
     question();
   }
   function maxPts(){ return G.qs.length*10; }
@@ -169,7 +204,7 @@
     var pct = Math.round(G.i/G.qs.length*100);
     var h = '<div class="bar" style="--sc:'+s.color+'">'+
       '<button class="icon-btn" id="homeBtn">← Ana Menü</button>'+
-      '<div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+
+      '<div class="title"><i></i>'+s.name+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
       '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
       '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
       '<div class="progress" style="--sc:'+s.color+'"><div style="width:'+pct+'%"></div></div>'+
@@ -311,12 +346,12 @@
     var pct = Math.round(G.score/maxPts()*100);
     var p=curP();
     if(p){
-      if(p.best[s.id]==null || pct>p.best[s.id]) p.best[s.id]=pct;
-      p.hist[s.id]=[{p:pct, s:G.score, ok:okc, n:G.qs.length, t:Date.now()}].concat(p.hist[s.id]||[]).slice(0,3);
+      if(p.best[G.key]==null || pct>p.best[G.key]) p.best[G.key]=pct;
+      p.hist[G.key]=[{p:pct, s:G.score, ok:okc, n:G.qs.length, t:Date.now()}].concat(p.hist[G.key]||[]).slice(0,3);
       saveProf();
     }
     var msg = pct>=85?'Çok iyi gidiyorsun!':pct>=60?'Güzel iş, biraz daha tekrarla mükemmel olur.':pct>=35?'Fena değil, yanlışları gözden geçir.':'Konuyu tekrar edip yeniden dene.';
-    var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
+    var h='<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
       '<div class="card result" style="--sc:'+s.color+'"><div class="big">%'+pct+'</div><div class="sub">'+msg+'</div>'+
       '<div class="stats"><div class="stat"><b>'+okc+'/'+G.qs.length+'</b><span>Doğru</span></div><div class="stat"><b>'+G.score+'</b><span>Puan</span></div>'+
       '<div class="stat"><b>'+G.log.filter(function(l){return l.ok&&!l.wrong;}).length+'</b><span>İlk denemede</span></div></div>'+
@@ -326,7 +361,7 @@
         return '<div class="rv"><div class="st '+(l.ok?'ok':'bad')+'">'+(l.ok?'✓':'✗')+'</div><div><div>'+(i+1)+'. '+esc(qt)+'</div><div class="ans">'+esc(trim(answerText(l.q).replace(/<br\s*\/?>/g,' · ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&'),260))+'</div></div></div>';
       }).join('')+'</div></div>';
     app.innerHTML=h; bindTheme();
-    $('#homeBtn').onclick=menu; $('#home2').onclick=menu; $('#again').onclick=function(){ start(s); };
+    $('#homeBtn').onclick=menu; $('#home2').onclick=menu; $('#again').onclick=function(){ start(s, G.lv); };
     window.scrollTo(0,0);
   }
 

@@ -6,7 +6,11 @@ var IC = {
   ed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5L9 20H4v-5z"/><path d="M13 6l5 5"/></svg>'
 };
 var SUBJECTS = [
-  {id:'biyoloji', name:'Biyoloji', desc:'Nükleik asitler · DNA replikasyonu · Protein sentezi', color:'#8cc49e', icon:IC.bio, questions:Q_BIYOLOJI},
+  {id:'biyoloji', name:'Biyoloji', desc:'Nükleik asitler · DNA replikasyonu · Protein sentezi', color:'#8cc49e', icon:IC.bio, questions:Q_BIYOLOJI,
+    levels:[
+      {id:'kolay', name:'Kolay–Orta', desc:'Çalışma soruları · açık uçlu', questions:Q_BIYOLOJI},
+      {id:'zor', name:'Zor', desc:'Çizimli · hesaplama · yorum', questions:Q_BIYOLOJI_ZOR}
+    ]},
   {id:'fizik', name:'Fizik', desc:'Çembersel hareket · Dönme · Kütle çekimi', color:'#8fb4dd', icon:IC.fiz, questions:Q_FIZIK},
   {id:'inkilap', name:'İnkılap Tarihi', desc:'Çalışma soruları (ilk 10)', color:'#de9aa3', icon:IC.ink, questions:Q_INKILAP},
   {id:'din', name:'Din Kültürü', desc:'İslam ve bilim · 1. dönem 1. sınav', color:'#d9b56f', icon:IC.din, questions:Q_DIN},
