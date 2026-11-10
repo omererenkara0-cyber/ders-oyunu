@@ -4,6 +4,12 @@
 
   function has(sid){ return !!(window.FORMULS && window.FORMULS[sid] && window.FORMULS[sid].length); }
 
+  function figHtml(sec){
+    if(!sec.fig || !window.FSVG || !FSVG[sec.fig]) return '';
+    var svg = FSVG[sec.fig]();
+    return '<figure class="ffig">'+svg+(sec.figCap?'<figcaption>'+esc(sec.figCap)+'</figcaption>':'')+'</figure>';
+  }
+
   function sectionsHtml(sid){
     var secs = (window.FORMULS||{})[sid]||[];
     return secs.map(function(sec){
@@ -12,7 +18,7 @@
       }).join('');
       return '<div class="card fsec"><h3>'+esc(sec.h)+'</h3>'+
         (sec.note?'<p class="fnote">'+esc(sec.note)+'</p>':'')+
-        '<div class="ftable">'+rows+'</div></div>';
+        '<div class="fbody">'+figHtml(sec)+'<div class="ftable">'+rows+'</div></div></div>';
     }).join('');
   }
 
