@@ -133,6 +133,37 @@ var M = (function(){
     });
     return res;
   }
-  return {norm:norm, lev:lev, check:check, checkList:checkList, nums:nums, numMatch:numMatch, dist:dist};
+  /* Formül cevabı kontrolü: sembol/boşluk/çarpma işareti/ünlem farklarını tolere eder.
+     Ör. "v²/r", "v2/r", "V kare / r", "a = v^2 / r" aynı kabul edilir. */
+  var FWORD = [['bolu','/'],['kare','2'],['kup','3'],['kok','sqrt'],['carpi','']];
+  function fnorm(s){
+    s = lower(String(s));
+    s = s.replace(/[ışğüöçâîû]/g, function(c){ return MAP[c]; });
+    s = s.replace(/π/g,'pi').replace(/θ/g,'theta').replace(/ω/g,'omega').replace(/α/g,'alpha')
+         .replace(/τ/g,'tau').replace(/Δ/g,'d').replace(/μ/g,'mu').replace(/λ/g,'lambda');
+    s = s.replace(/√/g,'sqrt').replace(/²/g,'2').replace(/³/g,'3').replace(/½/g,'1/2').replace(/¼/g,'1/4');
+    s = s.replace(/[·×*∙]/g,'').replace(/\^/g,'').replace(/[−–—]/g,'-');
+    FWORD.forEach(function(w){ s = s.split(w[0]).join(w[1]); });
+    s = s.replace(/\s+/g,'');
+    s = s.replace(/^[a-z]{1,3}=/,'');   /* baştaki "a =" / "v=" atılır */
+    s = s.replace(/\.(?=[a-z])/g,'').replace(/([a-z\)])\./g,'$1');
+    s = s.replace(/\[|\]/g,'(');
+    s = s.replace(/[^a-z0-9\/\(\)\.\-\+]/g,'');
+    return s;
+  }
+  /* Çarpma sırası ve parantez farkını yok sayan imza: her pay/payda içindeki
+     karakterler sıralanır. Ör. "m·v²/r" ≡ "v²·m/r", ama "v²/r" ≠ "r/v²". */
+  function fsig(s){ s=s.replace(/[\(\)]/g,''); return s.split('/').map(function(p){ return p.split('').sort().join(''); }).join('/'); }
+  function formula(raw, spec){
+    var inp = fnorm(raw); if(!inp) return false;
+    var si = fsig(inp), cands = [].concat(spec.a||[]);
+    for(var i=0;i<cands.length;i++){
+      var c = fnorm(cands[i]); if(!c) continue;
+      if(inp===c || fsig(c)===si) return true;
+    }
+    if(spec.num!=null && numMatch(raw, spec.num, spec.tol)) return true;
+    return false;
+  }
+  return {norm:norm, lev:lev, check:check, checkList:checkList, nums:nums, numMatch:numMatch, dist:dist, fnorm:fnorm, fsig:fsig, formula:formula};
 })();
 if(typeof module!=='undefined') module.exports=M;
