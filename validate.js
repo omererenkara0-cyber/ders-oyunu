@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/formuller.js','data/subjects.js','weak.js','anim.js'])
+for(const f of ['match.js','svg.js','data/formul-svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/formuller.js','data/subjects.js','weak.js','anim.js'])
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
 const M=ctx.M; let bad=0;
 const firstOf=s=> s.num!=null? String(s.num) : s.a? s.a[0] : s.all? s.all.map(g=>g[0]).join(' ') : s.keys? s.keys[0][0] : null;
@@ -138,4 +138,15 @@ let fBad=0, fRows=0;
 WTEST('formül bölümleri biçimli', fBad===0);
 WTEST('formül satır sayısı yeterli', fRows>=30);
 WTEST('her formül bölümünde başlık var', (FM.fizik||[]).every(s=>typeof s.h==='string' && s.h.length>0));
+// formül çizimleri: tanımlı her fig FSVG'de üretilebilmeli
+const FSV=ctx.FSVG||{};
+let figBad=0, figN=0;
+(FM.fizik||[]).forEach(s=>{ if(!s.fig) return; figN++;
+  const fn=FSV[s.fig];
+  if(typeof fn!=='function'){ figBad++; console.log('FAIL fig missing', s.fig); return; }
+  let out=''; try{ out=fn(); }catch(e){ figBad++; console.log('FAIL fig threw', s.fig, e.message); return; }
+  if(!/^<svg[\s\S]*<\/svg>$/.test(out) || out.indexOf('NaN')!==-1 || out.indexOf('undefined')!==-1){ figBad++; console.log('FAIL fig bad', s.fig); }
+});
+WTEST('her bölüm için çizim var', figN===(FM.fizik||[]).length);
+WTEST('çizimler geçerli SVG üretiyor', figBad===0);
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');
