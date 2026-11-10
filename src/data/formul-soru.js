@@ -1,230 +1,126 @@
-/* Formül sınavı — doğrudan formül soruları. Her soru bir bağıntının yazılmasını ister.
-   Biçim: { id, topic, q, a:[kabul edilen yazımlar], hints:[...], sol:'<b>…</b>' }
-   a: toleranslı eşleştirici (M.formula) için kabul edilen yazımlar.
-   hints: her yanlışta sırayla açılan, formülün bir bileşenini gösteren ipuçları. */
-var FORMUL_SORU = [
-/* ---- 1. Temel büyüklükler ---- */
-{ id:'fs1', topic:'Temel büyüklükler', formula:true,
-  q:'Periyot ile frekans arasındaki bağıntıyı yazınız. (T: periyot, f: frekans)',
-  a:['f = 1/T','T = 1/f','1/T','1/f'],
-  hints:['Periyot ile frekans birbirinin tersidir.','Bağıntı 1 bölü T (ya da 1 bölü f) biçimindedir.'],
-  sol:'f = 1/T = n/t' },
-{ id:'fs2', topic:'Temel büyüklükler', formula:true,
-  q:'Çizgisel hızı yarıçap ve periyot cinsinden yazınız. (v, r, T)',
-  a:['v = 2πr/T','2πr/T','v = 2πrf','2πrf'],
-  hints:['Bir turda alınan yol çemberin çevresidir: 2πr.','Yolu periyoda böl: v = 2πr/T'],
-  sol:'v = 2πr/T = 2πr·f' },
-{ id:'fs3', topic:'Temel büyüklükler', formula:true,
-  q:'Çizgisel hızı açısal hız ve yarıçap cinsinden yazınız. (v, ω, r)',
-  a:['v = ω·r','v = w·r','ω·r','w·r','ωr','wr'],
-  hints:['Çizgisel hız, açısal hız ile yarıçapın çarpımıdır.','Bağıntı ω ile r çarpımıdır.'],
-  sol:'v = ω·r' },
-{ id:'fs4', topic:'Temel büyüklükler', formula:true,
-  q:'Açısal hızı periyot cinsinden yazınız. (ω, T)',
-  a:['ω = 2π/T','2π/T'],
-  hints:['Bir tam turda taranan açı 2π radyandır.','Açıyı periyoda böl: 2π/T'],
-  sol:'ω = 2π/T = 2πf' },
-{ id:'fs5', topic:'Temel büyüklükler', formula:true,
-  q:'Açısal hız ile frekans arasındaki bağıntıyı yazınız. (ω, f)',
-  a:['ω = 2πf','2πf'],
-  hints:['f = 1/T olduğunu anımsa.','ω = 2π·f'],
-  sol:'ω = 2πf' },
-/* ---- 2. Merkezcil ivme ve kuvvet ---- */
-{ id:'fs6', topic:'Merkezcil ivme ve kuvvet', formula:true,
-  q:'Merkezcil ivmenin bağıntısını yazınız. (a, v, r)',
-  a:['a = v²/r','v²/r','v2/r','v kare / r'],
-  hints:['İvme, hızın karesi ile doğru orantılıdır.','Yarıçapa bölünür: v²/r'],
-  sol:'a = v²/r' },
-{ id:'fs7', topic:'Merkezcil ivme ve kuvvet', formula:true,
-  q:'Merkezcil ivmeyi açısal hız cinsinden yazınız. (a, ω, r)',
-  a:['a = ω²·r','ω²·r','ω2r','w2r'],
-  hints:['v = ω·r bağıntısını a = v²/r içine koy.','a = ω²·r'],
-  sol:'a = ω²·r' },
-{ id:'fs8', topic:'Merkezcil ivme ve kuvvet', formula:true,
-  q:'Merkezcil ivmeyi periyot cinsinden yazınız. (a, r, T)',
-  a:['a = 4π²r/T²','4π²r/T²','4π²r·f²','4π²rf²'],
-  hints:['v = 2πr/T bağıntısını a = v²/r içine koy.','Payda T², pay 4π²r olur.'],
-  sol:'a = 4π²r/T² = 4π²r·f²' },
-{ id:'fs9', topic:'Merkezcil ivme ve kuvvet', formula:true,
-  q:'Merkezcil kuvvetin bağıntısını yazınız. (F, m, v, r)',
-  a:['F = m·v²/r','m·v²/r','mv²/r','mv2/r'],
-  hints:['F = m·a ve a = v²/r.','F = m·v²/r'],
-  sol:'F = m·v²/r' },
-/* ---- 3. Viraj, eğimli yol ve silindir ---- */
-{ id:'fs10', topic:'Viraj ve eğimli yol', formula:true,
-  q:'Yatay (eğimsiz) virajda kaymadan dönülebilecek en büyük hızın bağıntısını yazınız. (k: sürtünme katsayısı, g, r)',
-  a:['v = √(k·g·r)','√(k·g·r)','sqrt(kgr)','√(kgr)'],
-  hints:['Merkezcil kuvveti statik sürtünme sağlar: k·m·g = m·v²/r.','Karekök içinde k·g·r bulunur.'],
-  sol:'v_max = √(k·g·r)' },
-{ id:'fs11', topic:'Viraj ve eğimli yol', formula:true,
-  q:'Eğimli (sürtünmesiz) yolda eğim açısı ile hız arasındaki bağıntıyı yazınız. (θ, v, r, g)',
-  a:['tanθ = v²/(r·g)','tanθ = v²/rg','v²/(r·g)','v²/(r g)'],
-  hints:['Normal kuvvetin düşey bileşeni ağırlığı, yatay bileşeni merkezcil kuvveti sağlar.','tanθ = v²/(r·g)'],
-  sol:'tanθ = v²/(r·g)' },
-{ id:'fs12', topic:'Viraj ve eğimli yol', formula:true,
-  q:'Eğimli (sürtünmesiz) yolda ideal hızı yazınız. (v, r, g, θ)',
-  a:['v = √(r·g·tanθ)','√(r·g·tanθ)','sqrt(rg·tanθ)','sqrt(rg tanθ)'],
-  hints:['tanθ = v²/(r·g) bağıntısını v için çöz.','v = √(r·g·tanθ)'],
-  sol:'v = √(r·g·tanθ)' },
-{ id:'fs13', topic:'Viraj ve eğimli yol', formula:true,
-  q:'Silindir (rotor) içinde düşeyde tutunmak için gereken en küçük hızı yazınız. (k, g, r)',
-  a:['v = √(g·r/k)','√(g·r/k)','sqrt(gr/k)','√(gr/k)'],
-  hints:['Sürtünme ağırlığı dengeler: k·N = m·g.','Normal kuvvet N = m·v²/r olduğundan v = √(g·r/k).'],
-  sol:'v_min = √(g·r/k)' },
-/* ---- 4. Düşey düzlemde çembersel hareket ---- */
-{ id:'fs14', topic:'Düşey düzlemde çembersel hareket', formula:true,
-  q:'Düşey düzlemde çembersel harekette en üst noktadaki ip gerilmesini yazınız. (T, m, v, r, g)',
-  a:['T = m·v²/r − m·g','m·v²/r − m·g','mv²/r − mg'],
-  hints:['En üstte gerilme ve ağırlık aynı yöndedir (merkeze).','T = m·v²/r − m·g'],
-  sol:'T_üst = m·v²/r − m·g' },
-{ id:'fs15', topic:'Düşey düzlemde çembersel hareket', formula:true,
-  q:'Düşey düzlemde çembersel harekette en alt noktadaki ip gerilmesini yazınız. (T, m, v, r, g)',
-  a:['T = m·v²/r + m·g','m·v²/r + m·g','mv²/r + mg'],
-  hints:['En altta gerilme merkeze, ağırlık dışa doğrudur.','T = m·v²/r + m·g'],
-  sol:'T_alt = m·v²/r + m·g' },
-{ id:'fs16', topic:'Düşey düzlemde çembersel hareket', formula:true,
-  q:'Düşey düzlemde ipin en üst noktada gergin kalması için gereken en küçük hızı yazınız. (g, r)',
-  a:['v = √(g·r)','√(g·r)','sqrt(gr)','√(gr)'],
-  hints:['Sınır durumda en üstte gerilme sıfırdır: m·g = m·v²/r.','v = √(g·r)'],
-  sol:'v_min = √(g·r)' },
-{ id:'fs17', topic:'Düşey düzlemde çembersel hareket', formula:true,
-  q:'Düşey düzlemde tepe ile dip arasındaki hız bağıntısını yazınız. (v_alt, v_üst, g, r)',
-  a:['v_alt² = v_üst² + 4g·r','v_alt² = v_üst² + 4gr','v alt² = v üst² + 4g r'],
-  hints:['Enerji korunumu: ½m·v_alt² = ½m·v_üst² + m·g·(2r).','v_alt² = v_üst² + 4g·r'],
-  sol:'v_alt² = v_üst² + 4g·r' },
-/* ---- 5. Konik sarkaç ---- */
-{ id:'fs18', topic:'Konik sarkaç', formula:true,
-  q:'Konik sarkaçta ip gerilmesinin düşey bileşenini yazınız. (T, θ, m, g)',
-  a:['T·cosθ = m·g','Tcosθ = mg','T·cosθ','Tcosθ'],
-  hints:['Düşeyde ivme yoktur; kuvvetler dengelenir.','İpin düşey bileşeni ağırlığı dengeler: T·cosθ = m·g'],
-  sol:'T·cosθ = m·g' },
-{ id:'fs19', topic:'Konik sarkaç', formula:true,
-  q:'Konik sarkaçta ip gerilmesinin yatay bileşenini yazınız. (T, θ, m, v, r)',
-  a:['T·sinθ = m·v²/r','T·sinθ = m·ω²·r','Tsinθ = mv²/r'],
-  hints:['Yatay bileşen merkezcil kuvveti sağlar.','T·sinθ = m·v²/r'],
-  sol:'T·sinθ = m·v²/r = m·ω²·r' },
-{ id:'fs20', topic:'Konik sarkaç', formula:true,
-  q:'Konik sarkaçta açısal hızın bağıntısını yazınız. (ω, g, L, θ)',
-  a:['ω = √(g/(L·cosθ))','√(g/(L·cosθ))','sqrt(g/(Lcosθ))'],
-  hints:['Yatay: T·sinθ = m·ω²·r, düşey: T·cosθ = m·g.','r = L·sinθ olduğundan ω = √(g/(L·cosθ)).'],
-  sol:'ω = √(g/(L·cosθ))' },
-/* ---- 6. Dönme ve tork ---- */
-{ id:'fs21', topic:'Dönme ve tork', formula:true,
-  q:'Torkun bağıntısını yazınız. (τ, F, r)',
-  a:['τ = F·r','F·r','τ = F r'],
-  hints:['Kuvvet ile eksene dik uzaklığın çarpımıdır.','τ = F·r'],
-  sol:'τ = F·r' },
-{ id:'fs22', topic:'Dönme ve tork', formula:true,
-  q:'Dönmede Newton’un 2. yasasını yazınız. (τ, I, α)',
-  a:['τ = I·α','I·α','Iα'],
-  hints:['Ötelemede F = m·a’nın dönme karşılığıdır.','τ = I·α'],
-  sol:'τ = I·α' },
-/* ---- 7. Eylemsizlik momenti ---- */
-{ id:'fs23', topic:'Eylemsizlik momenti', formula:true,
-  q:'Noktasal bir kütlenin dönme eksenine göre eylemsizlik momentini yazınız. (I, m, r)',
-  a:['I = m·r²','m·r²','mr²','mr2'],
-  hints:['Kütle ile dik uzaklığın karesinin çarpımıdır.','I = m·r²'],
-  sol:'I = m·r²' },
-{ id:'fs24', topic:'Eylemsizlik momenti', formula:true,
-  q:'Merkezinden geçen eksene göre diskin (silindirin) eylemsizlik momentini yazınız. (I, M, R)',
-  a:['I = ½·M·R²','½·M·R²','(1/2)·M·R²','M·R²/2','0.5·M·R²'],
-  hints:['Katsayı ½’dir.','I = ½·M·R²'],
-  sol:'I = ½·M·R²' },
-{ id:'fs25', topic:'Eylemsizlik momenti', formula:true,
-  q:'Merkezinden geçen eksene göre halkanın eylemsizlik momentini yazınız. (I, M, R)',
-  a:['I = M·R²','M·R²','MR²','MR2'],
-  hints:['Halkada tüm kütle R uzaklığındadır.','I = M·R²'],
-  sol:'I = M·R²' },
-{ id:'fs26', topic:'Eylemsizlik momenti', formula:true,
-  q:'Merkezinden geçen eksene göre dolu kürenin eylemsizlik momentini yazınız. (I, M, R)',
-  a:['I = (2/5)·M·R²','(2/5)·M·R²','2/5·M·R²','2M·R²/5'],
-  hints:['Katsayı 2/5’tir.','I = (2/5)·M·R²'],
-  sol:'I = (2/5)·M·R²' },
-{ id:'fs27', topic:'Eylemsizlik momenti', formula:true,
-  q:'Paralel eksen (Steiner) teoremini yazınız. (I, I_merkez, M, d)',
-  a:['I = I_merkez + M·d²','I_merkez + M·d²','I = I0 + M·d²'],
-  hints:['Merkez ekseninkine M·d² eklenir.','I = I_merkez + M·d²'],
-  sol:'I = I_merkez + M·d²' },
-/* ---- 8. Dönme kinetik enerjisi ve yuvarlanma ---- */
-{ id:'fs28', topic:'Dönme kinetik enerjisi', formula:true,
-  q:'Dönme kinetik enerjisinin bağıntısını yazınız. (E, I, ω)',
-  a:['E = ½·I·ω²','½·I·ω²','(1/2)·I·ω²','I·ω²/2'],
-  hints:['Ötelemede ½m·v²’nin dönme karşılığıdır.','E = ½·I·ω²'],
-  sol:'E = ½·I·ω²' },
-{ id:'fs29', topic:'Dönme kinetik enerjisi', formula:true,
-  q:'Kaymadan yuvarlanan bir cismin toplam kinetik enerjisini yazınız. (E, m, v, I, ω)',
-  a:['E = ½·m·v² + ½·I·ω²','½·m·v² + ½·I·ω²','E = ½mv² + ½Iω²'],
-  hints:['Enerji, öteleme ve dönme enerjilerinin toplamıdır.','E = ½·m·v² + ½·I·ω²'],
-  sol:'E = ½·m·v² + ½·I·ω²' },
-{ id:'fs30', topic:'Dönme kinetik enerjisi', formula:true,
-  q:'Eğik düzlemde kaymadan yuvarlanan cismin ivmesini yazınız. (a, g, θ, I, m, r)',
-  a:['a = g·sinθ/(1 + I/(m·r²))','g·sinθ/(1 + I/(m·r²))','a = g sinθ /(1+I/mr²)'],
-  hints:['Newton yasası ile dönme denklemini birleştir.','a = g·sinθ / (1 + I/(m·r²))'],
-  sol:'a = g·sinθ / (1 + I/(m·r²))' },
-/* ---- 9. Açısal momentum ---- */
-{ id:'fs31', topic:'Açısal momentum', formula:true,
-  q:'Açısal momentumun bağıntısını yazınız. (L, I, ω)',
-  a:['L = I·ω','I·ω','Iω'],
-  hints:['Çizgisel momentumun (p = m·v) dönme karşılığıdır.','L = I·ω'],
-  sol:'L = I·ω' },
-{ id:'fs32', topic:'Açısal momentum', formula:true,
-  q:'Noktasal bir kütlenin çembersel hareketinde açısal momentumunu yazınız. (L, m, v, r)',
-  a:['L = m·v·r','m·v·r','mvr','L = m·ω·r²'],
-  hints:['L = I·ω ve v = ω·r bağıntılarını kullan.','L = m·v·r'],
-  sol:'L = m·v·r = m·ω·r²' },
-{ id:'fs33', topic:'Açısal momentum', formula:true,
-  q:'Açısal momentum korunumunu yazınız. (I₁, ω₁, I₂, ω₂)',
-  a:['I₁·ω₁ = I₂·ω₂','I1·ω1 = I2·ω2','I1ω1 = I2ω2'],
-  hints:['Dış tork yoksa açısal momentum sabit kalır.','I₁·ω₁ = I₂·ω₂'],
-  sol:'I₁·ω₁ = I₂·ω₂' },
-/* ---- 10. Kütle çekimi ---- */
-{ id:'fs34', topic:'Kütle çekimi ve yer çekimi', formula:true,
-  q:'Newton’un evrensel çekim yasasını yazınız. (F, G, M, m, r)',
-  a:['F = G·M·m/r²','G·M·m/r²','GMm/r²','GMm/r2'],
-  hints:['Kütleler çarpımıyla doğru, uzaklığın karesiyle ters orantılıdır.','F = G·M·m/r²'],
-  sol:'F = G·M·m/r²' },
-{ id:'fs35', topic:'Kütle çekimi ve yer çekimi', formula:true,
-  q:'Bir gezegenin yüzeyindeki yer çekimi ivmesini yazınız. (g, G, M, R)',
-  a:['g = G·M/R²','G·M/R²','GM/R²','GM/R2'],
-  hints:['Çekim yasasında F = m·g yazıp m’yi sadeleştir.','g = G·M/R²'],
-  sol:'g = G·M/R²' },
-{ id:'fs36', topic:'Kütle çekimi ve yer çekimi', formula:true,
-  q:'Yer çekimi ivmesinin yüksekliğe bağlı ifadesini yazınız. (g′: yükseklikteki, g: yüzeydeki, R, h)',
-  a:['g′ = g·(R/(R+h))²','g·(R/(R+h))²','g′ = g·(R/(R+h))^2'],
-  hints:['Merkeze uzaklık R + h olur.','g′ = g·(R/(R+h))²'],
-  sol:'g′ = g·(R/(R+h))²' },
-/* ---- 11. Uydu ve yörünge ---- */
-{ id:'fs37', topic:'Uydu ve yörünge', formula:true,
-  q:'Bir uydunun yörünge (dolanma) hızını yazınız. (v, G, M, r)',
-  a:['v = √(G·M/r)','√(G·M/r)','sqrt(GM/r)','√(GM/r)'],
-  hints:['Çekim kuvveti merkezcil kuvveti sağlar: G·M·m/r² = m·v²/r.','v = √(G·M/r)'],
-  sol:'v = √(G·M/r)' },
-{ id:'fs38', topic:'Uydu ve yörünge', formula:true,
-  q:'Dünya yüzeyine yakın dolanan bir uydunun hızını yazınız. (v, g, R)',
-  a:['v = √(g·R)','√(g·R)','sqrt(gR)','√(gR)'],
-  hints:['g = G·M/R² eşitliğini yörünge hızı bağıntısında kullan.','v = √(g·R)'],
-  sol:'v = √(g·R) ≈ 7,9 km/s' },
-{ id:'fs39', topic:'Uydu ve yörünge', formula:true,
-  q:'Kepler’in 3. yasasını yazınız. (T: periyot, r: yörünge yarıçapı)',
-  a:['T²/r³ = sabit','T²/r³','T² ∝ r³','T2 ∝ r3'],
-  hints:['Periyodun karesi ile yarıçapın küpü doğru orantılıdır.','T²/r³ = sabit'],
-  sol:'T²/r³ = sabit = 4π²/(G·M)' },
-{ id:'fs40', topic:'Uydu ve yörünge', formula:true,
-  q:'Bir uydunun toplam yörünge enerjisini yazınız. (E, G, M, m, r)',
-  a:['E = −G·M·m/(2r)','−G·M·m/(2r)','-GMm/(2r)','E = -GMm/2r'],
-  hints:['E = E_pot + E_kin ve E_kin = |E_pot|/2.','E = −G·M·m/(2r)'],
-  sol:'E = −G·M·m/(2r)' },
-/* ---- 12. Kurtulma hızı ---- */
-{ id:'fs41', topic:'Kurtulma hızı', formula:true,
-  q:'Kurtulma (kaçış) hızının bağıntısını yazınız. (v_k, G, M, R)',
-  a:['v_k = √(2·G·M/R)','√(2·G·M/R)','sqrt(2GM/R)','√(2GM/R)'],
-  hints:['Enerji korunumu: ½m·v² = G·M·m/R.','v_k = √(2·G·M/R)'],
-  sol:'v_k = √(2·G·M/R) = √(2·g·R)' },
-{ id:'fs42', topic:'Kurtulma hızı', formula:true,
-  q:'Kurtulma hızını yer çekimi ivmesi cinsinden yazınız. (v_k, g, R)',
-  a:['v_k = √(2·g·R)','√(2·g·R)','sqrt(2gR)','√(2gR)'],
-  hints:['G·M = g·R² eşitliğini kullan.','v_k = √(2·g·R)'],
-  sol:'v_k = √(2·g·R) ≈ 11,2 km/s' }
-];
+/* Formül sınavı — sorular doğrudan formül kağıdından (FORMULS) üretilir.
+   Kağıttaki her bağıntı satırı tek bir soruya dönüşür: "<etiket> bağıntısını yazınız."
+   Cevap anahtarı = satırın sağ tarafı; yazım/sembol toleransı M.formula ile sağlanır. */
+var FORMUL_SORU = (function(){
+  /* büyüklük açıklamaları (ipuçlarında kullanılır) */
+  var OV = {
+    'T':'periyot','f':'frekans','ω':'açısal hız','v':'çizgisel hız','r':'yarıçap','a':'ivme',
+    'F':'kuvvet','m':'kütle','k':'sürtünme katsayısı','g':'yer çekimi ivmesi','θ':'eğim açısı',
+    'α':'açısal ivme','τ':'tork','I':'eylemsizlik momenti','L':'açısal momentum','M':'gezegen kütlesi',
+    'R':'gezegen yarıçapı','h':'yükseklik','d':'uzaklık','G':'çekim sabiti','N':'normal kuvvet',
+    'W':'ağırlık','n':'tur sayısı','t':'zaman','E':'enerji',
+    'f_s':'sürtünme kuvveti','v_max':'en büyük hız','v_min':'en küçük hız','ω_min':'en küçük açısal hız',
+    'v_k':'kurtulma hızı','v_üst':'tepedeki hız','v_alt':'dipteki hız','T_üst':'tepedeki ip gerilmesi',
+    'T_alt':'dipteki ip gerilmesi','T_orta':'ortadaki ip gerilmesi','g′':'yükseklikteki yer çekimi ivmesi',
+    'E_pot':'potansiyel enerji','E_kin':'kinetik enerji','E_dönme':'dönme kinetik enerjisi',
+    'I_merkez':'merkez eksenine göre eylemsizlik momenti','v_alt,min':'en küçük dip hızı'
+  };
+  var FUNC = {sin:1,cos:1,tan:1,cot:1,sqrt:1,pi:1,log:1,ln:1};
+
+  function uniq(a){ var out=[], seen={}; a.forEach(function(x){ x=String(x).trim(); if(x && !seen[x]){ seen[x]=1; out.push(x); } }); return out; }
+  function rightOf(eq){ var i=String(eq).indexOf('='); return i<0? String(eq).trim() : String(eq).slice(i+1).trim(); }
+  function leftOf(eq){ return String(eq).split('=')[0].trim(); }
+
+  /* üst düzey ayırıcı: parantez içini atlar; "," için ondalık virgülü (6,67) korur */
+  function topSplit(s, sep){
+    var out=[], depth=0, buf='';
+    for(var i=0;i<s.length;i++){
+      var c=s[i];
+      if(c==='(') depth++;
+      else if(c===')') depth=Math.max(0,depth-1);
+      var dec = (sep===',' && /\d/.test(s[i-1]||'') && /\d/.test(s[i+1]||''));
+      if(depth===0 && !dec && s.substr(i,sep.length)===sep){ out.push(buf); buf=''; i+=sep.length-1; continue; }
+      buf+=c;
+    }
+    out.push(buf);
+    return out;
+  }
+  /* sondaki üst düzey parantez grubunu ("... (açıklama)") atar */
+  function stripTrailingParen(s){
+    s=s.trim(); if(s.charAt(s.length-1)!==')') return s;
+    var depth=0, i;
+    for(i=s.length-1;i>=0;i--){
+      if(s[i]===')') depth++;
+      else if(s[i]==='('){ depth--; if(depth===0) break; }
+    }
+    if(i<=0) return s;
+    return s.slice(0,i).trim();
+  }
+  function balanced(s){ var d=0; for(var i=0;i<s.length;i++){ if(s[i]==='(')d++; else if(s[i]===')')d--; if(d<0) return false; } return d===0; }
+  function meaningful(p){
+    p=String(p).trim();
+    if(!p) return false;
+    var alnum = p.replace(/[^A-Za-z0-9α-ωΑ-Ω]/g,'');
+    if(alnum.length<2) return false;                 /* tek harf/sayı */
+    if(!balanced(p)) return false;                    /* dengesiz parantez */
+    if(/^[·*\/]/.test(p)) return false;               /* baştaki çarpma/bölme */
+    if(/[·*\/+−\-]$/.test(p)) return false;           /* sondaki işleç */
+    if(/√\s*$/.test(p)) return false;                 /* kökün içi eksik ("2π·√") */
+    return true;
+  }
+  /* kabul edilen cevap yazımları: sol taraf, sağ taraf, sondaki açıklama/≈ atılmış
+     hâlleri ve eşitliğin sağ tarafındaki tüm alternatifler (tek harf ve bozuk
+     parçalar elenir). */
+  function answerForms(eq){
+    var rhs = rightOf(eq), forms=[];
+    function add(s){ s=String(s||'').trim(); if(s) forms.push(s); }
+    add(eq);                /* tam eşitliğin kendisi de kabul edilir */
+    add(rhs);
+    var lf = leftOf(eq);
+    if(/[\/·*+−²³√]/.test(lf)) add(lf);   /* "T²/r³ = …" gibi adlandırılmış bağıntılarda sol taraf */
+    add(stripTrailingParen(rhs));
+    add(rhs.replace(/\s*≈.*$/,''));
+    add(stripTrailingParen(rhs.replace(/\s*≈.*$/,'')));
+    topSplit(rhs, ',').forEach(function(piece){
+      piece=piece.trim(); if(!piece) return;
+      var eqParts = topSplit(piece,' = ');
+      eqParts.forEach(function(x){ if(x.indexOf('√')<0 || x.replace(/[^A-Za-zα-ωΑ-Ω0-9]/g,'').length>=2) add(x); });
+    });
+    return uniq(forms.filter(meaningful));
+  }
+  function varsOf(eq){
+    var out=[], re=/([A-Za-z_][A-Za-z0-9_′]*|[α-ωΑ-Ω])/g, m;
+    while((m=re.exec(eq))){
+      var w=m[1];
+      if(FUNC[w.toLowerCase()]) continue;
+      if(out.indexOf(w)<0) out.push(w);
+    }
+    return out;
+  }
+  function stripNo(h){ return String(h).replace(/^\s*\d+\.\s*/,'').trim(); }
+  /* etiketten birim parantezini ("(T, s)") atar; açıklayıcı parantezleri korur */
+  function descriptor(label){ return String(label).trim().replace(/\s*\([^)]*,[^)]*\)\s*$/,'').trim(); }
+
+  function buildQuestion(sec, row, idx){
+    var eq = String(row[1]);
+    var d = descriptor(row[0]);
+    var q = /bağıntı/i.test(d) ? d + 'nı yazınız.' : d + ' bağıntısını yazınız.';
+    var vars = varsOf(eq).map(function(x){ return OV[x] || x; });
+    return {
+      id:'fs'+idx,
+      topic:stripNo(sec.h),
+      formula:true,
+      q: q,
+      a: answerForms(eq),
+      hints: [
+        'Formülde geçen büyüklükler: ' + vars.join(', ') + '.',
+        'Bağıntı, formül kağıdındaki “' + stripNo(sec.h) + '” bölümündedir.'
+      ],
+      sol: eq
+    };
+  }
+  function build(secs){
+    var out=[], i=0;
+    (secs||[]).forEach(function(sec){
+      (sec.rows||[]).forEach(function(row){
+        if(!Array.isArray(row) || row.length<2) return;
+        if(String(row[1]).indexOf('=')<0) return;
+        out.push(buildQuestion(sec, row, ++i));
+      });
+    });
+    return out;
+  }
+  return { build:build, _answerForms:answerForms, _descriptor:descriptor };
+})();
 window.FORMUL_SORU = FORMUL_SORU;
 if(typeof module!=='undefined') module.exports = FORMUL_SORU;
