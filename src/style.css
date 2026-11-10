@@ -185,6 +185,25 @@ svg .qb{fill:var(--accent2)} svg .qbt{fill:var(--bg);font-weight:800}
 .fv{font-size:14.5px;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 @media(max-width:640px){ .fbody{grid-template-columns:1fr} }
 
+/* formül sınavı ekranı: sol formüller + sağ test paneli */
+#app.wide{max-width:1300px}
+.fstudy{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.fstudy-left{min-width:0}
+.fstudy-scroll{max-height:calc(100vh - 150px);overflow:auto;padding-right:8px}
+.fstudy-head{margin:0 0 14px}
+.fstudy-head h2{margin:0 0 4px;font-size:21px}
+.fstudy-head p{margin:0;color:var(--muted);font-size:14px}
+.fstudy-right{position:sticky;top:20px}
+.fpanel{text-align:center;padding:22px}
+.fp-ico{font-size:36px;line-height:1}
+.fpanel h3{margin:10px 0 6px}
+.fpanel p{color:var(--muted);font-size:14px;margin:0 0 12px}
+.fp-list{text-align:left;margin:0 0 16px;padding-left:18px;color:var(--muted);font-size:13.5px}
+.fp-list li{margin:4px 0}
+.fp-start{width:100%}
+.fquiz{max-width:720px;margin:0 auto}
+@media(max-width:900px){ .fstudy{grid-template-columns:1fr} .fstudy-right{position:static} .fstudy-scroll{max-height:none;overflow:visible} }
+
 /* süre sayacı */
 .pill.timer{font-variant-numeric:tabular-nums;border-color:color-mix(in srgb,var(--accent2) 55%,transparent)}
 .pill.timer b{color:var(--accent2)}
