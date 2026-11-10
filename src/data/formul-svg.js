@@ -33,8 +33,7 @@ var FSVG = (function(){
     b+=ball(cx+R,cy,11);
     b+=l(cx+R,cy-12,cx+R,cy-58,'k4','ar4')+t(cx+R+14,cy-46,'v',{i:1,b:1,c:'t4'});
     b+=p('M'+(cx+R-26)+','+(cy-40)+' A'+R+','+R+' 0 0 1 '+(cx+R-4)+','+(cy-24),'ink','ar');
-    b+=t(cx,232,'T = 2πr/v = 1/f',{s:12,c:'mut'});
-    return wrap(364,244,b);
+    return wrap(364,216,b);
   }
 
   /* 2 — merkezcil ivme yönü */
@@ -46,8 +45,7 @@ var FSVG = (function(){
     b+=ball(Ax,Ay,11);
     b+=l(Ax,Ay-12,Ax,Ay-60,'k4','ar4')+t(Ax+14,Ay-50,'v',{i:1,b:1,c:'t4'});
     b+=l(Ax-10,Ay+8,cx+(Ax-cx)*0.22,cy+(Ay-cy)*0.22,'k2','ar2')+t(Ax+6,Ay+34,'a',{b:1,c:'t2'});
-    b+=t(150,232,'a = v²/r  (yön: merkeze)',{s:12,c:'mut'});
-    return wrap(300,244,b);
+    return wrap(300,216,b);
   }
 
   /* 3 — eğimli viraj */
@@ -63,8 +61,7 @@ var FSVG = (function(){
     b+=l(px,py,(px+nx*64).toFixed(1),(py+ny*64).toFixed(1),'k2','ar2')+t((px+nx*78).toFixed(1),(py+ny*78).toFixed(1),'N',{b:1,c:'t2'});
     b+=l(px,py,px,(py+70),'k4','ar4')+t(px+14,py+66,'mg',{c:'t4'});
     b+=l(px,py,(px-ux*60).toFixed(1),(py-uy*60).toFixed(1),'k3','ara')+t((px-ux*76).toFixed(1),(py-uy*76-6).toFixed(1),'f_s',{b:1,c:'t3'});
-    b+=t(300,210,'N·sinθ = m·v²/r',{a:'end',s:12,c:'mut'});
-    return wrap(360,222,b);
+    return wrap(360,204,b);
   }
 
   /* 4 — düşey düzlemde çembersel hareket */
@@ -78,7 +75,6 @@ var FSVG = (function(){
     b+=l(cx+14,cy-R+8,cx+14,cy-R+56,'k4','ar4')+t(cx+30,cy-R+40,'mg',{c:'t4'});
     b+=l(cx-14,cy+R-8,cx-14,cy+R-56,'k2','ar2')+t(cx-30,cy+R-40,'T',{b:1,c:'t2'});
     b+=l(cx+14,cy+R+8,cx+14,cy+R+56,'k4','ar4')+t(cx+30,cy+R+40,'mg',{c:'t4'});
-    b+=t(cx,260,'T_üst = mv²/r − mg   ·   T_dip = mv²/r + mg',{s:11.5,c:'mut'});
     return wrap(340,272,b);
   }
 
@@ -98,7 +94,6 @@ var FSVG = (function(){
     b+=ball(bx.toFixed(1),by.toFixed(1),11);
     b+=l(bx.toFixed(1),by.toFixed(1),(bx-64*sx).toFixed(1),(by-64*cs).toFixed(1),'k1','ar1')+t((bx-80*sx).toFixed(1),(by-80*cs-6).toFixed(1),'T',{b:1,c:'t1'});
     b+=l(bx.toFixed(1),by.toFixed(1),bx.toFixed(1),(by+56).toFixed(1),'k4','ar4')+t((bx+14).toFixed(1),(by+54).toFixed(1),'mg',{c:'t4'});
-    b+=t(px,by+56,'tanθ = ω²r/g',{s:12,c:'mut'});
     return wrap(360,250,b);
   }
 
@@ -112,8 +107,7 @@ var FSVG = (function(){
     b+=l(84,112,84,98,'thin')+l(316,112,316,98,'thin');
     b+=l(308,132,308,184,'k4','ar4')+t(322,182,'F',{b:1,c:'t4'});
     b+=p('M116,72 A64,64 0 0 1 196,68','ink','ar')+t(156,54,'τ',{b:1});
-    b+=t(200,206,'τ = F·r = I·α',{s:12,c:'mut'});
-    return wrap(360,218,b);
+    return wrap(360,200,b);
   }
 
   /* 7 — eylemsizlik momenti */
@@ -126,8 +120,7 @@ var FSVG = (function(){
     b+=ball(250,104,16)+t(250,104,'m',{s:12,b:1});
     b+=l(110,128,180,128,'thin')+t(145,142,'r',{i:1,s:12});
     b+=l(180,128,250,128,'thin')+t(215,142,'r',{i:1,s:12});
-    b+=t(180,176,'I = m·r² + m·r² = 2m·r²',{s:12,c:'mut'});
-    return wrap(360,194,b);
+    return wrap(360,166,b);
   }
 
   /* 8 — yuvarlanma */
@@ -143,8 +136,7 @@ var FSVG = (function(){
     b+=dot(cx,cy,4);
     b+=l(cx.toFixed(1),cy.toFixed(1),(cx+34).toFixed(1),(cy+14).toFixed(1),'k4','ar4')+t((cx+40).toFixed(1),(cy+8).toFixed(1),'v',{a:'start',i:1,c:'t4'});
     b+=p('M'+(cx+30).toFixed(1)+','+(cy-34).toFixed(1)+' A46,46 0 0 1 '+(cx+44).toFixed(1)+','+(cy-14).toFixed(1),'ink','ar')+t((cx+56).toFixed(1),(cy-30).toFixed(1),'ω',{i:1,s:12});
-    b+=t(180,214,'v = ω·r ,   a = g·sinθ /(1 + I/mr²)',{s:12,c:'mut'});
-    return wrap(360,226,b);
+    return wrap(360,206,b);
   }
 
   /* 9 — açısal momentum korunumu */
@@ -161,10 +153,9 @@ var FSVG = (function(){
     };
     b+=pose(98,70,'ω₁');
     b+=pose(268,30,'ω₂');
-    b+=t(98,164,'Kollar açık · I büyük',{s:12,c:'mut'});
-    b+=t(268,164,'Kollar kapalı · I küçük',{s:12,c:'mut'});
-    b+=t(183,198,'I₁·ω₁ = I₂·ω₂  →  I küçülünce ω artar',{s:12,c:'mut'});
-    return wrap(366,212,b);
+    b+=t(98,164,'Kollar açık',{s:12,c:'mut'});
+    b+=t(268,164,'Kollar kapalı',{s:12,c:'mut'});
+    return wrap(366,184,b);
   }
 
   /* 10 — kütle çekimi */
@@ -178,7 +169,6 @@ var FSVG = (function(){
     b+=l(278,152,278,76,'dash')+t(290,112,'2r',{i:1,s:12});
     b+=t(112,222,'M₁',{b:1});
     b+=t(278,234,'M₂',{b:1});
-    b+=t(190,28,'X cisimlerinin ağırlıkları eşit · F = G·M·m/r²',{s:11.5,c:'mut'});
     return wrap(366,248,b);
   }
 
@@ -204,8 +194,7 @@ var FSVG = (function(){
     b+=ball(cx,cy-R,10);
     b+=l(cx,cy-R-12,cx,cy-R-72,'k4','ar4')+t(cx+16,cy-R-56,'v_k',{b:1,c:'t4'});
     b+=l(cx,cy-R-16,cx,cy-R-40,'dash');
-    b+=t(cx,cy+112,'v_k = √(2GM/R)',{s:12,c:'mut'});
-    return wrap(360,340,b);
+    return wrap(360,300,b);
   }
 
   return { circ:circ, avgacc:avgacc, banked:banked, vcircle:vcircle, conical:conical,

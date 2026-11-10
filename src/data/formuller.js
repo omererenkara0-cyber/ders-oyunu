@@ -76,14 +76,14 @@ var FORMULS = {
         ['Silindir / disk', 'a = (2/3)·g·sinθ'],
         ['Halka', 'a = (1/2)·g·sinθ']
       ]},
-    { h:'9. Açısal momentum', fig:'skater', figCap:'Kollarını kapatınca I küçülür, ω büyür (L korunur)',
+    { h:'9. Açısal momentum', fig:'skater', figCap:'Kollarını kapatınca açısal hız artar (açısal momentum korunur)',
       rows:[
         ['Açısal momentum', 'L = I·ω'],
         ['Noktasal kütle', 'L = m·v·r = m·ω·r²'],
         ['Tork–momentum ilişkisi', 'τ = ΔL/Δt'],
         ['Korunum (I değişirse)', 'I₁·ω₁ = I₂·ω₂']
       ]},
-    { h:'10. Kütle çekimi ve yer çekimi', fig:'planets', figCap:'Ağırlıkları eşit iki cisim: F = G·M·m/r²',
+    { h:'10. Kütle çekimi ve yer çekimi', fig:'planets', figCap:'Ağırlıkları eşit iki cisim',
       rows:[
         ['Newton çekim yasası', 'F = G·M·m/r²'],
         ['Çekim sabiti', 'G = 6,67×10⁻¹¹ N·m²/kg²'],
@@ -93,7 +93,7 @@ var FORMULS = {
       ]},
     { h:'11. Uydu: yörünge hızı ve periyot',
       note:'Çekim kuvveti merkezcil kuvveti sağlar: G·M·m/r² = m·v²/r.',
-      fig:'earthsat', figCap:'Dünya çevresinde dolanan uydu (r = R + h)',
+      fig:'earthsat', figCap:'Dünya çevresinde dolanan uydu',
       rows:[
         ['Yörünge (dolanma) hızı', 'v = √(G·M/r)   (r = R + h)'],
         ['Yüzeye yakın hız', 'v = √(g·R) ≈ 7,9 km/s'],
