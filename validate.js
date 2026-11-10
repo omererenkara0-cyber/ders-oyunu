@@ -150,9 +150,11 @@ let figBad=0, figN=0;
 WTEST('her bölüm için çizim var', figN===(FM.fizik||[]).length);
 WTEST('çizimler geçerli SVG üretiyor', figBad===0);
 
-// formül sınavı soruları
-const FS=ctx.FORMUL_SORU||[];
-WTEST('formül sınavı soruları var', FS.length>=25);
+// formül sınavı soruları — doğrudan formül kağıdından (FORMULS) üretilir
+const FM0=ctx.FORMULS||{};
+const FORMUL_SORU=ctx.FORMUL_SORU;
+const FS=FORMUL_SORU.build(FM0.fizik);
+WTEST('formül sınavı soruları var', FS.length>=30);
 let fsBad=0, fsFormula=0;
 FS.forEach((q,i)=>{
   if(!q.q || typeof q.q!=='string') { fsBad++; console.log('FAIL soru metni', i); }
@@ -160,6 +162,8 @@ FS.forEach((q,i)=>{
   else fsFormula++;
   if(!Array.isArray(q.hints) || !q.hints.length) { fsBad++; console.log('FAIL ipucu yok', i); }
   if(q.fig){ fsBad++; console.log('FAIL soruda resim olmamalı', i); }
+  if(!q.sol || String(q.sol).indexOf('=')<0){ fsBad++; console.log('FAIL çözüm eşitlik değil', i); }
+  if(!q.topic){ fsBad++; console.log('FAIL konu yok', i); }
 });
 WTEST('formül soruları biçimli', fsBad===0);
 WTEST('tüm formül soruları formül cevaplı', fsFormula===FS.length);
@@ -175,4 +179,16 @@ FS.forEach((q,i)=>{
   if(M.formula('zzzz', {a:q.a})){ fsNegBad++; console.log('FAIL yanlış kabul edildi', i, q.q); }
 });
 WTEST('formül sorularında yanlış cevaplar reddediliyor', fsNegBad===0);
+// üretilen soru sayısı = kağıttaki eşitlik içeren satır sayısı
+let fmRows=0;
+(FM0.fizik||[]).forEach(sec=>(sec.rows||[]).forEach(r=>{ if(r && String(r[1]).indexOf('=')>=0) fmRows++; }));
+WTEST('her formül satırı bir soruya karşılık geliyor', FS.length===fmRows);
+// yazım toleransı: sembol/sözcük farklı yazımlar aynı kabul edilmeli
+const byQ=sub=>FS.find(q=>q.q.indexOf(sub)===0);
+WTEST('formül toleransı: v²/r ≡ v kare / r', M.formula('v kare / r', {a:byQ('Merkezcil ivme').a}));
+WTEST('formül toleransı: omega ≡ ω', M.formula('a = omega kare r', {a:byQ('Merkezcil ivme').a}));
+WTEST('formül toleransı: sqrt ≡ √', M.formula('v_k = sqrt(2 g R)', {a:byQ('Kurtulma hızı').a}));
+WTEST('formül toleransı: kök ≡ √', M.formula('kök(2GM/R)', {a:byQ('Kurtulma hızı').a}));
+WTEST('formül toleransı: T²/r³', M.formula('T kare / r kup', {a:byQ('Kepler 3').a}));
+WTEST('formül toleransı: yanlış cevap reddedilir (2gR)', !M.formula('2 g R', {a:byQ('Kurtulma hızı').a}));
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');

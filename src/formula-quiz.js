@@ -5,9 +5,9 @@
   var esc = function(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
   var M = window.M;
 
-  function pool(){ return window.FORMUL_SORU || []; }
-  function has(sid){ return !!(window.FORMULS && window.FORMULS[sid] && window.FORMULS[sid].length) && pool().length; }
-  function qsFor(sid){ return pool(); } /* şimdilik yalnızca fizik soruları */
+  function pool(sid){ return (window.FORMUL_SORU && FORMUL_SORU.build) ? FORMUL_SORU.build((window.FORMULS||{})[sid]) : []; }
+  function has(sid){ return !!(window.FORMULS && window.FORMULS[sid] && window.FORMULS[sid].length) && pool(sid).length>0; }
+  function qsFor(sid){ return pool(sid); }
 
   function checkAnswer(q, raw){
     if(q.formula) return M.formula(raw, {a:q.a, num:q.num});

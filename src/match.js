@@ -138,6 +138,7 @@ var M = (function(){
   var FWORD = [['bolu','/'],['kare','2'],['kup','3'],['kok','sqrt'],['carpi','']];
   function fnorm(s){
     s = lower(String(s));
+    s = s.replace(/_/g,'');
     s = s.replace(/[ışğüöçâîû]/g, function(c){ return MAP[c]; });
     s = s.replace(/π/g,'pi').replace(/θ/g,'theta').replace(/ω/g,'omega').replace(/α/g,'alpha')
          .replace(/τ/g,'tau').replace(/Δ/g,'d').replace(/μ/g,'mu').replace(/λ/g,'lambda');
