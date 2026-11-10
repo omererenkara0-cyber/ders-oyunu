@@ -40,7 +40,7 @@
       '<aside class="fstudy-right"><div class="card fpanel">'+
         '<div class="fp-ico">📝</div>'+
         '<h3>Formül Sınavı</h3>'+
-        '<p>Formülleri bilip bilmediğini ölçen '+qsFor(s.id).length+' soru. Cevaplar açık uçlu; her yanlışta ipucu açılır.</p>'+
+        '<p>'+qsFor(s.id).length+' formül sorusu: her soruda bir bağıntıyı doğrudan yazman istenir. Her yanlışta ipucu açılır.</p>'+
         '<ul class="fp-list"><li>Yazım/sembol toleransı vardır</li><li>Bağıntıları kendin yazacaksın</li><li>Her yanlış bir ipucu açar</li></ul>'+
         '<button class="btn primary fp-start" id="fstart">Teste Başla →</button>'+
       '</div></aside>'+
@@ -64,8 +64,7 @@
       '<div class="card qcard" id="qc" style="--sc:'+s.color+'">'+
         '<div class="qnum"><span>'+esc(q.topic||'Formül')+'</span><span>Formül sorusu</span></div>'+
         '<div class="qtext">'+esc(q.q)+'</div>'+
-        (q.fig&&window.FSVG&&FSVG[q.fig]?'<figure class="fig">'+FSVG[q.fig]()+'</figure>':'')+
-        '<div class="inputs"><div class="field" data-k="0"><input autocomplete="off" spellcheck="false" placeholder="Cevabını yaz…"></div></div>'+
+        '<div class="inputs"><div class="field" data-k="0"><input autocomplete="off" spellcheck="false" placeholder="Formülü yaz… (ör. v²/r)"></div></div>'+
         '<div class="actions"><button class="btn primary" id="qchk">Kontrol Et</button>'+
         '<button class="btn ghost" id="qshow" style="display:none">Cevabı göster</button>'+
         '<button class="btn primary" id="qnext" style="display:none">'+(Q.i+1<Q.qs.length?'Sonraki soru →':'Sonuçları gör →')+'</button>'+

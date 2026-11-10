@@ -153,34 +153,26 @@ WTEST('çizimler geçerli SVG üretiyor', figBad===0);
 // formül sınavı soruları
 const FS=ctx.FORMUL_SORU||[];
 WTEST('formül sınavı soruları var', FS.length>=25);
-let fsBad=0, fsFig=0;
+let fsBad=0, fsFormula=0;
 FS.forEach((q,i)=>{
   if(!q.q || typeof q.q!=='string') { fsBad++; console.log('FAIL soru metni', i); }
-  const hasAns = q.formula ? (Array.isArray(q.a)&&q.a.length) : (q.num!=null || (Array.isArray(q.a)&&q.a.length));
-  if(!hasAns) { fsBad++; console.log('FAIL cevap yok', i, q.q); }
+  if(!q.formula || !Array.isArray(q.a) || !q.a.length) { fsBad++; console.log('FAIL formül cevabı yok', i, q.q); }
+  else fsFormula++;
   if(!Array.isArray(q.hints) || !q.hints.length) { fsBad++; console.log('FAIL ipucu yok', i); }
-  if(q.fig){ fsFig++; if(typeof FSV[q.fig]!=='function'){ fsBad++; console.log('FAIL fig yok', q.fig); } }
+  if(q.fig){ fsBad++; console.log('FAIL soruda resim olmamalı', i); }
 });
 WTEST('formül soruları biçimli', fsBad===0);
-WTEST('formül sorularında çizim kullanılıyor', fsFig>=8);
-// her formül sorusu en az bir ipucu ile yanlışta yol gösterir; doğru cevap kabul ediliyor mu?
+WTEST('tüm formül soruları formül cevaplı', fsFormula===FS.length);
+// her sorunun kabul edilen tüm yazımları geçerli olmalı
 let fsAnsBad=0;
 FS.forEach((q,i)=>{
-  if(q.formula){ if(!M.formula(q.a[0], {a:q.a})) { fsAnsBad++; console.log('FAIL formula self-check', i, q.q); } }
-  else if(q.num!=null){ if(!M.check(String(q.num).replace('.',','), {num:q.num, a:q.a})) { fsAnsBad++; console.log('FAIL num self-check', i, q.q); } }
-  else if(q.a && q.a.length){ if(!M.check(q.a[0], {a:q.a, not:q.not})) { fsAnsBad++; console.log('FAIL a self-check', i, q.q); } }
+  q.a.forEach((v,j)=>{ if(!M.formula(v, {a:q.a})) { fsAnsBad++; console.log('FAIL formula self-check', i, j, q.q, '=>', v); } });
 });
 WTEST('formül sorularının cevap anahtarı kendini doğruluyor', fsAnsBad===0);
-// yanlış cevaplar reddedilmeli (aşırı tolerans olmasın) ve 'not' seçenekleri kabul edilmemeli
+// yanlış cevaplar reddedilmeli (aşırı tolerans olmasın)
 let fsNegBad=0;
 FS.forEach((q,i)=>{
-  const wrong = (q.num!=null) ? String((q.num===0? 1 : 0)).replace('.',',') : 'zzzz';
-  let accepted;
-  if(q.formula) accepted = M.formula(wrong, {a:q.a, num:q.num});
-  else if(q.num!=null) accepted = M.check(wrong, {num:q.num, a:q.a, tol:q.tol});
-  else accepted = M.check(wrong, {a:q.a, not:q.not});
-  if(accepted){ fsNegBad++; console.log('FAIL yanlış kabul edildi', i, q.q, '=>', wrong); }
-  (q.not||[]).forEach(n=>{ if(M.check(n, {a:q.a, not:q.not})){ fsNegBad++; console.log('FAIL not kabul edildi', i, n); } });
+  if(M.formula('zzzz', {a:q.a})){ fsNegBad++; console.log('FAIL yanlış kabul edildi', i, q.q); }
 });
 WTEST('formül sorularında yanlış cevaplar reddediliyor', fsNegBad===0);
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');
