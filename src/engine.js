@@ -216,11 +216,20 @@
         '<div class="tag">'+lv.desc+'</div>'+
         '<div class="meta"><span>'+lv.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
     });
+    if(window.FORMULAS && FORMULAS.has(s.id)){
+      h += '<button class="card subject" data-formula="1" style="--sc:'+s.color+';animation-delay:'+(s.levels.length*.05).toFixed(2)+'s">'+
+        '<div class="ico">📐</div><h3>Formül Kağıdı</h3>'+
+        '<div class="tag">'+esc(s.name)+' · tüm bağıntılar tek sayfada</div>'+
+        '<div class="meta"><span>'+FORMULS[s.id].length+' bölüm</span><span>Hızlı tekrar</span></div></button>';
+    }
     h += '</div><div class="foot">Zor seviyede cevaplar için yazım hataları tolere edilir; yine de doğru terimi yazmaya çalış.</div>';
     ANIM.render(app, h);
     bindTheme();
     $('#homeBtn').onclick = menu;
-    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ pickScreen(s, s.levels[+b.dataset.l]); }; });
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
+      if(b.dataset.formula){ FORMULAS.open(app, s, function(){ levelSelect(s); }); return; }
+      pickScreen(s, s.levels[+b.dataset.l]);
+    }; });
     window.scrollTo(0,0);
   }
 

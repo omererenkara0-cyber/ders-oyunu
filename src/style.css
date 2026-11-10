@@ -169,6 +169,17 @@ svg .qb{fill:var(--accent2)} svg .qbt{fill:var(--bg);font-weight:800}
 .pick-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
 .pick-foot span{color:var(--muted);font-size:14px}
 
+/* formül kağıdı */
+.fgrid{display:grid;gap:14px}
+.fsec{padding:16px 18px}
+.fsec h3{margin:0 0 4px;font-size:16px;color:var(--sc,var(--accent))}
+.fnote{margin:2px 0 8px;color:var(--muted);font-size:13.5px}
+.ftable{display:flex;flex-direction:column}
+.frow{display:grid;grid-template-columns:minmax(130px,44%) 1fr;gap:12px;padding:7px 0;border-top:1px solid var(--line);align-items:baseline}
+.frow:first-child{border-top:0}
+.fk{color:var(--muted);font-size:14px}
+.fv{font-size:14.5px;color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
 /* süre sayacı */
 .pill.timer{font-variant-numeric:tabular-nums;border-color:color-mix(in srgb,var(--accent2) 55%,transparent)}
 .pill.timer b{color:var(--accent2)}

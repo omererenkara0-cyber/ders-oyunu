@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/subjects.js','weak.js','anim.js'])
+for(const f of ['match.js','svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/formuller.js','data/subjects.js','weak.js','anim.js'])
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
 const M=ctx.M; let bad=0;
 const firstOf=s=> s.num!=null? String(s.num) : s.a? s.a[0] : s.all? s.all.map(g=>g[0]).join(' ') : s.keys? s.keys[0][0] : null;
@@ -129,4 +129,13 @@ WTEST('konfeti boyut aralığı', specs.every(p=>p.size>=6&&p.size<=13));
 WTEST('konfeti geçerli renk', specs.every(p=>/^#[0-9a-f]{6}$/i.test(p.color)));
 WTEST('konfeti round bool', specs.every(p=>typeof p.round==='boolean'));
 WTEST('konfeti n=0 boş', AN.confettiSpecs(0, seq([0.5])).length===0);
+// formül kağıdı: fizik için dolu ve biçimli
+const FM=ctx.FORMULS||{};
+WTEST('fizik formülleri var', Array.isArray(FM.fizik) && FM.fizik.length>=8);
+let fBad=0, fRows=0;
+(FM.fizik||[]).forEach(sec=>{ if(!sec.h || !Array.isArray(sec.rows) || !sec.rows.length) fBad++;
+  sec.rows.forEach(r=>{ fRows++; if(!Array.isArray(r) || r.length!==2 || !String(r[0]).trim() || !String(r[1]).trim()) fBad++; }); });
+WTEST('formül bölümleri biçimli', fBad===0);
+WTEST('formül satır sayısı yeterli', fRows>=30);
+WTEST('her formül bölümünde başlık var', (FM.fizik||[]).every(s=>typeof s.h==='string' && s.h.length>0));
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');
