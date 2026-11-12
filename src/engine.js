@@ -141,18 +141,27 @@
     for(var i=a.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
     return a;
   }
-  /* Bir denemenin dağılımına göre soru listesi (havuz küçükse dağılımdan az olabilir). */
+  /* Bir denemenin dağılımına göre soru listesi.
+     Her dersin havuzu önce SABİT bir tohumla karıştırılır; sonra havuz,
+     deneme başına d.n'lik dilimlere bölünür. Böylece farklı denemeler
+     AYNI dersten HİÇ ortak soru almaz (havuz >= 3·d.n olduğu için). */
   function denemePick(cfg){
     var dist = (cfg && cfg.dist) || [];
     var seed = (cfg && cfg.seed) || 1;
+    var all = denemeList();
+    var idx = 0;
+    for(var k=0;k<all.length;k++){ if(all[k].id === cfg.id){ idx = k; break; } }
     var out = [];
     dist.forEach(function(d, di){
       var s = null; SUBJECTS.forEach(function(x){ if(x.id===d.id) s=x; });
       if(!s) return;
       var pool = [];
       s.levels.forEach(function(lv){ lv.questions.forEach(function(q){ if(q.type==='mc' || (!q.type && q.options)) pool.push(q); }); });
-      pool = seededShuffle(pool, seed + di*97);
-      pool.slice(0, d.n).forEach(function(q){ out.push(q); });
+      pool = seededShuffle(pool, 9176 + di*131);
+      var start = idx * d.n;
+      var slice = pool.slice(start, start + d.n);
+      if(slice.length < d.n) slice = seededShuffle(pool, seed + di*97).slice(0, d.n);
+      slice.forEach(function(q){ out.push(q); });
     });
     return out;
   }
