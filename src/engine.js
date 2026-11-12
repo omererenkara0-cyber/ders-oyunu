@@ -58,19 +58,13 @@
         return '<td><b class="'+cl+'">%'+r.p+'</b><small><span>'+r.ok+'/'+r.n+'<em> doğru</em></span><span class="dt"><em> · </em>'+fmtDate(r.t)+'</span></small></td>';
       }).join('')+'</tr>';
     };
-    var rows = SUBJECTS.map(function(s){
-      if(s.levels){
-        return s.levels.map(function(lv){
-          return rowFor('<i style="background:'+s.color+'"></i>'+s.name+' · '+lv.name, s.id+':'+lv.id);
-        }).join('');
-      }
-      return rowFor('<i style="background:'+s.color+'"></i>'+s.name, s.id);
-    }).join('');
+    var rows = '';
     denemeList().forEach(function(d){
       rows += rowFor('<i style="background:var(--accent2)"></i>'+esc(d.name), 'deneme:'+d.id);
     });
+    if(!rows) return '';
     return '<div class="card scores-card"><h3>'+esc(prof.cur)+' · son 3 tur</h3><div class="tbl-wrap"><table class="scores">'+
-      '<thead><tr><th>Ders</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+      '<thead><tr><th>Deneme</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
   function modal(inner, bind){
     var d=document.createElement('div'); d.className='modal-bg';
@@ -115,6 +109,7 @@
   function addMistake(q){ var p=curP(); if(!p) return; p.mistakes[qkey(q)]={q:q}; saveProf(); }
   function delMistake(q){ var p=curP(); if(!p) return; delete p.mistakes[qkey(q)]; saveProf(); }
   function mistakeList(){ return Object.keys(mistakes()).map(function(k){ return mistakes()[k]; }); }
+  function clearMistakes(){ var p=curP(); if(!p) return; p.mistakes={}; saveProf(); }
 
   /* ---------- SORU HAVUZU YARDIMCILARI ---------- */
   function allQuestions(){
@@ -175,44 +170,25 @@
     G = null; clearTimer();
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
-      '<section class="hero"><h1>Hangi dersle başlamak istersin?</h1><p>TYT’ye yönelik çoktan seçmeli sorular. Her soruda beş seçenek vardır; doğru seçeneği işaretle ve “Kontrol Et”e bas. Yanlışta ipucu açılır.</p></section>'+
+      '<section class="hero"><h1>TYT denemeleri ve yanlışların</h1><p>TYT soru dağılımına göre hazırlanmış süreli denemeleri çöz; yanlış yaptığın sorular “Yanlışlarım” bölümünde toplanır. Her soruda beş seçenek vardır; doğru seçeneği işaretle ve “Kontrol Et”e bas.</p></section>'+
       playerBar();
     var mc = mistakeCount();
-    h += '<div class="grid">';
-    var extra = '';
-    if(curP() && mc){
-      extra += '<button class="card subject special" data-mistakes="1" style="--sc:var(--bad)">'+
+    var dl = denemeList();
+    var h2 = '<div class="grid">';
+    h2 += '<button class="card subject special" data-denemeler="1" style="--sc:var(--accent2)">'+
+      '<div class="ico">⚡</div><h3>TYT Denemeleri</h3><div class="tag">'+dl.length+' deneme · TYT dağılımı · süreli</div>'+
+      '<div class="meta"><span>'+dl.length+' deneme</span><span>Net hesaplı</span></div></button>';
+    if(mc){
+      h2 += '<button class="card subject special" data-mistakes="1" style="--sc:var(--bad)">'+
         '<div class="ico">✎</div><h3>Yanlışlarım</h3><div class="tag">Hata defteri · '+mc+' soru</div>'+
         '<div class="meta"><span>'+mc+' soru</span><span>Tekrar çöz</span></div></button>';
+    } else {
+      h2 += '<button class="card subject special" data-mistakes="1" style="--sc:var(--bad)">'+
+        '<div class="ico">✎</div><h3>Yanlışlarım</h3><div class="tag">Hata defteri · boş</div>'+
+        '<div class="meta"><span>0 soru</span><span>Henüz yanlış yok</span></div></button>';
     }
-    if(curP()){
-      var dl = denemeList();
-      extra += '<button class="card subject special" data-denemeler="1" style="--sc:var(--accent2)">'+
-        '<div class="ico">⚡</div><h3>TYT Denemeleri</h3><div class="tag">'+dl.length+' deneme · TYT dağılımı · süreli</div>'+
-        '<div class="meta"><span>'+dl.length+' deneme</span><span>Net hesaplı</span></div></button>';
-    }
-    var wbs = weakBySubject();
-    wbs.forEach(function(g){
-      extra += '<button class="card subject special" data-weaks="'+g.s.id+'" style="--sc:var(--ok)">'+
-        '<div class="ico">🎯</div><h3>Zayıf Konularım · '+esc(g.s.name)+'</h3>'+
-        '<div class="tag">'+g.weak.map(function(w){ return esc(trim(w.topic,22)); }).join(' · ')+'</div>'+
-        '<div class="meta"><span>'+g.weak.length+' konu · '+g.open+' açık soru</span><span>Hedefli çalış</span></div></button>';
-    });
-    h += extra;
-    SUBJECTS.forEach(function(s,i){
-      var b = best[s.id];
-      var total = s.levels ? s.levels.reduce(function(a,lv){return a+lv.questions.length;},0) : s.questions.length;
-      var cnt = s.levels ? (s.levels.length+' seviye · '+total+' soru') : (total+' soru');
-      var bestTxt = s.levels ? 'İki seviye' : (b!=null?'En iyi: %'+b:'Henüz oynanmadı');
-      h += '<button class="card subject" data-i="'+i+'" style="--sc:'+s.color+';animation-delay:'+((i+(extra?2:0))*.05).toFixed(2)+'s">'+
-        '<div class="ico">'+s.icon+'</div><h3>'+s.name+'</h3>'+
-        '<div class="tag">'+s.desc+'</div>'+
-        '<div class="meta"><span>'+cnt+'</span><span>'+bestTxt+'</span></div></button>';
-    });
-    h += '</div>'+scoreTable()+'<div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
-      [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
-      '</div><label class="chk"><input type="checkbox" id="shf" '+(opts.shuffle?'checked':'')+'> Soruları karıştır</label>'+
-      '</div>'+
+    h2 += '</div>';
+    h += h2 + scoreTable() +
       '<div class="foot">Enter ile cevap gönderilir · Sorulardayken üstteki “Ana Menü” tuşuyla çıkabilirsin</div>';
     ANIM.render(app, h);
     bindTheme();
@@ -220,14 +196,9 @@
     var needPlayer = function(){ var pc=$('#pcard'); pc.classList.remove('shake'); void pc.offsetWidth; pc.classList.add('shake'); pc.scrollIntoView({block:'center',behavior:'smooth'}); var f=$('#pname'); if(f) f.focus({preventScroll:true}); };
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
       if(!curP()){ needPlayer(); return; }
-      if(b.dataset.mistakes){ startMistakes(); return; }
+      if(b.dataset.mistakes){ mistakesSelect(); return; }
       if(b.dataset.denemeler){ denemeSelect(); return; }
-      if(b.dataset.weaks){ startWeak(b.dataset.weaks); return; }
-      var s = SUBJECTS[+b.dataset.i];
-      if(s.levels) levelSelect(s); else pickScreen(s, null);
     }; });
-    app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
-    $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
     window.scrollTo(0,0);
   }
 
@@ -302,10 +273,40 @@
   /* ---------- HATA DEFTERİ / KARIŞIK SINAV ---------- */
   function startMistakes(){
     var list = mistakeList();
-    if(!list.length){ menu(); return; }
+    if(!list.length){ mistakesSelect(); return; }
     var qs = shuffle(list.map(function(m){ return m.q; }));
-    if(opts.count && qs.length>opts.count) qs = qs.slice(0,opts.count);
     startGame({name:'Yanlışlarım', color:'#dc9090', questions:qs, key:'yanlislar', special:'mistakes'});
+  }
+  /* Yanlışlarım bölümü: yanlış soruları listeler, çözme ve sıfırlama sunar. */
+  function mistakesSelect(){
+    G = null; clearTimer();
+    var list = mistakeList();
+    var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
+      '<div class="bar" style="--sc:var(--bad)"><button class="icon-btn" id="backBtn">← Ana Menü</button><div class="title"><i></i>Yanlışlarım</div></div>'+
+      '<section class="hero"><h1>Yanlışlarım</h1><p>Yanlış yaptığın sorular burada toplanır. Hepsini tekrar çözebilir ya da listeyi sıfırlayabilirsin.</p></section>';
+    if(!list.length){
+      h += '<div class="card pick"><p class="empty-note">Henüz yanlışın yok. Bir deneme çöz, yanlışların burada birikir.</p></div>';
+    } else {
+      h += '<div class="card pick"><div class="pick-foot"><span id="mcount">'+list.length+' soru</span>'+
+        '<button class="btn primary" id="msolve">Hepsini çöz →</button>'+
+        '<button class="btn ghost" id="mreset">Sıfırla</button></div></div>'+
+        '<div class="review">'+list.map(function(m,i){
+          var qt = (m.q.q||'').replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,''); qt = trim(qt,160);
+          return '<div class="rv" style="animation-delay:'+Math.min(0.5,0.04*i).toFixed(2)+'s"><div class="st bad">✗</div><div><div>'+(i+1)+'. '+esc(qt)+'</div></div></div>';
+        }).join('')+'</div>';
+    }
+    h += '<div class="foot">Doğru cevapladığın sorular listeden otomatik çıkar.</div>';
+    ANIM.render(app, h); bindTheme();
+    $('#backBtn').onclick = menu;
+    var ms=$('#msolve'); if(ms) ms.onclick=startMistakes;
+    var mr=$('#mreset'); if(mr) mr.onclick=function(){
+      modal('<h3>Yanlışlarım sıfırlansın mı?</h3><p>Hata defterindeki '+list.length+' soru silinecek. Bu işlem geri alınamaz.</p><div class="actions"><button class="btn ghost" id="mNo">Vazgeç</button><button class="btn primary" id="mYes">Sıfırla</button></div>', function(d, close){
+        $('#mNo',d).onclick=close;
+        $('#mYes',d).onclick=function(){ clearMistakes(); close(); mistakesSelect(); };
+        $('#mNo',d).focus();
+      });
+    };
+    window.scrollTo(0,0);
   }
   function denemeSelect(){
     G = null; clearTimer();
@@ -322,7 +323,7 @@
           '<div class="tag">'+esc(d.desc||'TYT dağılımı')+'</div>'+
           '<div class="meta"><span>'+denemeCount(d)+' soru · '+d.minutes+' dk</span><span>'+(b!=null?'En iyi: %'+b:'Henüz çözülmedi')+'</span></div></button>';
       }).join('')+
-      '</div><div class="foot">TYT dağılımı: Türkçe 40, Temel Matematik 40, Sosyal 20, Fen 20. Soru havuzu sınırlı olduğundan bir dersin soru sayısı havuzdaki çoktan seçmeli soru kadardır.</div>';
+      '</div><div class="foot">TYT dağılımı: Türkçe 40, Sosyal 20 (Tarih 5, Coğrafya 5, Felsefe 5, Din Kültürü 5), Temel Matematik 40 (son 10 sorusu Geometri), Fen 20 (Fizik 7, Kimya 7, Biyoloji 6). Toplam 120 soru · 165 dakika.</div>';
     ANIM.render(app, h); bindTheme();
     $('#backBtn').onclick = menu;
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ startDeneme(dl[+b.dataset.d]); }; });
@@ -351,7 +352,6 @@
     clearTimer();
     var qs = cfg.questions.slice();
     if(opts.shuffle && cfg.special!=='mistakes') qs = shuffle(qs);
-    if(opts.count && !cfg.timed && cfg.special!=='weak' && qs.length>opts.count) qs = qs.slice(0,opts.count);
     G = {name:cfg.name, color:cfg.color||'var(--accent)', lv:cfg.lv||null, key:cfg.key,
          special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, weakSubj:cfg.weakSubj||null, denemeId:cfg.denemeId||null, qs:qs, i:0, score:0, log:[], topics:{},
          timed:cfg.timed||0, left:cfg.timed||0, streak:0, bestStreak:0};
