@@ -322,7 +322,7 @@
           '<div class="tag">'+esc(d.desc||'TYT dağılımı')+'</div>'+
           '<div class="meta"><span>'+denemeCount(d)+' soru · '+d.minutes+' dk</span><span>'+(b!=null?'En iyi: %'+b:'Henüz çözülmedi')+'</span></div></button>';
       }).join('')+
-      '</div><div class="foot">TYT dağılımı: Türkçe 40, Temel Matematik 40, Sosyal 20, Fen 20. Soru havuzu sınırlı olduğundan bir dersin soru sayısı havuzdaki çoktan seçmeli soru kadardır.</div>';
+      '</div><div class="foot">TYT dağılımı: Türkçe 40, Sosyal 20 (Tarih 5, Coğrafya 5, Felsefe 5, Din Kültürü 5), Temel Matematik 40 (son 10 sorusu Geometri), Fen 20 (Fizik 7, Kimya 7, Biyoloji 6). Toplam 120 soru · 165 dakika.</div>';
     ANIM.render(app, h); bindTheme();
     $('#backBtn').onclick = menu;
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ startDeneme(dl[+b.dataset.d]); }; });
