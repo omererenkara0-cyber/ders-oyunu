@@ -68,6 +68,21 @@ label.chk input{accent-color:var(--accent);width:16px;height:16px}
 figure.fig{margin:14px 0 6px;display:flex;justify-content:center;background:var(--surface2);border-radius:12px;padding:12px}
 figure.fig svg{max-width:100%;height:auto;display:block}
 .inputs{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+
+/* çoktan seçmeli şıklar */
+.mc{display:flex;flex-direction:column;gap:10px}
+.mc .opt{display:flex;align-items:flex-start;gap:12px;text-align:left;background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;padding:12px 15px;font-size:16px;line-height:1.5;transition:border-color .15s,background .15s,transform .08s;width:100%}
+.mc .opt:hover{border-color:var(--muted)}
+.mc .opt:active{transform:scale(.99)}
+.mc .opt .ol{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1.5px solid var(--line);font-weight:700;font-size:14px}
+.mc .opt .ot{flex:1;min-width:0}
+.mc .opt.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface2))}
+.mc .opt.sel .ol{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.mc .opt.ok{border-color:var(--ok);background:var(--ok-bg)}
+.mc .opt.ok .ol{background:var(--ok);border-color:var(--ok);color:var(--accent-ink)}
+.mc .opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.mc .opt.bad .ol{background:var(--bad);border-color:var(--bad);color:var(--accent-ink)}
+.mc .opt:disabled{cursor:default;opacity:.92}
 .field{display:flex;align-items:center;gap:10px}
 .field label{min-width:0;flex:0 0 auto;max-width:45%;font-size:14.5px;color:var(--muted)}
 .field input,.field textarea{flex:1;min-width:0;background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--ink);font:inherit;outline:none;transition:border-color .15s,background .15s}

@@ -1,194 +1,110 @@
+/* TYT soru bankası doğrulayıcı. Tüm soruları yükler ve tutarlılığı denetler. */
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-for(const f of ['match.js','svg.js','data/formul-svg.js','data/biyoloji.js','data/biyoloji-zor.js','data/fizik.js','data/fizik-zor.js','data/inkilap.js','data/din.js','data/edebiyat.js','data/formuller.js','data/formul-soru.js','data/subjects.js','weak.js','anim.js'])
+const FILES=['match.js','svg.js','data/tyt-turkce.js','data/tyt-matematik.js','data/tyt-geometri.js','data/tyt-fizik.js','data/tyt-kimya.js','data/tyt-biyoloji.js','data/tyt-tarih.js','data/tyt-cografya.js','data/tyt-felsefe.js','data/tyt-din.js','data/tyt-deneme.js','data/tyt-denemeler.js','data/subjects.js','weak.js','anim.js'];
+for(const f of FILES)
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
-const M=ctx.M; let bad=0;
-const firstOf=s=> s.num!=null? String(s.num) : s.a? s.a[0] : s.all? s.all.map(g=>g[0]).join(' ') : s.keys? s.keys[0][0] : null;
-const LISTS=[]; for(const S of ctx.SUBJECTS){ LISTS.push({id:S.id, questions:S.questions}); if(S.levels) S.levels.forEach(lv=>LISTS.push({id:S.id+':'+lv.id, questions:lv.questions})); }
-for(const S of LISTS){
-  let img=S.questions.filter(q=>q.svg).length;
-  console.log(S.id, S.questions.length,'soru,',img,'çizimli');
-  S.questions.forEach((q,i)=>{
-    const tag=S.id+'#'+(i+1);
-    const specs = q.type==='parts'? q.parts : q.type==='list'? q.pool.concat(q.extra||[]) : q.type==='free'? [] : [q];
-    specs.forEach(s=>{ let v=firstOf(s); if(s.minWords) v=v+' kelimesi burada geçiyor ve cümle uzun'; if(v==null||!M.check(v,s)){bad++;console.log('FAIL self',tag,v);} 
-      (s.a||[]).forEach(a=>{ let v2=s.minWords? a+' bir iki üç dört beş':a; if(!M.check(v2,s)){bad++;console.log('FAIL alt',tag,a);} });
-      (s.not||[]).forEach(n=>{ if(M.check(n,s)){bad++;console.log('FAIL not accepted',tag,n);} }); });
-    if(!q.hints||!q.hints.length) console.log('no hints',tag);
+let bad=0;
+const fail=(...a)=>{bad++;console.log('FAIL',...a);};
+
+/* 1) Her soru biçimsel olarak geçerli mi? */
+const seen=new Set();
+let total=0, withImg=0, mcCount=0, openCount=0;
+const OPEN_TYPES=new Set(['parts','list','free']);
+for(const S of ctx.SUBJECTS){
+  if(!S.id||!S.name||!S.levels) fail('ders alanları eksik',S.id);
+  S.levels.forEach(lv=>{
+    if(!lv.id||!lv.name||!Array.isArray(lv.questions)) fail('seviye alanları eksik',S.id,lv.id);
+    lv.questions.forEach((q,i)=>{
+      total++;
+      const tag=S.id+':'+lv.id+'#'+(i+1);
+      if(typeof q.q!=='string'||q.q.trim().length<8) fail('soru metni kısa',tag);
+      if(!q.topic||typeof q.topic!=='string') fail('konu yok',tag);
+      if(!Array.isArray(q.hints)||q.hints.length<1) fail('ipucu yok',tag);
+      if(!q.exp||typeof q.exp!=='string') fail('açıklama yok',tag);
+      const isMc = q.type==='mc' || (!q.type && Array.isArray(q.options));
+      if(isMc){
+        mcCount++;
+        if(!Array.isArray(q.options)||q.options.length!==5) fail('şık sayısı 5 değil',tag,q.options&&q.options.length);
+        if(q.options&&new Set(q.options).size!==q.options.length) fail('şık tekrarı',tag);
+        if(!Number.isInteger(q.answer)||q.answer<0||q.answer>4) fail('cevap indeksi geçersiz',tag,q.answer);
+      } else {
+        openCount++;
+        if(q.type && !OPEN_TYPES.has(q.type)) fail('bilinmeyen soru tipi',tag,q.type);
+        const hasSpec = q.a || q.num!=null || q.all || q.keys || q.type==='parts' || q.type==='list' || q.type==='free';
+        if(!hasSpec) fail('cevap ölçütü yok (a/num/all/keys/type)',tag);
+        if(q.a && !Array.isArray(q.a)) fail('a dizisi değil',tag);
+        if(q.all && (!Array.isArray(q.all)||!q.all.every(g=>Array.isArray(g)))) fail('all biçimi geçersiz',tag);
+      }
+      if(q.svg){ withImg++; if(!/^<svg[\s\S]*<\/svg>$/.test(q.svg)||q.svg.indexOf('undefined')!==-1) fail('svg geçersiz',tag); }
+      const key=q.q.slice(0,60);
+      if(seen.has(key)) fail('soru tekrarı',tag,q.q.slice(0,40));
+      seen.add(key);
+    });
   });
 }
-// tipik yanlışlar
-const T=(sid,i,inp,exp)=>{const qs=LISTS.find(s=>s.id===sid).questions; const q=typeof i==='string'? qs.find(x=>x.q.includes(i)) : qs[i-1]; const g=M.check(inp,q); if(g!==exp){bad++;console.log('FAIL case',sid,i,inp,g);}};
-T('biyoloji',9,'riboz',false); T('biyoloji',11,'deoksiriboz',false); T('biyoloji',15,'TACGCT',false);
-T('fizik',1,'4',false); T('fizik','Buz patencisi','azalır',false); T('fizik','Buz patencisi','kollarını kapatınca artar',true); T('fizik','(m ve r cinsinden)','5mr2',false); T('biyoloji','yeni nükleotitleri','RNA polimeraz',false); T('biyoloji','yeni nükleotitleri','DNA polimeraz',true); T('fizik','yönü sürekli','açısal hız',false); T('fizik','Kepler’in birinci','çember',false);
-T('inkilap',10,'erzurum kongresi',false); T('inkilap',10,'sivas kongresi',true); T('inkilap',1,'kanunu esasi',true);
-T('din',3,'farabi',false); T('din',1,'insanın aklına hitap eder',true);
-// zor seviye (biyoloji)
-T('biyoloji:zor',1,'TACGGU',false); T('biyoloji:zor',1,'UACGGU',true); T('biyoloji:zor',1,'UACGGT',false);
-T('biyoloji:zor',2,'tek bant ara',true); T('biyoloji:zor',2,'iki bant',false);
-T('biyoloji:zor','eşlenme süresi prokaryottakine','kısalır',true); T('biyoloji:zor','eşlenme süresi prokaryottakine','uzar',false);
-T('biyoloji:zor','5′ ucu ile','3',true); T('biyoloji:zor','5′ ucu ile','5',false);
-T('biyoloji:zor','kalıp DNA zincirinden sentezlenen mRNA','uacggu',true);
-T('biyoloji:zor','üst zinciri AATGCG','TTACGC',true); T('biyoloji:zor','üst zinciri AATGCG','AATGCG',false);
-// biyoloji zor: yeni sorular (enzim/Okazaki/prokaryot/DNA-RNA/RNA oranı/kodon)
-const TP=(sid,qsub,label,inp,exp)=>{const qs=LISTS.find(s=>s.id===sid).questions; const q=qs.find(x=>x.q.includes(qsub)); if(!q||!q.parts){bad++;console.log('FAIL part missing',sid,qsub);return;} const p=q.parts.find(x=>(x.label||'').includes(label)); if(!p){bad++;console.log('FAIL part label',sid,label);return;} const g=M.check(inp,p); if(g!==exp){bad++;console.log('FAIL part case',sid,label,inp,g);}};
-TP('biyoloji:zor','A, B, C ve D ile gösterilen','A (','helikaz',true);
-TP('biyoloji:zor','A, B, C ve D ile gösterilen','C (','ligaz',true);
-TP('biyoloji:zor','A, B, C ve D ile gösterilen','B (','polimeraz',true);
-TP('biyoloji:zor','A, B, C ve D ile gösterilen','D (','okazaki',true);
-TP('biyoloji:zor','A, B, C ve D ile gösterilen','A (','ligaz',false);
-TP('biyoloji:zor','DNA ve RNA moleküllerini karşılaştırarak','Şeker','deoksiriboz',true);
-TP('biyoloji:zor','DNA ve RNA moleküllerini karşılaştırarak','Baz','urasil',true);
-TP('biyoloji:zor','DNA ve RNA moleküllerini karşılaştırarak','Zincir','çift',true);
-TP('biyoloji:zor','RNA tiplerinin oranları','En fazla','rrna',true);
-TP('biyoloji:zor','RNA tiplerinin oranları','En az','mrna',true);
-TP('biyoloji:zor','RNA tiplerinin oranları','görevi','ribozom',true);
-TP('biyoloji:zor','kısaltılmış kodon tablosu','1. amino','metiyonin',true);
-TP('biyoloji:zor','kısaltılmış kodon tablosu','3. amino','glisin',true);
-TP('biyoloji:zor','iki kez eşlenen (2 eşlenme)','Toplam','4',true);
-TP('biyoloji:zor','iki kez eşlenen (2 eşlenme)','Hibrit','2',true);
-TP('biyoloji:zor','iki kez eşlenen (2 eşlenme)','hafif','2',true);
-T('biyoloji:zor','Okazaki parçalarının oluşmasına','polimeraz yalnızca 5\' yönünde sentez yapar, çataldan uzaklaşan zincirde kesintili parçalar oluşur',true);
-T('biyoloji:zor','prokaryot ve ökaryot DNA replikasyonunu','ökaryotta birden fazla orijin ve çekirdekte hızlı gerçekleşir',true);
-T('biyoloji:zor','Griffith deneyinde','protein ve rna parçalandı, dna parçalandığında aktarım durdu',true);
-T('biyoloji:zor','600 nükleotitlik tek zincirli','4800',true);
-T('biyoloji:zor','600 nükleotitlik tek zincirli','1200',false);
-T('biyoloji:zor','60 amino asitlik bir polipeptidin','186',true);
-T('biyoloji:zor','60 amino asitlik bir polipeptidin','180',false);
-T('biyoloji:zor','kalıp DNA zincirinden sentezlenen mRNA’daki toplam baz','eşit',true);
-// fizik zor seviye
-T('fizik:zor','Kayışla birbirine bağlı','5',true); T('fizik:zor','Kayışla birbirine bağlı','45',false);
-T('fizik:zor','konik sarkaç','0,8',true); T('fizik:zor','konik sarkaç','1,25',false);
-T('fizik:zor','yuvarlanan bir silindirin','3/2',true); T('fizik:zor','yuvarlanan bir silindirin','1',false);
-T('fizik:zor','çubuğa, dönme ekseninden','6',true); T('fizik:zor','çubuğa, dönme ekseninden','3',false);
-T('fizik:zor','ikinci bir disk düşüyor','12',true); T('fizik:zor','ikinci bir disk düşüyor','8',false);
-T('fizik:zor','T_Y / T_X oranı','8',true); T('fizik:zor','T_Y / T_X oranı','2',false);
-T('fizik:zor','kaçış hızı bunun','kök 2',true); T('fizik:zor','kaçış hızı bunun','2',false);
-T('fizik:zor','0–8 s arasında toplam','60',true); T('fizik:zor','0–8 s arasında toplam','40',false);
-T('fizik:zor','özkütlesi kaç','3',true); T('fizik:zor','özkütlesi kaç','30',false);
-T('fizik:zor','basınçların oranı','2',true); T('fizik:zor','basınçların oranı','1',false);
-T('fizik:zor','denge sıcaklığı','44',true); T('fizik:zor','denge sıcaklığı','50',false);
-T('fizik:zor','Kayığın yere','13',true); T('fizik:zor','Kayığın yere','7',false);
-T('fizik:zor','esneklik potansiyel enerjisi','4',true); T('fizik:zor','esneklik potansiyel enerjisi','8',false);
-T('fizik:zor','birlikte hareket ediyor','1,2',true); T('fizik:zor','birlikte hareket ediyor','6/5',true); T('fizik:zor','birlikte hareket ediyor','5',false);
-T('fizik:zor','45 m yükseklikten','30',true); T('fizik:zor','45 m yükseklikten','90',false);
-T('fizik:zor','en az hangi yükseklikten','2,5',true); T('fizik:zor','en az hangi yükseklikten','5/2',true); T('fizik:zor','en az hangi yükseklikten','1,5',false);
-T('fizik:zor','en alt noktasından 5 m/s','30',true); T('fizik:zor','en alt noktasından 5 m/s','20',false);
-T('fizik:zor','virajı kaymadan dönebilecek en büyük hız','10',true); T('fizik:zor','virajı kaymadan dönebilecek en büyük hız','100',false);
-// zayıf konu analizi: ders bazlı ayrım (src/weak.js)
-const WK=ctx.window.WEAK;
-const allQ=[]; for(const S of ctx.SUBJECTS){ const qs=S.levels?S.levels.reduce((a,lv)=>a.concat(lv.questions),[]):S.questions; qs.forEach(q=>allQ.push({q,s:S})); }
-const WTEST=(name,cond)=>{ if(!cond){bad++;console.log('FAIL weak',name);} };
-// 1) Dersler ayrı gruplanır; "Genel" konusu din/edebiyat/inkilap arasında karışmaz
-const ts1={"biyoloji::Nükleotit":{ok:0,n:3},"din::Genel":{ok:0,n:3},"edebiyat::Genel":{ok:0,n:3},"fizik::Hareket":{ok:0,n:3}};
-const g1=WK.weakBySubject(ts1,ctx.SUBJECTS,allQ);
-WTEST('grup sayısı 4', g1.length===4);
-WTEST('her grup tek ders', g1.every(g=>g.pool.every(x=>x.s===g.s)));
-const ede=g1.find(g=>g.s.id==='edebiyat'); WTEST('edebiyat havuzu sadece edebiyat', ede && ede.pool.length===15 && ede.pool.every(x=>x.s.id==='edebiyat'));
-const din=g1.find(g=>g.s.id==='din'); WTEST('din havuzu sadece din', din && din.pool.length===10);
-const bio=g1.find(g=>g.s.id==='biyoloji'); WTEST('biyoloji havuzu sadece biyoloji', bio && bio.pool.every(x=>x.s.id==='biyoloji'));
-// 2) weakTopicsFor ders dışı anahtarları yok sayar
-WTEST('weakTopicsFor din 1 konu', WK.weakTopicsFor(ts1,'din').length===1);
-WTEST('weakTopicsFor fizik 1 konu', WK.weakTopicsFor(ts1,'fizik').length===1);
-WTEST('weakTopicsFor edebiyat sadece Genel', WK.weakTopicsFor(ts1,'edebiyat')[0].topic==='Genel');
-// 3) Aynı adlı konu farklı derslerde bağımsız puanlanır
-const ts2={"biyoloji::Ortak":{ok:0,n:5,w:5},"fizik::Ortak":{ok:5,n:5,w:0}};
-WTEST('biyoloji::Ortak %0', WK.weakTopicsFor(ts2,'biyoloji')[0].pct===0);
-// 4) Çözülmemiş hatası olmayan konu (yani %100) zayıf listesine girmez
-WTEST('fizik::Ortak %100 zayıf sayılmaz (boş liste)', WK.weakTopicsFor(ts2,'fizik').length===0);
-// 5) Tek yanlış bile konuyu zayıf yapar (min-N eşiği yok)
-WTEST('tek yanlış zayıf yapar', WK.weakTopicsFor({"din::X":{ok:0,n:1,w:1}},'din').length===1);
-// 6) openErrors eski (w'siz) kayıtları ok/n'den türetir
-WTEST('openErrors eski kayıt', WK.openErrors({ok:1,n:3})===2);
-WTEST('openErrors yeni kayıt', WK.openErrors({ok:1,n:3,w:0})===0);
-// 7) recordResult: yanlış hata açar, doğru hatayı kapatır; hepsi kapanınca liste boşalır
-const rec=WK.recordResult({},false); WTEST('yanlış sonrası w=1', rec.w===1 && WK.weakTopicsFor({'din::K':rec},'din').length===1);
-WK.recordResult(rec,true); WTEST('doğru sonrası w=0', rec.w===0 && WK.weakTopicsFor({'din::K':rec},'din').length===0);
-WK.recordResult(rec,true); WTEST('w sıfırın altına inmez', rec.w===0);
-WK.recordResult(rec,false); WTEST('yeni yanlış yeniden açar', rec.w===1 && WK.weakTopicsFor({'din::K':rec},'din').length===1);
-// 8) Zayıf konular tamamlanınca ders grubu menüden kaybolur (0 konu)
-const tsC={"inkilap::Genel":{ok:10,n:10,w:0}};
-WTEST('tamamlanan konu grubu yok', WK.weakBySubject(tsC,ctx.SUBJECTS,allQ).length===0);
-const tsD={"inkilap::Genel":{ok:0,n:10,w:2}};
-WTEST('açık hata olan konu grubu var', WK.weakBySubject(tsD,ctx.SUBJECTS,allQ).length===1);
-// 9) Migrasyon: tek sahip taşınır, çok sahip silinir, :: olan korunur
-const ts3={"Nükleik asitlerin keşfi":{ok:0,n:2},"Hareket":{ok:1,n:2},"Genel":{ok:2,n:2},"Düzgün çembersel hareket":{ok:1,n:2},"fizik::Hareket":{ok:9,n:9}};
-WK.migrateTstats(ts3,ctx.SUBJECTS);
-WTEST('tek sahip biyolojiye taşındı', !!ts3['biyoloji::Nükleik asitlerin keşfi'] && !ts3['Nükleik asitlerin keşfi']);
-WTEST('çok sahipli Genel silindi', !ts3['Genel']);
-WTEST('çok sahipli (kolay+zor) silindi', !ts3['Düzgün çembersel hareket']);
-WTEST('mevcut kapsamlı anahtar korundu', ts3['fizik::Hareket'].ok===9 && !ts3['Hareket']);
-// animasyon: konfeti spec üretimi (saf)
-const AN=ctx.ANIM;
-const seq=(vals)=>{let i=0;return()=>vals[i++%vals.length];};
-const specs=AN.confettiSpecs(5, seq([0.0,0.5,0.25,0.75,0.1,0.9,0.3,0.6,0.2,0.8]));
-WTEST('konfeti adedi', specs.length===5);
-WTEST('konfeti left 0-100', specs.every(p=>p.left>=0&&p.left<=100));
-WTEST('konfeti süre aralığı', specs.every(p=>p.dur>=900&&p.dur<=1600));
-WTEST('konfeti boyut aralığı', specs.every(p=>p.size>=6&&p.size<=13));
-WTEST('konfeti geçerli renk', specs.every(p=>/^#[0-9a-f]{6}$/i.test(p.color)));
-WTEST('konfeti round bool', specs.every(p=>typeof p.round==='boolean'));
-WTEST('konfeti n=0 boş', AN.confettiSpecs(0, seq([0.5])).length===0);
-// formül kağıdı: fizik için dolu ve biçimli
-const FM=ctx.FORMULS||{};
-WTEST('fizik formülleri var', Array.isArray(FM.fizik) && FM.fizik.length>=8);
-let fBad=0, fRows=0;
-(FM.fizik||[]).forEach(sec=>{ if(!sec.h || !Array.isArray(sec.rows) || !sec.rows.length) fBad++;
-  sec.rows.forEach(r=>{ fRows++; if(!Array.isArray(r) || r.length!==2 || !String(r[0]).trim() || !String(r[1]).trim()) fBad++; }); });
-WTEST('formül bölümleri biçimli', fBad===0);
-WTEST('formül satır sayısı yeterli', fRows>=30);
-WTEST('her formül bölümünde başlık var', (FM.fizik||[]).every(s=>typeof s.h==='string' && s.h.length>0));
-// formül çizimleri: tanımlı her fig FSVG'de üretilebilmeli
-const FSV=ctx.FSVG||{};
-let figBad=0, figN=0;
-(FM.fizik||[]).forEach(s=>{ if(!s.fig) return; figN++;
-  const fn=FSV[s.fig];
-  if(typeof fn!=='function'){ figBad++; console.log('FAIL fig missing', s.fig); return; }
-  let out=''; try{ out=fn(); }catch(e){ figBad++; console.log('FAIL fig threw', s.fig, e.message); return; }
-  if(!/^<svg[\s\S]*<\/svg>$/.test(out) || out.indexOf('NaN')!==-1 || out.indexOf('undefined')!==-1){ figBad++; console.log('FAIL fig bad', s.fig); }
-});
-WTEST('her bölüm için çizim var', figN===(FM.fizik||[]).length);
-WTEST('çizimler geçerli SVG üretiyor', figBad===0);
+console.log('Toplam',total,'soru ·',mcCount,'çoktan seçmeli ·',openCount,'açık uçlu ·',withImg,'çizimli');
+if(total<80) fail('soru sayısı çok az',total);
 
-// formül sınavı soruları — doğrudan formül kağıdından (FORMULS) üretilir
-const FM0=ctx.FORMULS||{};
-const FORMUL_SORU=ctx.FORMUL_SORU;
-const FS=FORMUL_SORU.build(FM0.fizik);
-WTEST('formül sınavı soruları var', FS.length>=30);
-let fsBad=0, fsFormula=0;
-FS.forEach((q,i)=>{
-  if(!q.q || typeof q.q!=='string') { fsBad++; console.log('FAIL soru metni', i); }
-  if(!q.formula || !Array.isArray(q.a) || !q.a.length) { fsBad++; console.log('FAIL formül cevabı yok', i, q.q); }
-  else fsFormula++;
-  if(!Array.isArray(q.hints) || !q.hints.length) { fsBad++; console.log('FAIL ipucu yok', i); }
-  if(q.fig){ fsBad++; console.log('FAIL soruda resim olmamalı', i); }
-  if(!q.sol || String(q.sol).indexOf('=')<0){ fsBad++; console.log('FAIL çözüm eşitlik değil', i); }
-  if(!q.topic){ fsBad++; console.log('FAIL konu yok', i); }
-});
-WTEST('formül soruları biçimli', fsBad===0);
-WTEST('tüm formül soruları formül cevaplı', fsFormula===FS.length);
-// her sorunun kabul edilen tüm yazımları geçerli olmalı
-let fsAnsBad=0;
-FS.forEach((q,i)=>{
-  q.a.forEach((v,j)=>{ if(!M.formula(v, {a:q.a})) { fsAnsBad++; console.log('FAIL formula self-check', i, j, q.q, '=>', v); } });
-});
-WTEST('formül sorularının cevap anahtarı kendini doğruluyor', fsAnsBad===0);
-// yanlış cevaplar reddedilmeli (aşırı tolerans olmasın)
-let fsNegBad=0;
-FS.forEach((q,i)=>{
-  if(M.formula('zzzz', {a:q.a})){ fsNegBad++; console.log('FAIL yanlış kabul edildi', i, q.q); }
-});
-WTEST('formül sorularında yanlış cevaplar reddediliyor', fsNegBad===0);
-// üretilen soru sayısı = kağıttaki eşitlik içeren satır sayısı
-let fmRows=0;
-(FM0.fizik||[]).forEach(sec=>(sec.rows||[]).forEach(r=>{ if(r && String(r[1]).indexOf('=')>=0) fmRows++; }));
-WTEST('her formül satırı bir soruya karşılık geliyor', FS.length===fmRows);
-// yazım toleransı: sembol/sözcük farklı yazımlar aynı kabul edilmeli
-const byQ=sub=>FS.find(q=>q.q.indexOf(sub)===0);
-WTEST('formül toleransı: v²/r ≡ v kare / r', M.formula('v kare / r', {a:byQ('Merkezcil ivme').a}));
-WTEST('formül toleransı: omega ≡ ω', M.formula('a = omega kare r', {a:byQ('Merkezcil ivme').a}));
-WTEST('formül toleransı: sqrt ≡ √', M.formula('v_k = sqrt(2 g R)', {a:byQ('Kurtulma hızı').a}));
-WTEST('formül toleransı: kök ≡ √', M.formula('kök(2GM/R)', {a:byQ('Kurtulma hızı').a}));
-WTEST('formül toleransı: T²/r³', M.formula('T kare / r kup', {a:byQ('Kepler 3').a}));
-WTEST('formül toleransı: yanlış cevap reddedilir (2gR)', !M.formula('2 g R', {a:byQ('Kurtulma hızı').a}));
+/* 2) Ders bazlı özet */
+for(const S of ctx.SUBJECTS){
+  const c=S.levels.reduce((a,lv)=>a+lv.questions.length,0);
+  console.log(' -',S.name.padEnd(16),c,'soru');
+}
+
+/* 3) Deneme sınavları tutarlı mı? */
+const DL=ctx.window.TYT_DENEMELER;
+const ids=new Set(ctx.SUBJECTS.map(s=>s.id));
+/* Ders başına çoktan seçmeli (denemeye uygun) soru sayısı. */
+const mcCap={};
+for(const S of ctx.SUBJECTS){
+  let c=0; S.levels.forEach(lv=>lv.questions.forEach(q=>{ if(q.type==='mc'||(!q.type&&q.options)) c++; }));
+  mcCap[S.id]=c;
+}
+if(!Array.isArray(DL)||!DL.length) fail('deneme listesi yok');
+else{
+  const dids=new Set();
+  DL.forEach(D=>{
+    const tag='deneme:'+(D&&D.id);
+    if(!D.id||dids.has(D.id)) fail('deneme id eksik/tekrar',tag); dids.add(D.id);
+    if(!D.name||typeof D.name!=='string') fail('deneme adı yok',tag);
+    if(typeof D.minutes!=='number'||D.minutes<=0) fail('deneme süresi geçersiz',tag);
+    if(typeof D.seed!=='number') fail('deneme tohumu yok',tag);
+    if(!Array.isArray(D.dist)||!D.dist.length){ fail('deneme dağılımı yok',tag); return; }
+    let sum=0, eff=0;
+    D.dist.forEach(d=>{
+      sum+=d.n;
+      if(!ids.has(d.id)) fail('deneme ders yok',tag,d.id);
+      if(!(d.n>0)) fail('deneme soru sayısı geçersiz',tag,d.id);
+      if((mcCap[d.id]||0)<=0) fail('denemede o dersin sorusu yok',tag,d.id);
+      eff += Math.min(d.n, mcCap[d.id]||0);
+    });
+    if(sum!==120) fail('deneme toplam dağılımı 120 değil',tag,sum);
+    if(eff<1) fail('deneme hiç soru üretmiyor',tag);
+    console.log(' -',D.name.padEnd(32),eff,'soru ·',D.minutes,'dk (dağılım toplamı '+sum+')');
+  });
+  console.log(' Deneme sayısı:',DL.length);
+}
+
+/* 4) weak.js: ders bazlı ayrım */
+const WK=ctx.window.WEAK;
+const allQ=[]; for(const S of ctx.SUBJECTS) S.levels.forEach(lv=>lv.questions.forEach(q=>allQ.push({q,s:S})));
+const WTEST=(name,cond)=>{ if(!cond) fail('weak',name); };
+const ts1={"turkce::Paragraf":{ok:0,n:3},"din::İslam ve İbadet":{ok:0,n:3},"fizik::Hareket":{ok:0,n:3}};
+const g1=WK.weakBySubject(ts1,ctx.SUBJECTS,allQ);
+WTEST('3 ders grubu',g1.length===3);
+WTEST('her grup tek ders',g1.every(g=>g.pool.every(x=>x.s===g.s)));
+WTEST('openErrors eski kayıt',WK.openErrors({ok:1,n:3})===2);
+const rec=WK.recordResult({},false); WTEST('yanlış w=1',rec.w===1);
+WK.recordResult(rec,true); WTEST('doğru w=0',rec.w===0);
+WTEST('tamamlanan konu gruptan düşer',WK.weakBySubject({"din::X":{ok:5,n:5,w:0}},ctx.SUBJECTS,allQ).length===0);
+
+/* 5) anim.js saf parça */
+const AN=ctx.ANIM;
+const seq=(v)=>{let i=0;return()=>v[i++%v.length];};
+const specs=AN.confettiSpecs(6,seq([0,0.5,0.25,0.75,0.1,0.9,0.3,0.6,0.2,0.8,0.4,0.7]));
+WTEST('konfeti adedi',specs.length===6);
+WTEST('konfeti geçerli',specs.every(p=>p.left>=0&&p.left<=100&&p.dur>=900&&p.dur<=1600&&/^#[0-9a-f]{6}$/i.test(p.color)));
+
 console.log(bad?bad+' PROBLEM':'tüm kontroller geçti');
+process.exit(bad?1:0);

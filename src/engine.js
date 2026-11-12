@@ -11,9 +11,9 @@
     get: function(k,d){ try{ var v=localStorage.getItem('dersoyunu.'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
     set: function(k,v){ try{ localStorage.setItem('dersoyunu.'+k, JSON.stringify(v)); }catch(e){} }
   };
-  var opts = store.get('opts', {count:10, shuffle:true, mixedCount:20, mixedMin:10});
-  if(store.get('optsV', 0) < 2 && opts.mixedMin===20){ opts.mixedMin=10; store.set('opts',opts); }
-  store.set('optsV', 2);
+  var opts = store.get('opts', {count:10, shuffle:true, mixedMin:165});
+  if(store.get('optsV', 0) < 3){ opts.mixedMin = 165; opts.mixedCount = 120; store.set('opts',opts); }
+  store.set('optsV', 3);
   var theme = store.get('theme', 'dark');
   document.documentElement.setAttribute('data-theme', theme);
   var G = null; // aktif oyun
@@ -66,7 +66,9 @@
       }
       return rowFor('<i style="background:'+s.color+'"></i>'+s.name, s.id);
     }).join('');
-    rows += rowFor('<i style="background:var(--accent2)"></i>Karışık Sınav', 'karisik');
+    denemeList().forEach(function(d){
+      rows += rowFor('<i style="background:var(--accent2)"></i>'+esc(d.name), 'deneme:'+d.id);
+    });
     return '<div class="card scores-card"><h3>'+esc(prof.cur)+' · son 3 tur</h3><div class="tbl-wrap"><table class="scores">'+
       '<thead><tr><th>Ders</th><th>Son tur</th><th>Önceki tur</th><th>Ondan önceki</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }
@@ -127,6 +129,39 @@
     var out=[]; list.forEach(function(q){ var t=q.topic||'Genel'; if(out.indexOf(t)<0) out.push(t); });
     return out;
   }
+  /* Deneme sınavı listesi. Eski tek deneme yapılandırması (window.TYT_DENEME) varsa
+     onu da listeye çevirir; yoksa TYT_DENEMELER kullanılır. */
+  function denemeList(){
+    if(Array.isArray(window.TYT_DENEMELER) && window.TYT_DENEMELER.length) return window.TYT_DENEMELER;
+    var one = window.TYT_DENEME;
+    return one ? [{id:'deneme', name:one.name, minutes:one.minutes, seed:1, dist:one.dist}] : [];
+  }
+  /* Tohumlu sözde rastgele üretici (mulberry32) — aynı deneme her açılışta aynı sırayı verir. */
+  function seededRandom(seed){
+    var a = (seed>>>0) || 1;
+    return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a>>>15, 1 | a); t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t; return ((t ^ t>>>14)>>>0) / 4294967296; };
+  }
+  function seededShuffle(arr, seed){
+    var rnd = seededRandom(seed), a = arr.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+  /* Bir denemenin dağılımına göre soru listesi (havuz küçükse dağılımdan az olabilir). */
+  function denemePick(cfg){
+    var dist = (cfg && cfg.dist) || [];
+    var seed = (cfg && cfg.seed) || 1;
+    var out = [];
+    dist.forEach(function(d, di){
+      var s = null; SUBJECTS.forEach(function(x){ if(x.id===d.id) s=x; });
+      if(!s) return;
+      var pool = [];
+      s.levels.forEach(function(lv){ lv.questions.forEach(function(q){ if(q.type==='mc' || (!q.type && q.options)) pool.push(q); }); });
+      pool = seededShuffle(pool, seed + di*97);
+      pool.slice(0, d.n).forEach(function(q){ out.push(q); });
+    });
+    return out;
+  }
+  function denemeCount(d){ return denemePick(d).length; }
 
   /* ---------- ZAYIF KONU ANALİZİ (ders bazlı; mantık src/weak.js) ---------- */
   var WEAK = window.WEAK;
@@ -140,7 +175,7 @@
     G = null; clearTimer();
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
-      '<section class="hero"><h1>Hangi dersle başlamak istersin?</h1><p>Cevaplarını kendi kelimelerinle yaz. Küçük yazım hataları sorun değil, her yanlışta bir ipucu açılır.</p></section>'+
+      '<section class="hero"><h1>Hangi dersle başlamak istersin?</h1><p>TYT’ye yönelik çoktan seçmeli sorular. Her soruda beş seçenek vardır; doğru seçeneği işaretle ve “Kontrol Et”e bas. Yanlışta ipucu açılır.</p></section>'+
       playerBar();
     var mc = mistakeCount();
     h += '<div class="grid">';
@@ -151,9 +186,10 @@
         '<div class="meta"><span>'+mc+' soru</span><span>Tekrar çöz</span></div></button>';
     }
     if(curP()){
-      extra += '<button class="card subject special" data-mixed="1" style="--sc:var(--accent2)">'+
-        '<div class="ico">⚡</div><h3>Karışık Sınav</h3><div class="tag">Tüm derslerden rastgele · süreli</div>'+
-        '<div class="meta"><span>'+opts.mixedCount+' soru · '+opts.mixedMin+' dk</span><span>Deneme</span></div></button>';
+      var dl = denemeList();
+      extra += '<button class="card subject special" data-denemeler="1" style="--sc:var(--accent2)">'+
+        '<div class="ico">⚡</div><h3>TYT Denemeleri</h3><div class="tag">'+dl.length+' deneme · TYT dağılımı · süreli</div>'+
+        '<div class="meta"><span>'+dl.length+' deneme</span><span>Net hesaplı</span></div></button>';
     }
     var wbs = weakBySubject();
     wbs.forEach(function(g){
@@ -176,11 +212,7 @@
     h += '</div>'+scoreTable()+'<div class="opts"><span>Soru sayısı</span><div class="seg" id="cnt">'+
       [10,20,0].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.count===n?'on':'')+'">'+(n||'Tümü')+'</button>'; }).join('')+
       '</div><label class="chk"><input type="checkbox" id="shf" '+(opts.shuffle?'checked':'')+'> Soruları karıştır</label>'+
-      '<span class="sep"></span><span>Karışık sınav</span><div class="seg" id="mcnt">'+
-      [10,20,30].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.mixedCount===n?'on':'')+'">'+n+'</button>'; }).join('')+
-      '</div><div class="seg" id="mmin">'+
-      [10,20,30].map(function(n){ return '<button data-n="'+n+'" class="'+(opts.mixedMin===n?'on':'')+'">'+n+' dk</button>'; }).join('')+
-      '</div></div>'+
+      '</div>'+
       '<div class="foot">Enter ile cevap gönderilir · Sorulardayken üstteki “Ana Menü” tuşuyla çıkabilirsin</div>';
     ANIM.render(app, h);
     bindTheme();
@@ -189,14 +221,12 @@
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
       if(!curP()){ needPlayer(); return; }
       if(b.dataset.mistakes){ startMistakes(); return; }
-      if(b.dataset.mixed){ mixedExam(); return; }
+      if(b.dataset.denemeler){ denemeSelect(); return; }
       if(b.dataset.weaks){ startWeak(b.dataset.weaks); return; }
       var s = SUBJECTS[+b.dataset.i];
       if(s.levels) levelSelect(s); else pickScreen(s, null);
     }; });
     app.querySelectorAll('#cnt button').forEach(function(b){ b.onclick=function(){ opts.count=+b.dataset.n; store.set('opts',opts); menu(); }; });
-    app.querySelectorAll('#mcnt button').forEach(function(b){ b.onclick=function(){ opts.mixedCount=+b.dataset.n; store.set('opts',opts); menu(); }; });
-    app.querySelectorAll('#mmin button').forEach(function(b){ b.onclick=function(){ opts.mixedMin=+b.dataset.n; store.set('opts',opts); menu(); }; });
     $('#shf').onchange=function(){ opts.shuffle=this.checked; store.set('opts',opts); };
     window.scrollTo(0,0);
   }
@@ -216,22 +246,11 @@
         '<div class="tag">'+lv.desc+'</div>'+
         '<div class="meta"><span>'+lv.questions.length+' soru</span><span>'+(b!=null?'En iyi: %'+b:'Henüz oynanmadı')+'</span></div></button>';
     });
-    if(window.FORMULAS && FORMULAS.has(s.id)){
-      h += '<button class="card subject" data-formula="1" style="--sc:'+s.color+';animation-delay:'+(s.levels.length*.05).toFixed(2)+'s">'+
-        '<div class="ico">📐</div><h3>Formül Kağıdı</h3>'+
-        '<div class="tag">'+esc(s.name)+' · formüller + formül sınavı</div>'+
-        '<div class="meta"><span>'+FORMULS[s.id].length+' bölüm</span><span>'+((window.FORMUL_SORU||[]).length)+' soru</span></div></button>';
-    }
-    h += '</div><div class="foot">Zor seviyede cevaplar için yazım hataları tolere edilir; yine de doğru terimi yazmaya çalış.</div>';
+    h += '</div><div class="foot">Kolay–orta seviyede beş seçenekli sorular, zor seviyede ise açık uçlu sorular bulunur; cevabını yazıp “Kontrol Et”e bas. Küçük yazım farkları ve Türkçe karakterler tolere edilir.</div>';
     ANIM.render(app, h);
     bindTheme();
     $('#homeBtn').onclick = menu;
     app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){
-      if(b.dataset.formula){
-        if(window.FORMULAQUIZ && FORMULAQUIZ.has(s.id)) FORMULAQUIZ.open(app, s, function(){ app.classList.remove('wide'); levelSelect(s); });
-        else FORMULAS.open(app, s, function(){ levelSelect(s); });
-        return;
-      }
       pickScreen(s, s.levels[+b.dataset.l]);
     }; });
     window.scrollTo(0,0);
@@ -288,12 +307,32 @@
     if(opts.count && qs.length>opts.count) qs = qs.slice(0,opts.count);
     startGame({name:'Yanlışlarım', color:'#dc9090', questions:qs, key:'yanlislar', special:'mistakes'});
   }
-  function mixedExam(){
-    var all = shuffle(allQuestions());
-    var n = opts.mixedCount || 20;
-    if(all.length>n) all = all.slice(0,n);
-    var qs = all.map(function(x){ return x.q; });
-    startGame({name:'Karışık Sınav', color:'#cfae74', questions:qs, key:'karisik', timed:(opts.mixedMin||20)*60});
+  function denemeSelect(){
+    G = null; clearTimer();
+    var dl = denemeList();
+    var best = curP() ? curP().best : {};
+    var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
+      '<div class="bar" style="--sc:var(--accent2)"><button class="icon-btn" id="backBtn">← Ana Menü</button><div class="title"><i></i>TYT Denemeleri</div></div>'+
+      '<section class="hero"><h1>Hangi denemeyi çözmek istersin?</h1><p>Her deneme TYT dağılımına göre hazırlanır ve kendi süresiyle başlar. Sorular çoktan seçmelidir; sonuçta net hesaplanır.</p></section>'+
+      '<div class="grid">'+
+      dl.map(function(d,i){
+        var b = best['deneme:'+d.id];
+        return '<button class="card subject" data-d="'+i+'" style="--sc:var(--accent2);animation-delay:'+(i*.05).toFixed(2)+'s">'+
+          '<div class="ico">⚡</div><h3>'+esc(d.name)+'</h3>'+
+          '<div class="tag">'+esc(d.desc||'TYT dağılımı')+'</div>'+
+          '<div class="meta"><span>'+denemeCount(d)+' soru · '+d.minutes+' dk</span><span>'+(b!=null?'En iyi: %'+b:'Henüz çözülmedi')+'</span></div></button>';
+      }).join('')+
+      '</div><div class="foot">TYT dağılımı: Türkçe 40, Temel Matematik 40, Sosyal 20, Fen 20. Soru havuzu sınırlı olduğundan bir dersin soru sayısı havuzdaki çoktan seçmeli soru kadardır.</div>';
+    ANIM.render(app, h); bindTheme();
+    $('#backBtn').onclick = menu;
+    app.querySelectorAll('.subject').forEach(function(b){ b.onclick=function(){ startDeneme(dl[+b.dataset.d]); }; });
+    window.scrollTo(0,0);
+  }
+  function startDeneme(d){
+    if(!d){ denemeSelect(); return; }
+    var qs = denemePick(d);
+    startGame({name:d.name, color:'#cfae74', questions:qs, key:'deneme:'+d.id, special:'deneme',
+      denemeId:d.id, timed:(d.minutes||165)*60});
   }
   function startWeak(sid){
     var groups = weakBySubject();
@@ -314,14 +353,14 @@
     if(opts.shuffle && cfg.special!=='mistakes') qs = shuffle(qs);
     if(opts.count && !cfg.timed && cfg.special!=='weak' && qs.length>opts.count) qs = qs.slice(0,opts.count);
     G = {name:cfg.name, color:cfg.color||'var(--accent)', lv:cfg.lv||null, key:cfg.key,
-         special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, weakSubj:cfg.weakSubj||null, qs:qs, i:0, score:0, log:[], topics:{},
+         special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, weakSubj:cfg.weakSubj||null, denemeId:cfg.denemeId||null, qs:qs, i:0, score:0, log:[], topics:{},
          timed:cfg.timed||0, left:cfg.timed||0, streak:0, bestStreak:0};
     question();
   }
   function maxPts(){ return G.qs.length*10; }
   function streakBonus(s){ return Math.min(Math.max(s-1,0)*2, 10); }
   function clearTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
-  function fmtTime(sec){ var m=Math.floor(sec/60), s=sec%60; return pad(m)+':'+pad(s); }
+  function fmtTime(sec){ var m=Math.floor(sec/60), s=sec%60; return (m<10?'0'+m:''+m)+':'+pad(s); }
   function startTimer(){
     if(!G.timed) return;
     clearTimer();
@@ -359,7 +398,14 @@
     return hs;
   }
 
+  var MC_LETTERS = ['A','B','C','D','E'];
+  function mcHtml(q){
+    return '<div class="mc" id="mc">'+q.options.map(function(o,i){
+      return '<button type="button" class="opt" data-o="'+i+'"><span class="ol">'+MC_LETTERS[i]+'</span><span class="ot">'+o+'</span></button>';
+    }).join('')+'</div>';
+  }
   function fieldsHtml(q){
+    if(q.type==='mc') return mcHtml(q);
     if(q.type==='parts') return q.parts.map(function(p,i){
       return '<div class="field" data-k="'+i+'">'+(p.label?'<label>'+p.label+'</label>':'')+(p.long?'<textarea style="min-height:80px" spellcheck="false" placeholder="'+(p.ph||'Cevabın…')+'"></textarea>':'<input autocomplete="off" spellcheck="false" placeholder="'+(p.ph||'Cevabın…')+'">')+'</div>'; }).join('');
     if(q.type==='list'){ var h=''; for(var i=0;i<q.n;i++) h+='<div class="field" data-k="'+i+'"><label>'+(q.labels?q.labels[i]:(i+1)+'.')+'</label><input autocomplete="off" spellcheck="false" placeholder="'+(q.ordered?(i+1)+'. sıradaki…':'Cevabın…')+'"></div>';
@@ -401,6 +447,14 @@
     $('#pass').onclick = function(){ reveal(true); };
     $('#show').onclick = function(){ reveal(false); };
     $('#next').onclick = next;
+    if(q.type==='mc'){
+      app.querySelectorAll('#mc .opt').forEach(function(b){
+        b.onclick=function(){ if(G.cur.finished) return; pickOption(+b.dataset.o); };
+      });
+      app.addEventListener('keydown', function(e){
+        if(e.key==='Enter'){ e.preventDefault(); if(G.cur.finished) next(); else submit(); }
+      });
+    }
     app.querySelectorAll('.field input, .field textarea').forEach(function(inp,idx,all){
       inp.addEventListener('keydown',function(e){
         if(e.key==='Enter' && !(inp.tagName==='TEXTAREA' && e.shiftKey)){
@@ -420,6 +474,18 @@
   }
 
   function values(){ return Array.prototype.map.call(app.querySelectorAll('.field'), function(f){ var i=f.querySelector('input,textarea'); return i.value; }); }
+
+  /* Şıklı soruda seçili şıkkı tutar. */
+  function pickOption(i){
+    if(!G.cur.mc) G.cur.mc = {sel:-1};
+    G.cur.mc.sel = i;
+    app.querySelectorAll('#mc .opt').forEach(function(b){ b.classList.toggle('sel', +b.dataset.o===i); });
+  }
+  function markOption(i, ok){
+    var b = app.querySelector('#mc .opt[data-o="'+i+'"]'); if(!b) return;
+    b.classList.remove('ok','bad'); b.classList.add(ok?'ok':'bad');
+    if(ok) app.querySelectorAll('#mc .opt').forEach(function(x){ x.disabled=true; });
+  }
   function mark(k, ok){
     var f = app.querySelector('.field[data-k="'+k+'"]'); if(!f) return;
     f.classList.remove('ok','bad'); f.classList.add(ok?'ok':'bad');
@@ -427,6 +493,12 @@
   }
 
   function evaluate(q, vals){
+    if(q.type==='mc'){
+      var sel = G.cur.mc ? G.cur.mc.sel : -1;
+      var ok = sel===q.answer;
+      if(sel>=0) markOption(sel, ok);
+      return ok;
+    }
     if(q.type==='parts'){
       var all=true;
       q.parts.forEach(function(p,i){
@@ -465,9 +537,13 @@
   function submit(){
     if(G.cur.finished) return;
     var q=G.qs[G.i], vals=values();
-    var pending = app.querySelectorAll('.field input:not(:disabled), .field textarea:not(:disabled)');
-    var empty = Array.prototype.some.call(pending, function(i){ return !i.value.trim(); });
-    if(empty){ var e=Array.prototype.find.call(pending,function(i){return !i.value.trim();}); e.focus(); var qc=$('#qc'); qc.classList.remove('shake'); void qc.offsetWidth; qc.classList.add('shake'); return; }
+    if(q.type==='mc'){
+      if(!G.cur.mc || G.cur.mc.sel<0){ var c0=$('#qc'); c0.classList.remove('shake'); void c0.offsetWidth; c0.classList.add('shake'); return; }
+    } else {
+      var pending = app.querySelectorAll('.field input:not(:disabled), .field textarea:not(:disabled)');
+      var empty = Array.prototype.some.call(pending, function(i){ return !i.value.trim(); });
+      if(empty){ var e=Array.prototype.find.call(pending,function(i){return !i.value.trim();}); e.focus(); var qc=$('#qc'); qc.classList.remove('shake'); void qc.offsetWidth; qc.classList.add('shake'); return; }
+    }
     var ok = evaluate(q, vals);
     if(ok){ finish(true); return; }
     G.cur.wrong++;
@@ -487,6 +563,7 @@
 
   function answerText(q){
     if(q.exp) return q.exp;
+    if(q.type==='mc') return '<b>'+MC_LETTERS[q.answer]+')</b> '+q.options[q.answer];
     if(q.type==='parts') return q.parts.map(function(p){ return (p.label||'')+' '+(p.a?p.a[0]:p.num); }).join('<br>');
     if(q.type==='list') return q.pool.map(function(p){ return p.a?p.a[0]:(p.all||[]).map(function(g){return g[0];}).join(' – '); }).join(', ');
     return q.a? q.a[0] : String(q.num);
@@ -535,7 +612,13 @@
     saveProf();
     G.log.push({q:q, ok:ok, pts:pts, bonus:bonus, streak:G.streak, wrong:G.cur.wrong});
     animateScore(G.score);
+    if(q.type==='mc'){
+      var sel = G.cur.mc ? G.cur.mc.sel : -1;
+      if(sel>=0 && sel!==q.answer) markOption(sel, false);
+      markOption(q.answer, true);
+    }
     app.querySelectorAll('.field input, .field textarea').forEach(function(i){ i.disabled=true; });
+    app.querySelectorAll('#mc .opt').forEach(function(b){ b.disabled=true; });
     var title;
     if(!ok) title = 'Cevap';
     else if(bonus>0) title = 'Doğru! 🔥 '+G.streak+'’li seri (+'+pts+')';
@@ -573,6 +656,9 @@
   function results(){
     clearTimer();
     var s=G.s, okc=G.log.filter(function(l){return l.ok;}).length;
+    var wrongc = G.log.length - okc;
+    var net = Math.max(0, okc - wrongc/4);
+    var netTxt = (Math.round(net*100)/100).toString().replace('.', ',');
     var pct = Math.min(100, Math.round(G.score/maxPts()*100));
     var p=curP();
     if(p){
@@ -585,8 +671,9 @@
     var stat = function(val, label, i){ return '<div class="stat" style="animation-delay:'+(0.08*i).toFixed(2)+'s"><b>'+val+'</b><span>'+label+'</span></div>'; };
     var h='<div class="bar" style="--sc:'+G.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+themeBtn()+'</div>'+
       '<div class="card result" style="--sc:'+G.color+'"><div class="big" id="bigPct">%0</div><div class="sub">'+msg+'</div>'+
-      '<div class="stats">'+stat(okc+'/'+G.qs.length,'Doğru',0)+stat(G.score,'Puan',1)+stat(firstTry,'İlk denemede',2)+
-      stat(G.bestStreak>=2?('🔥 '+G.bestStreak):'—','En uzun seri',3)+'</div>'+
+      '<div class="stats">'+stat(okc+'/'+G.qs.length,'Doğru',0)+stat(wrongc,'Yanlış',1)+stat(netTxt,'Net',2)+stat(G.score,'Puan',3)+
+      stat(firstTry,'İlk denemede',4)+
+      stat(G.bestStreak>=2?('🔥 '+G.bestStreak):'—','En uzun seri',5)+'</div>'+
       '<div class="actions" style="justify-content:center"><button class="btn primary" id="again">Tekrar oyna</button><button class="btn" id="home2">Ana menü</button></div>'+
       topicAnalysis()+
       '<div class="review">'+G.log.map(function(l,i){
@@ -600,8 +687,9 @@
     $('#again').onclick=function(){
       if(G.special==='mistakes') startMistakes();
       else if(G.special==='weak') startWeak(G.weakSubj);
+      else if(G.special==='deneme'){ var d=null; denemeList().forEach(function(x){ if(x.id===G.denemeId) d=x; }); if(d) startDeneme(d); else denemeSelect(); }
       else if(G.s) startGame({s:G.s, lv:G.lv, questions:(G.lv?G.lv.questions:G.s.questions), key:G.key, name:G.name, color:G.color});
-      else mixedExam();
+      else denemeSelect();
     };
     window.scrollTo(0,0);
   }
