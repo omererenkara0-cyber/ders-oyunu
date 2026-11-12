@@ -14,6 +14,7 @@
 - `src/data/tyt-ek.js`: ek soru havuzu (denemeleri kesişimsiz yapmak için). `add(Q_TYT_X, 'kolay'|'zor', [...])` ile mevcut dizilere ekler. Veri dosyalarından SONRA yüklenir.
 - `src/data/tyt-denemeler.js`: `TYT_DENEMELER` (seed, minutes, dist). TYT dağılımı toplam 120 soru / 165 dk.
 - `src/engine.js`: `denemePick(cfg)` her dersin havuzunu sabit tohumla karıştırıp deneme indeksine göre dilimler → denemeler aynı dersten ortak soru almaz (havuz ≥ 3×dağılım olmalı).
+- Deneme sınav ekranı (`special:'deneme'`): sorular `DENEME_GROUPS` sırasına göre gruplu gelir (Türkçe → Sosyal: Tarih,Coğrafya,Felsefe,Din → Matematik+Geometri → Fen: Fizik,Kimya,Biyoloji). Sol kolonda optik form + ders kısayolları (`optikHtml`, `bindDeneme`, `syncOptik`), soru kartında "Önceki soru" ve "Sınavı bitir" bulunur. Deneme soruları karıştırılmaz (sıra korunur).
 
 ## Kurallar
 - Deneme dağılımı sabit: Türkçe 40, Tarih/Coğrafya/Felsefe/Din 5'er, Temel Matematik 30, Geometri 10, Fizik 7, Kimya 7, Biyoloji 6 (=120).

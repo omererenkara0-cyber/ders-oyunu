@@ -316,6 +316,36 @@ svg .qb{fill:var(--accent2)} svg .qbt{fill:var(--bg);font-weight:800}
 .chip:active{transform:scale(.94)}
 .subject:active{transform:translateY(-1px) scale(.99)}
 
+/* deneme sınavı: sol optik form + sağ soru */
+#app.wide{max-width:1180px}
+.deneme-wrap{display:grid;grid-template-columns:236px minmax(0,1fr);gap:20px;align-items:start}
+.deneme-main{min-width:0}
+.optik{position:sticky;top:16px;padding:14px;max-height:calc(100vh - 32px);overflow:auto}
+.otop{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:10px}
+.otop b{font-size:15px}
+.otop span{color:var(--muted);font-variant-numeric:tabular-nums}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dchip{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;border:1.5px solid var(--line);background:var(--surface2);border-radius:9px;padding:6px 9px;font-size:12.5px;color:var(--muted);font-weight:600;transition:.15s}
+.dchip span{font-size:10.5px;font-weight:500;opacity:.8;font-variant-numeric:tabular-nums}
+.dchip:hover{border-color:var(--muted);color:var(--ink)}
+.dchip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink)}
+.ogroups{display:flex;flex-direction:column;gap:12px}
+.ogroup{display:flex;flex-direction:column;gap:8px}
+.orow{display:flex;flex-direction:column;gap:5px}
+.osub{font-size:11.5px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.4px;background:none;border:0;padding:0;text-align:left;cursor:pointer}
+.osub:hover{color:var(--ink)}
+.oballs{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:5px}
+.oball{position:relative;height:34px;border:1.5px solid var(--line);background:var(--surface2);border-radius:8px;padding:0;display:grid;place-items:center;font-variant-numeric:tabular-nums;transition:.12s}
+.oball .on{font-size:12px;color:var(--muted);font-weight:600}
+.oball .oa{position:absolute;right:3px;bottom:1px;font-size:9.5px;font-weight:800;color:var(--accent-ink)}
+.oball:hover{border-color:var(--muted)}
+.oball.filled{background:color-mix(in srgb,var(--accent) 22%,var(--surface2));border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.oball.filled .on{color:var(--ink)}
+.oball.filled .oa{color:var(--ink)}
+.oball.cur{border-color:var(--accent2);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent2) 45%,transparent)}
+.ofoot{margin-top:12px;color:var(--muted);font-size:11.5px;line-height:1.4}
+@media(max-width:820px){ .deneme-wrap{grid-template-columns:1fr} .optik{position:static;max-height:none;order:2} }
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){
   table.scores{min-width:0;font-size:13px} .scores th,.scores td{padding:8px 5px} .scores tbody th{white-space:normal} .scores td small span{display:block} .scores td small em,.scores .tm{display:none} .scores td b{font-size:14px} .scores tbody th i{margin-right:5px}
@@ -3395,6 +3425,25 @@ var ANIM = (function(){
   }
   function denemeCount(d){ return denemePick(d).length; }
 
+  /* Deneme sınavı ders grupları (soru sırası bu gruplara göre kurulur):
+     1) Türkçe  2) Sosyal (Tarih, Coğrafya, Felsefe, Din)
+     3) Matematik (son 10 sorusu Geometri)  4) Fen (Fizik, Kimya, Biyoloji). */
+  var DENEME_GROUPS = [
+    {name:'Türkçe',    subs:['turkce']},
+    {name:'Sosyal',    subs:['tarih','cografya','felsefe','din']},
+    {name:'Matematik', subs:['matematik','geometri']},
+    {name:'Fen',       subs:['fizik','kimya','biyoloji']}
+  ];
+  function subjById(id){ var r=null; SUBJECTS.forEach(function(s){ if(s.id===id) r=s; }); return r; }
+  function qSubjId(q){ var s=qSubj.get(q); return s?s.id:'genel'; }
+  function subjName(id){ var s=subjById(id); return s?s.name:id; }
+  /* Bir sorunun deneme sırasındaki grup indeksi (0..3); bulunamazsa -1. */
+  function qGroupIdx(q){
+    var sid=qSubjId(q);
+    for(var g=0; g<DENEME_GROUPS.length; g++){ if(DENEME_GROUPS[g].subs.indexOf(sid)>=0) return g; }
+    return -1;
+  }
+
   /* ---------- ZAYIF KONU ANALİZİ (ders bazlı; mantık src/weak.js) ---------- */
   var WEAK = window.WEAK;
   var WEAK_MAX_Q = 15;
@@ -3405,6 +3454,7 @@ var ANIM = (function(){
   /* ---------- ANA MENÜ ---------- */
   function menu(){
     G = null; clearTimer();
+    app.classList.remove('wide');
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<section class="hero"><h1>TYT denemeleri ve yanlışların</h1><p>TYT soru dağılımına göre hazırlanmış süreli denemeleri çöz; yanlış yaptığın sorular “Yanlışlarım” bölümünde toplanır. Her soruda beş seçenek vardır; doğru seçeneği işaretle ve “Kontrol Et”e bas.</p></section>'+
@@ -3442,6 +3492,7 @@ var ANIM = (function(){
   /* ---------- SEVİYE SEÇİMİ ---------- */
   function levelSelect(s){
     G = null; clearTimer();
+    app.classList.remove('wide');
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<div class="bar" style="--sc:'+s.color+'"><button class="icon-btn" id="homeBtn">← Ana Menü</button><div class="title"><i></i>'+s.name+'</div></div>'+
@@ -3468,6 +3519,7 @@ var ANIM = (function(){
   var pickSel = null;
   function pickScreen(s, lv){
     G = null; clearTimer();
+    app.classList.remove('wide');
     var pool = lv ? lv.questions : s.questions;
     var topics = topicsOf(pool);
     if(topics.length<=1){ startGame({s:s, lv:lv, questions:pool, key:s.id+(lv?':'+lv.id:''), name:s.name, color:s.color}); return; }
@@ -3517,6 +3569,7 @@ var ANIM = (function(){
   /* Yanlışlarım bölümü: yanlış soruları listeler, çözme ve sıfırlama sunar. */
   function mistakesSelect(){
     G = null; clearTimer();
+    app.classList.remove('wide');
     var list = mistakeList();
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<div class="bar" style="--sc:var(--bad)"><button class="icon-btn" id="backBtn">← Ana Menü</button><div class="title"><i></i>Yanlışlarım</div></div>'+
@@ -3547,6 +3600,7 @@ var ANIM = (function(){
   }
   function denemeSelect(){
     G = null; clearTimer();
+    app.classList.remove('wide');
     var dl = denemeList();
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
@@ -3587,11 +3641,25 @@ var ANIM = (function(){
   /* ---------- OYUN ---------- */
   function startGame(cfg){
     clearTimer();
+    app.classList.toggle('wide', cfg.special==='deneme');
     var qs = cfg.questions.slice();
-    if(opts.shuffle && cfg.special!=='mistakes') qs = shuffle(qs);
+    if(opts.shuffle && cfg.special!=='mistakes' && cfg.special!=='deneme') qs = shuffle(qs);
+    var groups = null;
+    if(cfg.special==='deneme'){
+      var idx = {};
+      groups = [];
+      qs.forEach(function(q,i){
+        var g = qGroupIdx(q); if(g<0) g = 0;
+        if(idx[g]==null){ idx[g]=groups.length; groups.push({gi:g, name:DENEME_GROUPS[g].name, subs:[], idxs:[]}); }
+        var grp = groups[idx[g]];
+        grp.idxs.push(i);
+        var sid = qSubjId(q); if(grp.subs.indexOf(sid)<0) grp.subs.push(sid);
+      });
+    }
     G = {name:cfg.name, color:cfg.color||'var(--accent)', lv:cfg.lv||null, key:cfg.key,
          special:cfg.special||null, focus:cfg.focus||null, s:cfg.s||null, weakSubj:cfg.weakSubj||null, denemeId:cfg.denemeId||null, qs:qs, i:0, score:0, log:[], topics:{},
-         timed:cfg.timed||0, left:cfg.timed||0, streak:0, bestStreak:0};
+         timed:cfg.timed||0, left:cfg.timed||0, streak:0, bestStreak:0,
+         groups:groups, states:qs.map(function(){ return null; }), groupTab:null};
     question();
   }
   function maxPts(){ return G.qs.length*10; }
@@ -3653,44 +3721,41 @@ var ANIM = (function(){
     return '<div class="field" data-k="0"><input autocomplete="off" spellcheck="false" placeholder="Cevabını yaz…"></div>';
   }
 
-  function question(){
-    var q = G.qs[G.i], s=G.s;
-    G.cur = {wrong:0, hints:0, done:{}, usedPool:{}, finished:false};
-    var pct = Math.round(G.i/G.qs.length*100);
-    var h = '<div class="bar" style="--sc:'+G.color+'">'+
-      '<button class="icon-btn" id="homeBtn">← Ana Menü</button>'+
-      '<div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
-      (G.timed?'<span class="pill timer'+(G.left<=60?' low':'')+'">⏱ <b id="tleft">'+fmtTime(Math.max(G.left,0))+'</b></span>':'')+
-      '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
-      (G.streak>=2?'<span class="pill streak" id="streakPill">🔥 Seri <b>'+G.streak+'</b> · +'+streakBonus(G.streak)+'</span>':'')+
-      '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
-      '<div class="progress" style="--sc:'+G.color+'"><div style="width:'+pct+'%"></div></div>'+
-      '<div class="card qcard" id="qc" style="--sc:'+G.color+'">'+
+  function qcardHtml(q){
+    var isD = G.special==='deneme';
+    var nextLabel = (G.i+1<G.qs.length?'Sonraki soru →':'Sonuçları gör →');
+    return '<div class="card qcard" id="qc" style="--sc:'+G.color+'">'+
       (G.focus?'<div class="focus-note">🎯 Odak: '+esc(G.focus)+'</div>':'')+
       '<div class="qnum"><span>'+(q.topic||'')+'</span><span>'+(q.src||'')+'</span></div>'+
       (q.passage?'<div class="passage">'+q.passage+'</div>':'')+
       '<div class="qtext">'+q.q+(q.note?'<span class="sub">'+q.note+'</span>':'')+'</div>'+
       (q.svg?'<figure class="fig">'+q.svg+'</figure>':'')+
       '<div class="inputs">'+fieldsHtml(q)+'</div>'+
-      '<div class="actions"><button class="btn primary" id="chk">Kontrol Et</button>'+
-      '<button class="btn ghost" id="pass">Pas geç</button><button class="btn ghost" id="show" style="display:none">Cevabı göster</button>'+
-      '<button class="btn primary" id="next" style="display:none">'+(G.i+1<G.qs.length?'Sonraki soru →':'Sonuçları gör →')+'</button>'+
+      '<div class="actions">'+
+      (isD?'<button class="btn" id="prevQ"'+(G.i<=0?' disabled':'')+'>← Önceki soru</button>':'')+
+      '<button class="btn primary" id="chk">Kontrol Et</button>'+
+      '<button class="btn ghost" id="pass">Pas geç</button>'+
+      '<button class="btn ghost" id="show" style="display:none">Cevabı göster</button>'+
+      '<button class="btn primary" id="next" style="display:none">'+nextLabel+'</button>'+
+      (isD?'<button class="btn ghost" id="finishQ">Sınavı bitir</button>':'')+
       '<span class="kbd">Enter ↵</span></div>'+
       '<div class="hints" id="hints"></div><div id="fb"></div></div>';
-    ANIM.render(app, h);
-    bindTheme();
+  }
+  function bindQcard(q){
     $('#homeBtn').onclick = confirmHome;
     $('#chk').onclick = submit;
     $('#pass').onclick = function(){ reveal(true); };
     $('#show').onclick = function(){ reveal(false); };
     $('#next').onclick = next;
+    var pq=$('#prevQ'); if(pq) pq.onclick = prev;
+    var fq=$('#finishQ'); if(fq) fq.onclick = function(){ results(); };
     if(q.type==='mc'){
       app.querySelectorAll('#mc .opt').forEach(function(b){
         b.onclick=function(){ if(G.cur.finished) return; pickOption(+b.dataset.o); };
       });
-      app.addEventListener('keydown', function(e){
-        if(e.key==='Enter'){ e.preventDefault(); if(G.cur.finished) next(); else submit(); }
-      });
+      if(G._mcKey){ app.removeEventListener('keydown', G._mcKey); }
+      G._mcKey = function(e){ if(e.key==='Enter'){ e.preventDefault(); if(G.cur.finished) next(); else submit(); } };
+      app.addEventListener('keydown', G._mcKey);
     }
     app.querySelectorAll('.field input, .field textarea').forEach(function(inp,idx,all){
       inp.addEventListener('keydown',function(e){
@@ -3705,6 +3770,103 @@ var ANIM = (function(){
         }
       });
     });
+  }
+
+  function groupOfIndex(i){
+    if(!G.groups) return -1;
+    for(var g=0; g<G.groups.length; g++){ if(G.groups[g].idxs.indexOf(i)>=0) return g; }
+    return -1;
+  }
+  /* Optik form + ders kısayolları (deneme ekranında sol kolon). */
+  function optikHtml(){
+    var total=G.qs.length;
+    var chips='';
+    G.groups.forEach(function(grp,g){
+      var a=grp.idxs[0]+1, b=grp.idxs[grp.idxs.length-1]+1;
+      chips+='<button class="dchip'+(g===G.groupTab?' on':'')+'" data-g="'+g+'">'+esc(grp.name)+'<span>'+a+'–'+b+'</span></button>';
+    });
+    var rows='';
+    G.groups.forEach(function(grp,g){
+      var subjRows='';
+      grp.subs.forEach(function(sid){
+        var idxs=grp.idxs.filter(function(i){ return qSubjId(G.qs[i])===sid; });
+        if(!idxs.length) return;
+        var balls='';
+        idxs.forEach(function(i){
+          var st=G.states[i], sel=(st&&st.sel>=0)?MC_LETTERS[st.sel]:null;
+          balls+='<button class="oball'+(i===G.i?' cur':'')+(sel?' filled':'')+'" data-i="'+i+'" title="Soru '+(i+1)+'">'+
+            '<span class="on">'+(i+1)+'</span><span class="oa">'+(sel||'')+'</span></button>';
+        });
+        subjRows+='<div class="orow"><button class="osub" data-jump="'+idxs[0]+'">'+esc(subjName(sid))+'</button><div class="oballs">'+balls+'</div></div>';
+      });
+      rows+='<div class="ogroup" data-g="'+g+'">'+subjRows+'</div>';
+    });
+    var answered=G.states.filter(function(s){ return s&&s.sel>=0; }).length;
+    return '<aside class="optik card" style="--sc:'+G.color+'">'+
+      '<div class="otop"><b>Optik form</b><span id="oCount">'+answered+'/'+total+'</span></div>'+
+      '<div class="dchips">'+chips+'</div>'+
+      '<div class="ogroups" id="ogroups">'+rows+'</div>'+
+      '<div class="ofoot">Ders kısayoluna bas → o dersin ilk sorusuna geç.</div>'+
+      '</aside>';
+  }
+  function bindDeneme(){
+    app.querySelectorAll('.dchip').forEach(function(b){ b.onclick=function(){ goTo(G.groups[+b.dataset.g].idxs[0]); }; });
+    app.querySelectorAll('.osub').forEach(function(b){ b.onclick=function(){ goTo(+b.dataset.jump); }; });
+    app.querySelectorAll('.oball').forEach(function(b){ b.onclick=function(){ goTo(+b.dataset.i); }; });
+  }
+  function syncOptik(){
+    if(!G || G.special!=='deneme') return;
+    app.querySelectorAll('.dchip').forEach(function(b){ b.classList.toggle('on', +b.dataset.g===G.groupTab); });
+    app.querySelectorAll('.oball').forEach(function(b){
+      var i=+b.dataset.i, st=G.states[i], sel=(st&&st.sel>=0)?MC_LETTERS[st.sel]:null;
+      b.classList.toggle('cur', i===G.i);
+      b.classList.toggle('filled', !!sel);
+      var oa=b.querySelector('.oa'); if(oa) oa.textContent = sel||'';
+    });
+    var el=$('#oCount'); if(el) el.textContent = G.states.filter(function(s){ return s&&s.sel>=0; }).length+'/'+G.qs.length;
+    var aside=app.querySelector('.optik'), cur=app.querySelector('.oball.cur');
+    if(aside && cur){
+      var ar=aside.getBoundingClientRect(), cr=cur.getBoundingClientRect();
+      if(cr.top<ar.top) aside.scrollTop += cr.top-ar.top-6;
+      else if(cr.bottom>ar.bottom) aside.scrollTop += cr.bottom-ar.bottom+6;
+    }
+  }
+  function applySaved(q, saved){
+    if(!saved) return;
+    if(saved.sel>=0 && q.type==='mc'){
+      app.querySelectorAll('#mc .opt').forEach(function(b){ b.classList.toggle('sel', +b.dataset.o===saved.sel); });
+      if(saved.done){
+        G.cur.finished=true;
+        markOption(saved.sel, true);
+        app.querySelectorAll('#mc .opt').forEach(function(b){ b.disabled=true; });
+        $('#chk').style.display='none'; $('#pass').style.display='none'; $('#show').style.display='none';
+        var n=$('#next'); if(n) n.style.display='';
+        var fb=$('#fb'); if(fb) fb.innerHTML='<div class="fb ok"><div class="h">Bu soruya doğru cevap verdin.</div>'+answerText(q)+'</div>';
+      }
+    }
+  }
+  function goTo(i){ if(!G || i<0 || i>=G.qs.length || i===G.i) return; G.i=i; question(); }
+  function prev(){ if(G && G.i>0) goTo(G.i-1); }
+
+  function question(){
+    var q = G.qs[G.i], s=G.s;
+    if(G.special==='deneme' && G.groups){ var gi=groupOfIndex(G.i); if(gi>=0) G.groupTab=gi; }
+    var saved = (G.states && G.states[G.i]) || null;
+    G.cur = {wrong:0, hints:0, done:{}, usedPool:{}, finished:false, mc:(saved && saved.sel>=0 ? {sel:saved.sel} : null)};
+    var pct = Math.round(G.i/G.qs.length*100);
+    var h = '<div class="bar" style="--sc:'+G.color+'">'+
+      '<button class="icon-btn" id="homeBtn">← Ana Menü</button>'+
+      '<div class="title"><i></i>'+esc(G.name)+(G.lv?' · '+G.lv.name:'')+'</div><div class="sp"></div>'+
+      (G.timed?'<span class="pill timer'+(G.left<=60?' low':'')+'">⏱ <b id="tleft">'+fmtTime(Math.max(G.left,0))+'</b></span>':'')+
+      '<span class="pill">Soru <b>'+(G.i+1)+'</b> / '+G.qs.length+'</span>'+
+      (G.streak>=2?'<span class="pill streak" id="streakPill">🔥 Seri <b>'+G.streak+'</b> · +'+streakBonus(G.streak)+'</span>':'')+
+      '<span class="pill">Puan <b id="pts">'+G.score+'</b></span>'+themeBtn()+'</div>'+
+      '<div class="progress" style="--sc:'+G.color+'"><div style="width:'+pct+'%"></div></div>'+
+      (G.special==='deneme' ? '<div class="deneme-wrap">'+optikHtml()+'<div class="deneme-main">'+qcardHtml(q)+'</div></div>' : qcardHtml(q));
+    ANIM.render(app, h);
+    bindTheme();
+    bindQcard(q);
+    if(G.special==='deneme'){ bindDeneme(); applySaved(q, saved); }
     startTimer();
     var f = app.querySelector('.field input, .field textarea'); if(f) f.focus({preventScroll:true});
     window.scrollTo(0,0);
@@ -3716,6 +3878,7 @@ var ANIM = (function(){
   function pickOption(i){
     if(!G.cur.mc) G.cur.mc = {sel:-1};
     G.cur.mc.sel = i;
+    if(G.special==='deneme'){ G.states[G.i] = {sel:i}; syncOptik(); }
     app.querySelectorAll('#mc .opt').forEach(function(b){ b.classList.toggle('sel', +b.dataset.o===i); });
   }
   function markOption(i, ok){
@@ -3856,6 +4019,11 @@ var ANIM = (function(){
     }
     app.querySelectorAll('.field input, .field textarea').forEach(function(i){ i.disabled=true; });
     app.querySelectorAll('#mc .opt').forEach(function(b){ b.disabled=true; });
+    if(G.special==='deneme'){
+      var ssel = (G.cur.mc && G.cur.mc.sel>=0) ? G.cur.mc.sel : -1;
+      G.states[G.i] = {sel:ssel, done:!!ok};
+      syncOptik();
+    }
     var title;
     if(!ok) title = 'Cevap';
     else if(bonus>0) title = 'Doğru! 🔥 '+G.streak+'’li seri (+'+pts+')';
@@ -3892,6 +4060,7 @@ var ANIM = (function(){
 
   function results(){
     clearTimer();
+    app.classList.remove('wide');
     var s=G.s, okc=G.log.filter(function(l){return l.ok;}).length;
     var wrongc = G.log.length - okc;
     var net = Math.max(0, okc - wrongc/4);

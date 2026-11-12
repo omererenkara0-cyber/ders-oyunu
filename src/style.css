@@ -309,6 +309,36 @@ svg .qb{fill:var(--accent2)} svg .qbt{fill:var(--bg);font-weight:800}
 .chip:active{transform:scale(.94)}
 .subject:active{transform:translateY(-1px) scale(.99)}
 
+/* deneme sınavı: sol optik form + sağ soru */
+#app.wide{max-width:1180px}
+.deneme-wrap{display:grid;grid-template-columns:236px minmax(0,1fr);gap:20px;align-items:start}
+.deneme-main{min-width:0}
+.optik{position:sticky;top:16px;padding:14px;max-height:calc(100vh - 32px);overflow:auto}
+.otop{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:10px}
+.otop b{font-size:15px}
+.otop span{color:var(--muted);font-variant-numeric:tabular-nums}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dchip{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;border:1.5px solid var(--line);background:var(--surface2);border-radius:9px;padding:6px 9px;font-size:12.5px;color:var(--muted);font-weight:600;transition:.15s}
+.dchip span{font-size:10.5px;font-weight:500;opacity:.8;font-variant-numeric:tabular-nums}
+.dchip:hover{border-color:var(--muted);color:var(--ink)}
+.dchip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink)}
+.ogroups{display:flex;flex-direction:column;gap:12px}
+.ogroup{display:flex;flex-direction:column;gap:8px}
+.orow{display:flex;flex-direction:column;gap:5px}
+.osub{font-size:11.5px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.4px;background:none;border:0;padding:0;text-align:left;cursor:pointer}
+.osub:hover{color:var(--ink)}
+.oballs{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:5px}
+.oball{position:relative;height:34px;border:1.5px solid var(--line);background:var(--surface2);border-radius:8px;padding:0;display:grid;place-items:center;font-variant-numeric:tabular-nums;transition:.12s}
+.oball .on{font-size:12px;color:var(--muted);font-weight:600}
+.oball .oa{position:absolute;right:3px;bottom:1px;font-size:9.5px;font-weight:800;color:var(--accent-ink)}
+.oball:hover{border-color:var(--muted)}
+.oball.filled{background:color-mix(in srgb,var(--accent) 22%,var(--surface2));border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.oball.filled .on{color:var(--ink)}
+.oball.filled .oa{color:var(--ink)}
+.oball.cur{border-color:var(--accent2);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent2) 45%,transparent)}
+.ofoot{margin-top:12px;color:var(--muted);font-size:11.5px;line-height:1.4}
+@media(max-width:820px){ .deneme-wrap{grid-template-columns:1fr} .optik{position:static;max-height:none;order:2} }
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){
   table.scores{min-width:0;font-size:13px} .scores th,.scores td{padding:8px 5px} .scores tbody th{white-space:normal} .scores td small span{display:block} .scores td small em,.scores .tm{display:none} .scores td b{font-size:14px} .scores tbody th i{margin-right:5px}
