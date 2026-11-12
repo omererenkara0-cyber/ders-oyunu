@@ -1,7 +1,7 @@
 /* TYT soru bankası doğrulayıcı. Tüm soruları yükler ve tutarlılığı denetler. */
 const fs=require('fs'),vm=require('vm');
 const ctx={window:{},console};vm.createContext(ctx);
-const FILES=['match.js','svg.js','data/tyt-turkce.js','data/tyt-matematik.js','data/tyt-geometri.js','data/tyt-fizik.js','data/tyt-kimya.js','data/tyt-biyoloji.js','data/tyt-tarih.js','data/tyt-cografya.js','data/tyt-felsefe.js','data/tyt-din.js','data/tyt-deneme.js','data/tyt-denemeler.js','data/subjects.js','weak.js','anim.js'];
+const FILES=['match.js','svg.js','data/tyt-turkce.js','data/tyt-matematik.js','data/tyt-geometri.js','data/tyt-fizik.js','data/tyt-kimya.js','data/tyt-biyoloji.js','data/tyt-tarih.js','data/tyt-cografya.js','data/tyt-felsefe.js','data/tyt-din.js','data/tyt-deneme.js','data/tyt-denemeler.js','data/tyt-ek.js','data/subjects.js','weak.js','anim.js'];
 for(const f of FILES)
   vm.runInContext(fs.readFileSync('src/'+f,'utf8').replace(/^var (\w+)/gm,'globalThis.$1'),ctx);
 let bad=0;
