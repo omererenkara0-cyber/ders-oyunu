@@ -313,7 +313,7 @@
     var best = curP() ? curP().best : {};
     var h = '<header class="top"><div class="brand"><span class="dot"></span>Bilgi Yolu</div>'+themeBtn()+'</header>'+
       '<div class="bar" style="--sc:var(--accent2)"><button class="icon-btn" id="backBtn">← Ana Menü</button><div class="title"><i></i>TYT Denemeleri</div></div>'+
-      '<section class="hero"><h1>Hangi denemeyi çözmek istersin?</h1><p>Her deneme TYT dağılımına göre hazırlanır ve kendi süresiyle başlar. Sorular çoktan seçmelidir; sonuçta net hesaplanır.</p></section>'+
+      '<section class="hero"><h1>Hangi denemeyi çözmek istersin?</h1><p>Tüm denemeler aynı TYT soru dağılımına sahiptir; yalnızca seçilen sorular farklıdır. Sorular çoktan seçmelidir ve sonuçta net hesaplanır.</p></section>'+
       '<div class="grid">'+
       dl.map(function(d,i){
         var b = best['deneme:'+d.id];
